@@ -16,10 +16,12 @@ function App() {
   if (isAuthPage) {
     // 🔒 Rutas que deben estar fuera del layout
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Registro />} />
-      </Routes>
+      <div className="min-h-screen bg-gray-100"> {/* Fondo gris solo en Login y Registro */}
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
+        </Routes>
+      </div>
     );
   }
 

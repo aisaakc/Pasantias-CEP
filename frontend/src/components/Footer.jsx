@@ -15,7 +15,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-indigo-500 transition duration-300"
               >
-                <i className="fa fa-facebook-f icon-size"></i> {/* Icono de Facebook con clase personalizada */}
+                <i className="fa fa-facebook-f icon-size"></i> 
               </a>
               <a
                 href="https://twitter.com"
@@ -23,7 +23,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-indigo-500 transition duration-300"
               >
-                <i className="fa fa-twitter icon-size"></i> {/* Icono de Twitter con clase personalizada */}
+                <i className="fa fa-twitter icon-size"></i> 
               </a>
               <a
                 href="https://www.linkedin.com"
@@ -31,7 +31,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-indigo-500 transition duration-300"
               >
-                <i className="fa fa-linkedin icon-size"></i> {/* Icono de LinkedIn con clase personalizada */}
+                <i className="fa fa-linkedin icon-size"></i> 
               </a>
               <a
                 href="https://www.instagram.com"
@@ -39,7 +39,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-indigo-500 transition duration-300"
               >
-                <i className="fa fa-instagram icon-size"></i> {/* Icono de Instagram con clase personalizada */}
+                <i className="fa fa-instagram icon-size"></i> 
               </a>
             </div>
           </div>

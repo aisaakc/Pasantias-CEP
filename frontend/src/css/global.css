@@ -1,6 +1,4 @@
-/* global.css */
 
-/* Estilos globales */
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
@@ -11,7 +9,7 @@ body {
     font-family: 'Helvetica', sans-serif;
   }
   
-  /* Estilos comunes */
+  
   .min-h-screen {
     min-height: 100vh;
   }
@@ -24,5 +22,5 @@ body {
     flex-direction: column;
   }
   
-  /* Otras reglas globales */
+
   

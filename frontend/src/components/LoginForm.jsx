@@ -1,53 +1,108 @@
-import React, { useState } from 'react';
-import InputField from './InputField';
+import React from 'react';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import InputField from './InputField'; // Importamos el InputField
+import { motion } from 'framer-motion';
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const initialValues = {
+    email: '',
+    password: '',
+  };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    console.log(`Email: ${email}, Password: ${password}`);
-    // Lógica de autenticación aquí (puedes conectarlo con un backend)
+  const validationSchema = Yup.object({
+    email: Yup.string().email('Correo inválido').required('Requerido'),
+    password: Yup.string().min(6, 'Mínimo 6 caracteres').required('Requerido'),
+  });
+
+  const handleLogin = (values) => {
+    console.log('Logueando...', values);
   };
 
   return (
     <div className="flex w-1/2 justify-center items-center bg-white p-8">
-      <form onSubmit={handleLogin} className="w-full max-w-md">
-        <h1 className="text-gray-800 font-bold text-3xl mb-3">Sign In</h1>
-        <p className="text-sm font-normal text-gray-600 mb-6">Please enter your credentials to access your account.</p>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleLogin}
+      >
+        {({ errors, touched, values, handleChange }) => (
+          <Form className="w-full max-w-md">
+            <motion.h1
+              className="text-gray-800 font-bold text-3xl mb-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1 }}
+            >
+              Iniciar Sesión
+            </motion.h1>
+            <motion.p
+              className="text-sm font-normal text-gray-600 mb-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.2 }}
+            >
+              Ingresa tus credenciales para continuar
+            </motion.p>
 
-        <InputField
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email Address"
-          icon="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-        />
-        
-        <InputField
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          icon="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-        />
+            {/* Email Field */}
+            <div className="mb-4">
+              <InputField
+                type="email"
+                value={values.email} // Aseguramos que se pasa el valor del estado de Formik
+                onChange={handleChange} // Aseguramos que se pasa la función handleChange de Formik
+                placeholder="Correo electrónico"
+                name="email" // Aseguramos que el campo tiene el nombre correcto
+                error={errors.email} // Pasamos el error si hay uno
+                touched={touched.email} // Pasamos si el campo ha sido tocado
+              />
+            </div>
 
-        <button
-          type="submit"
-          className="block w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold mt-4"
-        >
-          Log In
-        </button>
+            {/* Password Field */}
+            <div className="mb-4">
+              <InputField
+                type="password"
+                value={values.password} // Aseguramos que se pasa el valor del estado de Formik
+                onChange={handleChange} // Aseguramos que se pasa la función handleChange de Formik
+                placeholder="Contraseña"
+                name="password" // Aseguramos que el campo tiene el nombre correcto
+                error={errors.password} // Pasamos el error si hay uno
+                touched={touched.password} // Pasamos si el campo ha sido tocado
+              />
+            </div>
 
-        <div className="flex justify-between items-center mt-6">
-          <label className="flex items-center text-sm">
-            <input type="checkbox" className="mr-2" />
-            Remember me
-          </label>
-          <span className="text-sm text-blue-600 cursor-pointer">Forgot Password?</span>
-        </div>
-      </form>
+            <motion.button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold mt-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 transform transition duration-200 ease-in-out shadow-md hover:shadow-lg active:scale-95"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.4 }}
+            >
+              Ingresar
+            </motion.button>
+
+            <motion.div
+              className="text-right mt-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.6 }}
+            >
+              <span className="text-sm text-blue-600 cursor-pointer hover:underline">
+                ¿Olvidaste tu contraseña?
+              </span>
+            </motion.div>
+
+            <motion.div
+              className="text-right mt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.6 }}
+            >
+              
+            </motion.div>
+          </Form>
+        )}
+      </Formik>
     </div>
   );
 }

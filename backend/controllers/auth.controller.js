@@ -10,10 +10,12 @@ export const registerUser = async (req, res) => {
     telefono,
     password,
     tipoParticipante,
+    genero, // Nuevo campo
   } = req.body;
 
   try {
-    if (!nombre || !apellido || !cedula || !correo || !password) {
+   
+    if (!nombre || !apellido || !cedula || !correo || !password || !tipoParticipante || !genero) {
       return res.status(400).json({ message: 'Todos los campos son obligatorios' });
     }
 
@@ -29,22 +31,22 @@ export const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await pool.query(
-        `INSERT INTO usuario 
-          (nombre, apellido, cedula, correo, telefono, tipo_participante, rol, asignado_por_usuario_id, contraseña)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [
-          nombre,
-          apellido,
-          cedula,
-          correo,
-          telefono,
-          tipoParticipante,
-          'Participante',          // Asignamos rol automáticamente
-          null,                    // No lo asignó ningún otro usuario
-          hashedPassword
-        ]
-      );
-      
+      `INSERT INTO usuario 
+        (nombre, apellido, cedula, correo, telefono, tipo_participante, genero, rol, asignado_por_usuario_id, contraseña)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        nombre,
+        apellido,
+        cedula,
+        correo,
+        telefono,
+        tipoParticipante,
+        genero,          
+        'Participante',  
+        null,           
+        hashedPassword
+      ]
+    );
 
     res.status(201).json({ message: 'Usuario registrado exitosamente' });
   } catch (err) {

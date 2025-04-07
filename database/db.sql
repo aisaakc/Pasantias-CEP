@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS usuario (
   correo VARCHAR(100) UNIQUE NOT NULL,
   telefono VARCHAR(15),
   tipo_participante VARCHAR(30) CHECK (tipo_participante IN ('estudiante IUJO', 'Participante Externo', 'Personal IUJO')),
+  genero VARCHAR(10) CHECK (genero IN ('Masculino', 'Femenino')),
   rol VARCHAR(50) DEFAULT 'Participante',
   contraseña VARCHAR(255) NOT NULL,
   asignado_por_usuario_id INTEGER,

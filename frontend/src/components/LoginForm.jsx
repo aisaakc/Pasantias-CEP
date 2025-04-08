@@ -1,8 +1,10 @@
-import React from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import React, { useEffect } from 'react';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import InputField from './InputField'; // Importamos el InputField
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom'; // Para acceder al estado de la redirección
+import { toast } from 'sonner'; // Importamos el toast
 
 export default function LoginForm() {
   const initialValues = {
@@ -18,6 +20,32 @@ export default function LoginForm() {
   const handleLogin = (values) => {
     console.log('Logueando...', values);
   };
+
+  // Obtener el estado de la redirección (cuando se redirige después del registro)
+  const location = useLocation();
+  const { state } = location;
+
+  // Usamos sessionStorage para almacenar si ya se mostró el mensaje
+  useEffect(() => {
+    if (state?.successMessage && !sessionStorage.getItem('successMessageShown')) {
+      // Mostrar el mensaje de éxito
+      toast.success(state.successMessage, {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          backgroundColor: '#16A34A', // Verde vibrante
+          color: '#FFFFFF',
+          borderRadius: '8px',
+          padding: '16px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+        },
+      });
+
+      // Marcar que el mensaje ya ha sido mostrado
+      sessionStorage.setItem('successMessageShown', 'true');
+    }
+  }, [state]);
 
   return (
     <div className="flex w-1/2 justify-center items-center bg-white p-8">
@@ -90,15 +118,6 @@ export default function LoginForm() {
               <span className="text-sm text-blue-600 cursor-pointer hover:underline">
                 ¿Olvidaste tu contraseña?
               </span>
-            </motion.div>
-
-            <motion.div
-              className="text-right mt-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.6 }}
-            >
-              
             </motion.div>
           </Form>
         )}

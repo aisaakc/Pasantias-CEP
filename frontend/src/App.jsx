@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner'; // Importa Toaster de sonner
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -17,6 +18,7 @@ function App() {
     // 🔒 Rutas que deben estar fuera del layout
     return (
       <div className="min-h-screen bg-gray-100"> {/* Fondo gris solo en Login y Registro */}
+        <Toaster /> {/* Agrega el Toaster aquí */}
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
@@ -28,8 +30,9 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-200">
       <Navbar />
-
+      
       <main className="flex-grow pt-20 px-4 max-w-6xl mx-auto w-full">
+        <Toaster /> {/* Agrega el Toaster aquí también, fuera de las rutas de autenticación */}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/curso" element={<Cursos />} />

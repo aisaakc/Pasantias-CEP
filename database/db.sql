@@ -1,11 +1,11 @@
 -- Crear tabla 'usuario' si no existe
 CREATE TABLE IF NOT EXISTS usuario (
   id SERIAL PRIMARY KEY,
-  nombre VARCHAR(45) NOT NULL,
-  apellido VARCHAR(45) NOT NULL,
+  nombre VARCHAR(255) NOT NULL,
+  apellido VARCHAR(255) NOT NULL,
   cedula INTEGER UNIQUE NOT NULL,
   correo VARCHAR(100) UNIQUE NOT NULL,
-  telefono VARCHAR(15),
+  telefono VARCHAR(150),
   tipo_participante VARCHAR(30) CHECK (tipo_participante IN ('estudiante IUJO', 'Participante Externo', 'Personal IUJO')),
   genero VARCHAR(10) CHECK (genero IN ('Masculino', 'Femenino')),
   rol VARCHAR(50) DEFAULT 'Participante',

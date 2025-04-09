@@ -10,7 +10,7 @@ const fields = [
   { label: 'Nombre', name: 'nombre', type: 'text', placeholder: 'Ej: Juan' },
   { label: 'Apellido', name: 'apellido', type: 'text', placeholder: 'Ej: Pérez' },
   { label: 'Cédula', name: 'cedula', type: 'text', placeholder: 'Ej: 12345678' },
-  { label: 'Correo electrónico', name: 'email', type: 'email', placeholder: 'ejemplo@correo.com' },
+  { label: 'Correo electrónico', name: 'correo', type: 'email', placeholder: 'ejemplo@correo.com' },
   { label: 'Teléfono', name: 'telefono', type: 'tel', placeholder: '04121234567' },
   { label: 'Contraseña', name: 'contraseña', type: 'password', placeholder: '••••••••' },
   { label: 'Confirmar Contraseña', name: 'confirm_contraseña', type: 'password', placeholder: '••••••••' },
@@ -28,28 +28,37 @@ const RegistroForm = () => {
           confirm_contraseña: '', email: '', telefono: '', genero: ''
         }}
         onSubmit={async (values) => {
+          if (values.contraseña !== values.confirm_contraseña) {
+            toast.error('Las contraseñas no coinciden');
+            return;
+          }
+        
           const payload = {
             nombre: values.nombre,
             apellido: values.apellido,
             cedula: values.cedula,
-            correo: values.email,
+            correo: values.email, // Asegúrate de que 'correo' y 'email' coincidan en el frontend y backend
             telefono: values.telefono,
             tipoParticipante: values.tipoParticipante,
             genero: values.genero,
             contraseña: values.contraseña
           };
-
+        
+          if (!payload.tipoParticipante || !payload.genero) {
+            toast.error('Selecciona tipo de participante y género');
+            return;
+          }
+        
           try {
             setLoading(true); // Iniciar carga
-
             const response = await register(payload);
             console.log('Registro exitoso:', response.data);
-
+        
             // Redirigir a la página de login con el estado de éxito
             navigate('/login', { state: { successMessage: '¡Registro exitoso! Ahora puedes iniciar sesión.' } });
           } catch (error) {
             console.error('Error al registrar:', error);
-
+        
             toast.error(
               error.response?.status === 409
                 ? 'Ya existe un usuario con ese correo o cédula'
@@ -74,6 +83,7 @@ const RegistroForm = () => {
             setLoading(false); // Detener carga
           }
         }}
+        
       >
         {({ handleChange, handleSubmit, values }) => (
           <Form onSubmit={handleSubmit}>

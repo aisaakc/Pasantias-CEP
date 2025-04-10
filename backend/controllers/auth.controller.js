@@ -11,26 +11,58 @@ export const registerUser = async (req, res) => {
     telefono,
     password,
     tipoParticipante,
-    genero, 
+    genero,
   } = req.body;
 
-  try {
-   
-    if (!nombre || !apellido || !cedula || !correo || !password || !tipoParticipante || !genero) {
-      return res.status(400).json({ message: 'Todos los campos son obligatorios' });
-    }
+  // ✅ Validaciones de campos requeridos
+  const camposObligatorios = [nombre, apellido, cedula, correo, password, tipoParticipante, genero];
+  if (camposObligatorios.some(campo => !campo)) {
+    return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+  }
 
-    const userExists = await pool.query(
-      'SELECT * FROM usuario WHERE correo = $1 OR cedula = $2',
+  // ✅ Validaciones específicas
+  if (!/^\d+$/.test(cedula)) {
+    return res.status(400).json({ message: 'La cédula debe contener solo números' });
+  }
+
+  const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!correoRegex.test(correo)) {
+    return res.status(400).json({ message: 'Formato de correo inválido' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+
+  const tipo = tipoParticipante.trim();
+  const generoClean = genero.trim();
+
+  const tiposPermitidos = ['estudiante IUJO', 'Participante Externo', 'Personal IUJO'];
+  const generosPermitidos = ['Masculino', 'Femenino'];
+
+  if (!tiposPermitidos.includes(tipo)) {
+    return res.status(400).json({ message: 'Tipo de participante inválido' });
+  }
+
+  if (!generosPermitidos.includes(generoClean)) {
+    return res.status(400).json({ message: 'Género inválido' });
+  }
+
+  try {
+    // ✅ Verificar si ya existe el usuario
+    const { rows } = await pool.query(
+      'SELECT 1 FROM usuario WHERE correo = $1 OR cedula = $2',
       [correo, cedula]
     );
 
-    if (userExists.rows.length > 0) {
+    if (rows.length > 0) {
       return res.status(409).json({ message: 'Ya existe un usuario con ese correo o cédula' });
     }
 
+    // ✅ Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ Insertar nuevo usuario
     await pool.query(
       `INSERT INTO usuario 
         (nombre, apellido, cedula, correo, telefono, tipo_participante, genero, rol, asignado_por_usuario_id, contraseña)
@@ -41,53 +73,77 @@ export const registerUser = async (req, res) => {
         cedula,
         correo,
         telefono,
-        tipoParticipante,
-        genero,          
-        'Participante',  
-        null,           
+        tipo,
+        generoClean,
+        'Participante',
+        null,
         hashedPassword
       ]
     );
 
     res.status(201).json({ message: 'Usuario registrado exitosamente' });
   } catch (err) {
-    console.error('Error en el registro:', err.message);
+    console.error('🛑 Error en el registro:', err);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
+
+
 export const loginUser = async (req, res) => {
   const { correo, password } = req.body;
 
+  // ✅ Validaciones básicas
+  if (!correo || !password) {
+    return res.status(400).json({ message: 'Correo y contraseña son requeridos' });
+  }
+
+  const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!correoRegex.test(correo)) {
+    return res.status(400).json({ message: 'Formato de correo inválido' });
+  }
+
   try {
-    if (!correo || !password) {
-      return res.status(400).json({ message: 'Correo y contraseña son requeridos' });
-    }
+    // ✅ Buscar usuario por correo
+    const { rows } = await pool.query('SELECT * FROM usuario WHERE correo = $1', [correo]);
 
-    // Buscar al usuario por correo
-    const user = await pool.query('SELECT * FROM usuario WHERE correo = $1', [correo]);
-
-    if (user.rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    // Comparar la contraseña
-    const isPasswordValid = await bcrypt.compare(password, user.rows[0].contraseña);
+    const usuario = rows[0];
 
+    // ✅ Validar contraseña
+    const isPasswordValid = await bcrypt.compare(password, usuario.contraseña);
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Contraseña incorrecta' });
     }
 
-    // Crear el token JWT
-    const token = jwt.sign(
-      { userId: user.rows[0].id, nombre: user.rows[0].nombre, rol: user.rows[0].rol }, // payload
-      process.env.JWT_SECRET, // clave secreta
-      { expiresIn: '1h' } // tiempo de expiración del token
-    );
+    // ✅ Generar token JWT
+    const tokenPayload = {
+      userId: usuario.id,
+      nombre: usuario.nombre,
+      rol: usuario.rol,
+    };
 
-    res.status(200).json({ message: 'Inicio de sesión exitoso', token });
-  } catch (err) {
-    console.error('Error en el login:', err.message);
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    res.status(200).json({
+      message: 'Inicio de sesión exitoso',
+      token,
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        correo: usuario.correo,
+        rol: usuario.rol,
+      }
+    });
+
+  } catch (error) {
+    console.error('🛑 Error en el login:', error.message);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };

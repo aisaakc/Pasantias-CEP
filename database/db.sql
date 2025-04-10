@@ -1,17 +1,26 @@
--- Crear tabla 'usuario' si no existe
 CREATE TABLE IF NOT EXISTS usuario (
   id SERIAL PRIMARY KEY,
-  nombre VARCHAR(255) NOT NULL,
-  apellido VARCHAR(255) NOT NULL,
-  cedula INTEGER UNIQUE NOT NULL,
-  correo VARCHAR(100) UNIQUE NOT NULL,
-  telefono VARCHAR(150),
-  tipo_participante VARCHAR(30) CHECK (tipo_participante IN ('estudiante IUJO', 'Participante Externo', 'Personal IUJO')),
-  genero VARCHAR(10) CHECK (genero IN ('Masculino', 'Femenino')),
+  nombre VARCHAR(45) NOT NULL,
+  apellido VARCHAR(45) NOT NULL,
+  cedula VARCHAR(20) NOT NULL UNIQUE,
+  correo VARCHAR(100) NOT NULL UNIQUE,
+  telefono VARCHAR(15),
+  tipo_participante VARCHAR(30) NOT NULL,
+  genero VARCHAR(10) NOT NULL,
   rol VARCHAR(50) DEFAULT 'Participante',
   contraseña VARCHAR(255) NOT NULL,
   asignado_por_usuario_id INTEGER,
-  FOREIGN KEY (asignado_por_usuario_id) REFERENCES usuario (id)
+  
+  CONSTRAINT usuario_genero_check CHECK (
+    genero IN ('Masculino', 'Femenino')
+  ),
+  
+  CONSTRAINT usuario_tipo_participante_check CHECK (
+    LOWER(tipo_participante) IN ('estudiante iujo', 'participante externo', 'personal iujo')
+  ),
+  
+  CONSTRAINT fk_asignado_por FOREIGN KEY (asignado_por_usuario_id)
+    REFERENCES usuario (id)
     ON DELETE SET NULL
     ON UPDATE CASCADE
 );

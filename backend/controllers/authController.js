@@ -1,36 +1,63 @@
-import { createUser } from '../models/persona.js'; // Importa la función del modelo
+import UserModel from "../models/persona.js";
 
-// Función para registrar un nuevo usuario
-export const registerUser = async (req, res) => {
-  const { 
-    nombre, 
-    apellido, 
-    telefono, 
-    cedula, 
-    id_genero, 
-    id_rol, 
-    id_pregunta_seguridad, 
-    respuesta_seguridad, 
-    contraseña, 
-    gmail 
-  } = req.body;
-
-  // Validación de campos
-  if (!nombre || !apellido || !telefono || !cedula || !id_genero || !id_rol || !id_pregunta_seguridad || !respuesta_seguridad || !contraseña || !gmail) {
-    return res.status(400).json({ message: "Por favor, complete todos los campos." });
-  }
-
+export const obtenerGeneros = async (req, res) => {
   try {
-    // Llama al modelo para registrar el usuario
-    const userId = await createUser(req.body);
-
-    // Responde con un mensaje de éxito y el ID del nuevo usuario
-    res.status(201).json({
-      message: "Usuario registrado exitosamente",
-      userId: userId
-    });
+    const generos = await UserModel.getGeneros();
+    res.json(generos);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Hubo un error al registrar el usuario." });
+    res.status(500).json({ error: error.message });
+  }
+};3
+
+export const obtenerRoles = async (req, res) => {
+  try {
+    const roles = await UserModel.getRoles();
+    res.json(roles);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
+
+export const obtenerPreguntas = async (req, res) => {
+  try {
+    const preguntas = await UserModel.getPreguntasSeguridad();
+    res.json(preguntas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const registrarUsuario = async (req, res) => {
+  try {
+    const userId = await UserModel.createUser(req.body);
+    res.status(201).json({ message: "Usuario registrado", userId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+
+};
+
+export const loginUsuario = async (req, res) => {
+  const { gmail, contraseña } = req.body;
+
+  try {
+    if (!gmail || !contraseña) {
+      return res.status(400).json({ error: "Debe proporcionar el correo y la contraseña." });
+    }
+
+    const usuario = await UserModel.loginUser({ gmail, contraseña });
+
+    const { id, nombre, apellido, gmail: userGmail, id_rol } = usuario;
+
+    res.status(200).json({
+      message: "Inicio de sesión exitoso",
+      user: { id, nombre, apellido, gmail: userGmail, id_rol },
+    });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+
+
+

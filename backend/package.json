@@ -4,12 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "dev": "nodemon index.js",
-  "start": "node index.js",
-  "migrate": "knex migrate:latest",
-  "seed": "knex seed:run"
-}
-,
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "migrate": "knex migrate:latest",
+    "seed": "knex seed:run"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

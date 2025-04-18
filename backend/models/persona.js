@@ -44,6 +44,14 @@ class UserModel {
     }
   }
 
+  async #hashDato(dato) {
+    try {
+      return await bcrypt.hash(dato, 10);
+    } catch (error) {
+      throw new Error("Error al cifrar datos: " + error.message);
+    }
+  }
+
   async createUser(data) {
     const {
       nombre,
@@ -57,12 +65,47 @@ class UserModel {
       respuesta_seguridad,
       contraseña,
     } = data;
-  
-    // 🔐 Cifrar la contraseña antes de guardar
-    const hashedPassword = await bcrypt.hash(contraseña, 10);
-  
-    const query = `
-      INSERT INTO personas (
+
+    try {
+
+      const checkQuery = `
+      SELECT * FROM personas WHERE cedula = $1 OR gmail = $2;
+    `;
+    const check = await pool.query(checkQuery, [cedula, gmail]);
+
+    if (check.rows.length > 0) {
+      const existing = check.rows[0];
+      if (existing.cedula === cedula) {
+        throw new Error("La cédula ya está registrada.");
+      }
+      if (existing.gmail === gmail) {
+        throw new Error("El correo electrónico ya está registrado.");
+      }
+    }
+    
+      const [hashedPassword, hashedRespuesta] = await Promise.all([
+        this.#hashDato(contraseña),
+        this.#hashDato(respuesta_seguridad),
+      ]);
+
+      const query = `
+        INSERT INTO personas (
+          nombre,
+          apellido,
+          telefono,
+          cedula,
+          id_genero,
+          id_rol,
+          id_pregunta_seguridad,
+          respuesta_seguridad,
+          contraseña,
+          gmail
+        ) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id;
+      `;
+
+      const values = [
         nombre,
         apellido,
         telefono,
@@ -70,30 +113,14 @@ class UserModel {
         id_genero,
         id_rol,
         id_pregunta_seguridad,
-        respuesta_seguridad,
-        contraseña,
-        gmail
-      ) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING id;
-    `;
-  
-    const values = [
-      nombre,
-      apellido,
-      telefono,
-      cedula,
-      id_genero,
-      id_rol,
-      id_pregunta_seguridad,
-      respuesta_seguridad,
-      hashedPassword, // usamos contraseña cifrada
-      gmail,
-    ];
-  
-    try {
+        hashedRespuesta,
+        hashedPassword,
+        gmail,
+      ];
+
       const result = await pool.query(query, values);
       return result.rows[0].id;
+
     } catch (error) {
       throw new Error("Error al registrar el usuario: " + error.message);
     }
@@ -118,7 +145,7 @@ class UserModel {
       if (!user) throw new Error("Usuario no encontrado");
   
       const passwordMatch = await bcrypt.compare(contraseña, user.contraseña);
-  
+   
       if (!passwordMatch) throw new Error("Contraseña incorrecta");
   
       return user;

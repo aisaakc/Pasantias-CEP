@@ -1,54 +1,64 @@
 import pool from "../db.js";
 import bcrypt from 'bcryptjs';
 
+
+
 class UserModel {
   async getGeneros() {
     const query = `
-      SELECT id, nombre 
+      SELECT id_clasificacion AS id, nombre 
       FROM clasificacion 
       WHERE type_id = 1;
-    `;
+    `;    
     try {
       const result = await pool.query(query);
       return result.rows;
     } catch (error) {
-      throw new Error("Error al obtener géneros: " + error.message);
+      console.error("Error en getGeneros:", error.message); 
+      throw new Error("Error al obtener géneros."); 
     }
   }
 
   async getRoles() {
     const query = `
-      SELECT id, nombre 
+      SELECT id_clasificacion AS id, nombre 
       FROM clasificacion 
       WHERE type_id = 2;
-    `;
+    `;    
     try {
       const result = await pool.query(query);
       return result.rows;
     } catch (error) {
-      throw new Error("Error al obtener roles: " + error.message);
+      console.error("Error en getRoles:", error.message); 
+      throw new Error("Error al obtener roles."); 
     }
   }
 
   async getPreguntasSeguridad() {
     const query = `
-      SELECT id, nombre 
+      SELECT id_clasificacion AS id, nombre 
       FROM clasificacion 
-      WHERE type_id = 14;
-    `;
+      WHERE type_id = 16; 
+    `;    
     try {
       const result = await pool.query(query);
       return result.rows;
     } catch (error) {
-      throw new Error("Error al obtener preguntas de seguridad: " + error.message);
+      console.error("Error en getPreguntasSeguridad:", error.message); 
+      throw new Error("Error al obtener preguntas de seguridad."); 
     }
   }
 
   async #hashDato(dato) {
     try {
-      return await bcrypt.hash(dato, 10);
+      if (dato === null || dato === undefined) {
+          throw new Error("Dato a cifrar es nulo o indefinido.");
+      }
+      const saltRounds = 10; 
+      return await bcrypt.hash(dato, saltRounds);
     } catch (error) {
-      throw new Error("Error al cifrar datos: " + error.message);
+       console.error("Error en #hashDato:", error.message); 
+      throw new Error("Error interno al cifrar datos."); 
     }
   }
 
@@ -61,31 +71,35 @@ class UserModel {
       gmail,
       id_genero,
       id_rol,
-      id_pregunta_seguridad,
-      respuesta_seguridad,
+      id_pregunta, 
+      respuesta, 
       contraseña,
     } = data;
 
+    if (!nombre || !apellido || !telefono || !cedula || !gmail || id_genero === undefined || id_rol === undefined || id_pregunta === undefined || !respuesta || !contraseña) {
+         throw new Error("Faltan campos obligatorios para crear el usuario.");
+    }
+
     try {
-
       const checkQuery = `
-      SELECT * FROM personas WHERE cedula = $1 OR gmail = $2;
-    `;
-    const check = await pool.query(checkQuery, [cedula, gmail]);
+        SELECT cedula, gmail FROM personas WHERE cedula = $1 OR gmail = $2;
+      `;    
+      const checkResult = await pool.query(checkQuery, [cedula, gmail]);
 
-    if (check.rows.length > 0) {
-      const existing = check.rows[0];
+    if (checkResult.rows.length > 0) {
+      const existing = checkResult.rows[0];
       if (existing.cedula === cedula) {
         throw new Error("La cédula ya está registrada.");
       }
-      if (existing.gmail === gmail) {
+      if (existing.gmail && existing.gmail.toLowerCase() === gmail.toLowerCase()) {
         throw new Error("El correo electrónico ya está registrado.");
       }
-    }
+        throw new Error("El usuario con esa cédula o correo ya existe."); 
+      }
     
       const [hashedPassword, hashedRespuesta] = await Promise.all([
         this.#hashDato(contraseña),
-        this.#hashDato(respuesta_seguridad),
+        this.#hashDato(respuesta), 
       ]);
 
       const query = `
@@ -96,15 +110,14 @@ class UserModel {
           cedula,
           id_genero,
           id_rol,
-          id_pregunta_seguridad,
-          respuesta_seguridad,
-          contraseña,
+          id_pregunta,     
+          respuesta,       
+          "contraseña",    
           gmail
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id;
+        RETURNING id_persona; 
       `;
-
       const values = [
         nombre,
         apellido,
@@ -112,45 +125,85 @@ class UserModel {
         cedula,
         id_genero,
         id_rol,
-        id_pregunta_seguridad,
+        id_pregunta, 
         hashedRespuesta,
         hashedPassword,
         gmail,
       ];
 
       const result = await pool.query(query, values);
-      return result.rows[0].id;
+      return result.rows[0].id_persona; 
 
     } catch (error) {
-      throw new Error("Error al registrar el usuario: " + error.message);
+       if (error.message.includes("La cédula ya está registrada.") || error.message.includes("El correo electrónico ya está registrado.")) {
+           throw error; 
+       }
+        console.error("Error detallado al registrar usuario:", error.message); 
+       if (error.code === '23505') {
+             if (error.constraint === 'personas_cedula_key') {
+                throw new Error("La cédula ya existe.");
+             } else if (error.constraint === 'personas_gmail_key') {
+                 throw new Error("El correo electrónico ya existe.");
+             } else {
+                 throw new Error("Entrada duplicada.");
+             }
+        }
+      throw new Error("Error al registrar el usuario: " + error.message); 
     }
   }
   
-
-  async loginUser({ gmail, contraseña }) {
-    if (!gmail) {
-      throw new Error("Debe proporcionar el correo electrónico.");
+    // Modificar loginUser para aceptar { cedula, gmail, contraseña }
+  async loginUser({ cedula, gmail, contraseña }) {
+    // Validar que al menos se proporcione cedula O gmail, y la contraseña
+    if ((!cedula && !gmail) || !contraseña) {
+      throw new Error("Debe proporcionar cédula o correo electrónico, y la contraseña.");
     }
   
-    const query = `
-      SELECT * FROM personas 
-      WHERE gmail = $1
-    `;
-    const values = [gmail];
-  
+    // Construir la consulta basada en si se proporciona cédula o gmail
+    let query = `SELECT * FROM personas WHERE `;
+    const values = [];
+    
+    if (cedula) {
+        query += `cedula = $1`;
+        values.push(cedula);
+    }
+
+    if (gmail) {
+        if (values.length > 0) {
+            query += ` OR `; // Si ya se añadió cedula, usar OR
+        }
+        query += `gmail = $${values.length + 1}`; // Usar el siguiente placeholder
+        values.push(gmail.toLowerCase()); // Convertir a lowercase para búsqueda de email
+    }
+
+    // Si no se proporcionó ni cedula ni gmail, esto ya fue validado arriba, pero es una medida de seguridad
+    if (values.length === 0) {
+         throw new Error("Debe proporcionar cédula o correo electrónico.");
+    }
+
     try {
       const result = await pool.query(query, values);
       const user = result.rows[0];
   
-      if (!user) throw new Error("Usuario no encontrado");
+      if (!user) {
+        throw new Error("Credenciales incorrectas."); 
+      }
   
-      const passwordMatch = await bcrypt.compare(contraseña, user.contraseña);
+      // Comparar la contraseña proporcionada con la hasheada en la DB
+      const passwordMatch = await bcrypt.compare(contraseña, user["contraseña"]); 
    
-      if (!passwordMatch) throw new Error("Contraseña incorrecta");
-  
-      return user;
+      if (!passwordMatch) {
+        throw new Error("Credenciales incorrectas.");
+      }
+      
+      return user; 
+
     } catch (error) {
-      throw new Error("Error al iniciar sesión: " + error.message);
+       console.error("Error detallado al iniciar sesión:", error.message); 
+       if (error.message === "Credenciales incorrectas." || error.message === "Debe proporcionar cédula o correo electrónico, y la contraseña.") {
+           throw error;
+       }
+      throw new Error("Error al iniciar sesión."); 
     }
   }
   

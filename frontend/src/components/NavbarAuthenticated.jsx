@@ -33,7 +33,7 @@ export default function NavbarAuthenticated() {
            <div className="flex justify-between items-center h-16 w-full"> 
              
                <div className="flex items-center space-x-5 ml-auto"> 
-                   {/* Desktop Profile/Logout links */}
+                   
                    <div className="hidden md:flex items-center space-x-5">
                        <Link to="/profile" className="text-white font-medium hover:text-blue-200 transition-all text-sm">
                            {user ? `Hola, ${user.nombre}!` : 'Mi Perfil'}
@@ -52,7 +52,6 @@ export default function NavbarAuthenticated() {
                    </button>
                </div>
            </div>
-           
         </div>
       </div>
 
@@ -62,7 +61,7 @@ export default function NavbarAuthenticated() {
        }`}
       >
 
-         <ul className="flex flex-col px-6 pt-4 pb-6 space-y-4 bg-blue-700 text-white font-medium shadow-md border-t border-blue-600 rounded-xl"> {/* Darker blue for mobile menu */}
+         <ul className="flex flex-col px-6 pt-4 pb-6 space-y-4 bg-blue-700 text-white font-medium shadow-md border-t border-blue-600 rounded-xl"> 
 
              <li className="pt-4 space-y-2"> 
              <Link

@@ -1,70 +1,64 @@
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AuthProvider } from "./context/AuthContext";
-import { useAuth } from "./context/AuthContext";
-import NavbarPublic from "./components/NavbarPublic";
-import NavbarAuthenticated from "./components/NavbarAuthenticated";
+import { AuthProvider } from "./context/AuthContext"; 
+import Navbar from "./components/NavbarPublic"; 
 import Footer from "./components/Footer";
 import Home from "./pages/cep/Home";
 import Lista from "./pages/cep/Lista";
 import Contacto from "./pages/cep/Contacto";
 import Login from './pages/auth/Login';
 import Registro from './pages/auth/Registro';
-import DashboardIndex from './pages/dashboard/Index';
+import DashboardIndex from './pages/dashboard/Index'; 
 import ProtectedRoute from './components/ProtectedRoute';
-import UserProfilePage from './pages/UserProfilePage';
+
 
 function App() {
-  const location = useLocation();
+  const location = useLocation(); 
+  const shouldShowNavbar = location.pathname === '/' || location.pathname === '/lista' || location.pathname === '/contacto';
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
-  const { isAuthenticated, loading } = useAuth();
+  const shouldShowFooter = !location.pathname.startsWith('/dashboard'); 
 
-  return (
-    
-    <AuthProvider> 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-
-      {isAuthPage ? (
-        <div className="min-h-screen bg-gray-100">
+  if (isAuthPage) {
+    return (
+      <AuthProvider>
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      
+        <div className="min-h-screen bg-gray-100 items-center justify-center">
           <Routes>
-          
             <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
+            <Route path="/registro" element={<Registro />} />          
           </Routes>
         </div>
-      ) : (
-  
-        <div className="flex flex-col min-h-screen">
-       
-          {loading ? null : (isAuthenticated ?   <NavbarAuthenticated /> : <NavbarPublic />)}
+      </AuthProvider>
+    );
+  } else {
+   
+    return (
+      <AuthProvider>
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} 
+        newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
-          <main className="flex-grow mt-16 mb-16">
-            <Routes>
-              {/* --- Rutas Públicas (con Navbar/Footer) --- */}
-              <Route path="/" element={<Home />} />
-              <Route path="/lista" element={<Lista />} />
-              <Route path="/contacto" element={<Contacto />} />
+        {shouldShowNavbar && <Navbar />}
 
-              {/* --- Ruta de la página de Perfil del Usuario (con Navbar/Footer, protegida) --- */}
-               <Route
-                   path="/profile"
-                   element={<ProtectedRoute element={<UserProfilePage />} />} // Protegida
-               />
+        <div className="flex-grow h-full flex flex-col">
+             <main className="flex-grow mb-16"> 
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/lista" element={<Lista />} />
+                    <Route path="/contacto" element={<Contacto />} />
+                    <Route path="/dashboard/*" element={<ProtectedRoute element={<DashboardIndex />} />} />
 
-               <Route path="/dashboard" element={<ProtectedRoute element={<DashboardIndex />} />}>
-                   <Route index element={<div>Contenido del Dashboard (Index) - Placeholder</div>} /> 
-               </Route>
-          
-            </Routes>
-          </main>
-          <Footer /> 
+                </Routes>
+             </main>
         </div>
-      )}
-       
-    </AuthProvider>
-  );
+
+        {shouldShowFooter && <Footer />}
+
+      </AuthProvider>
+    );
+  }
 }
 
 export default App;

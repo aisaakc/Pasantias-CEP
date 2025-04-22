@@ -23,7 +23,7 @@ export default function Contacto() {
   };
 
   return (
-    <div className="py-12 px-6 bg-gray-50">
+    <div className="min-h-screen pt-20  py-12 px-6 bg-gray-50">
       <motion.h1
         className="text-4xl font-extrabold text-indigo-600 text-center mb-8"
         initial={{ opacity: 0, y: -30 }}
@@ -147,19 +147,19 @@ export default function Contacto() {
         </motion.form>
       </div>
 
-      {/* Mapa */}
+      
       <motion.div
-  className="max-w-5xl mx-auto mt-10"
-  initial={{ opacity: 0 }}
-  whileInView={{ opacity: 1 }}
-  transition={{ duration: 0.7 }}
-  viewport={{ once: true }}
+        className="max-w-5xl mx-auto mt-10"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.7 }}
+        viewport={{ once: true }}
 >
-  <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">Ubicación </h2>
-  <div className="relative w-full h-96 rounded-lg overflow-hidden shadow-lg">
-    <Mapa />
-  </div>
-</motion.div>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">Ubicación </h2>
+        <div className="relative w-full h-96 rounded-lg overflow-hidden shadow-lg">
+          <Mapa />
+        </div>
+      </motion.div>
 
     </div>
   );

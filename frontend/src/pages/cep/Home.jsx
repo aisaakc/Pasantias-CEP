@@ -33,8 +33,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="py-16 px-6 ">
-      {/* Intro CEP */}
+    <div className="pt-20 py-16 px-6 ">
+      
       <motion.section
         className="text-center max-w-3xl mx-auto mb-16"
         initial={{ opacity: 0, y: 60 }}

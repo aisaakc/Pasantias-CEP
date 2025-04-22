@@ -27,7 +27,7 @@ export default function Lista() {
   ];
 
   return (
-    <div className="py-16 px-6 ">
+    <div className="pt-20 py-16 px-6 ">
       {/* Título */}
       <motion.h1
         className="text-4xl font-extrabold text-indigo-700 text-center mb-6"
@@ -45,7 +45,8 @@ export default function Lista() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.7 }}
       >
-        Aquí se encuentran todos nuestros cursos disponibles. Consulta los detalles y escoge el que más se ajuste a tus intereses.
+        Aquí se encuentran todos nuestros cursos disponibles. Consulta los detalles
+         y escoge el que más se ajuste a tus intereses.
       </motion.p>
 
       {/* Cards */}

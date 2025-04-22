@@ -4,50 +4,87 @@ import bcrypt from 'bcryptjs';
 
 
 class UserModel {
-  async getGeneros() {
+  // NUEVA FUNCIÓN HELPER: Obtiene el ID de un tipo de clasificación por su nombre
+  async #getClassificationTypeId(typeName) {
     const query = `
-      SELECT id_clasificacion AS id, nombre 
-      FROM clasificacion 
-      WHERE type_id = 1;
-    `;    
+      SELECT id_clasificacion
+      FROM clasificacion
+      WHERE nombre = $1
+      LIMIT 1;
+    `;
     try {
-      const result = await pool.query(query);
+      const result = await pool.query(query, [typeName]);
+      if (result.rows.length === 0) {
+        // Lanza un error si el tipo no se encuentra en la DB
+        throw new Error(`Tipo de clasificación "${typeName}" no encontrado en la base de datos.`);
+      }
+      return result.rows[0].id_clasificacion;
+    } catch (error) {
+      console.error(`Error al obtener ID para tipo "${typeName}":`, error.message);
+      // Propaga un error genérico para no exponer detalles internos
+      throw new Error(`Error interno al obtener ID de tipo de clasificación.`);
+    }
+  }
+
+
+  async getGeneros() {
+    try {
+      // Paso 1: Buscar el ID del tipo "Genero" dinámicamente por su nombre
+      const genderTypeId = await this.#getClassificationTypeId('Genero');
+
+      // Paso 2: Usar el ID encontrado en la consulta principal
+      const query = `
+        SELECT id_clasificacion AS id, nombre
+        FROM clasificacion
+        WHERE type_id = $1;
+      `;
+      const result = await pool.query(query, [genderTypeId]);
       return result.rows;
     } catch (error) {
-      console.error("Error en getGeneros:", error.message); 
-      throw new Error("Error al obtener géneros."); 
+      console.error("Error en getGeneros:", error.message);
+      // Es buena práctica propagar el error original o uno más específico si es necesario
+      throw error;
     }
   }
 
   async getRoles() {
-    const query = `
-      SELECT id_clasificacion AS id, nombre 
-      FROM clasificacion 
-      WHERE type_id = 2;
-    `;    
     try {
-      const result = await pool.query(query);
+      // Paso 1: Buscar el ID del tipo "Rol" dinámicamente por su nombre
+      const roleTypeId = await this.#getClassificationTypeId('Rol');
+
+      // Paso 2: Usar el ID encontrado en la consulta principal
+      const query = `
+        SELECT id_clasificacion AS id, nombre
+        FROM clasificacion
+        WHERE type_id = $1;
+      `;
+      const result = await pool.query(query, [roleTypeId]);
       return result.rows;
     } catch (error) {
-      console.error("Error en getRoles:", error.message); 
-      throw new Error("Error al obtener roles."); 
+      console.error("Error en getRoles:", error.message);
+      throw error;
     }
   }
 
   async getPreguntasSeguridad() {
-    const query = `
-      SELECT id_clasificacion AS id, nombre 
-      FROM clasificacion 
-      WHERE type_id = 16; 
-    `;    
     try {
-      const result = await pool.query(query);
+      // Paso 1: Buscar el ID del tipo "Pregunta" dinámicamente por su nombre
+      const questionTypeId = await this.#getClassificationTypeId('Pregunta');
+
+      // Paso 2: Usar el ID encontrado en la consulta principal
+      const query = `
+        SELECT id_clasificacion AS id, nombre
+        FROM clasificacion
+        WHERE type_id = $1;
+      `;
+      const result = await pool.query(query, [questionTypeId]);
       return result.rows;
     } catch (error) {
-      console.error("Error en getPreguntasSeguridad:", error.message); 
-      throw new Error("Error al obtener preguntas de seguridad."); 
+      console.error("Error en getPreguntasSeguridad:", error.message);
+      throw error;
     }
   }
+
 
   async #hashDato(dato) {
     try {

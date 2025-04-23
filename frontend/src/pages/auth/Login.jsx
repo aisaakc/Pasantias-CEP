@@ -1,10 +1,10 @@
 import React, { useState } from 'react'; 
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'; // Iconos
-import { Link, useNavigate } from 'react-router-dom'; // Link y useNavigate
-import Section from '../../components/Section'; // Tu componente Section
-import '../../css/login.css'; // Tu archivo CSS
-import { motion } from 'framer-motion'; // Animaciones
-import { useAuth } from '../../context/AuthContext'; // Importar el hook del contexto de autenticación
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'; 
+import { Link, useNavigate } from 'react-router-dom'; 
+import Section from '../../components/Section'; 
+import '../../css/login.css';
+import { motion } from 'framer-motion'; 
+import { useAuth } from '../../context/AuthContext'; 
 
 
 export default function Login() {
@@ -12,31 +12,29 @@ export default function Login() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate(); // Para navegar después del login
 
-  // Estado para mostrar/ocultar contraseña
+  
   const [showPassword, setShowPassword] = useState(false);
-  // Estado para los datos del formulario
+  
   const [formData, setFormData] = useState({
-    email: '', // Usaremos este campo para correo o cédula
-    password: '', // Contraseña
+    email: '', 
+    password: '', 
   });
-  // Estado para manejar el estado de carga del botón
+ 
   const [loading, setLoading] = useState(false);
-  // Estado para manejar errores locales del formulario (ej. campos vacíos)
-  const [localError, setLocalError] = useState(''); // Cambié el nombre a localError para distinguirlo del backend
+ 
+  const [localError, setLocalError] = useState(''); 
 
 
   const togglePassword = () => setShowPassword(!showPassword);
 
-  // Función para manejar cambios en los inputs del formulario
   const handleChange = (e) => {
-    setLocalError(''); // Limpiar errores locales al cambiar input
+    setLocalError(''); 
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
   };
 
-  // --- Función para manejar el envío del formulario ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
@@ -85,10 +83,8 @@ export default function Login() {
             Iniciar Sesión
           </motion.h2>
 
-          {/* Mostrar errores locales del formulario (ej. campos vacíos) */}
           {localError && <div className="text-red-600 text-sm text-center mb-4">{localError}</div>}
 
-          {/* Campo Correo o Cédula */}
           <div className="flex items-center border-2 border-gray-300 rounded-xl px-4 py-3">
             <Mail className="text-gray-400 mr-3" />
             <input

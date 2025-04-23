@@ -2,13 +2,7 @@ import UserModel from "../models/persona.js";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js"; 
 
-// Definir las constantes para los IDs de rol basados en tu tabla clasificacion
-const ROL_SUPERADMIN = 7; // ID para 'Super Administrador'
-const ROL_ADMIN = 8;      // ID para 'Administrador'
-const ROL_PARTICIPANTE = 11; 
-
 const JWT_EXPIRES_IN = "2h"; 
-
 class AuthController {
   
   async obtenerGeneros(req, res) {
@@ -59,7 +53,8 @@ class AuthController {
       const userId = await UserModel.createUser(userData);
       res.status(201).json({ message: "Usuario registrado exitosamente.", userId: userId });
     } catch (error) {
-      if (error.message.includes("La cédula ya está registrada.") || error.message.includes("El correo electrónico ya está registrado.") || error.message.includes("Faltan campos obligatorios")) {
+      if (error.message.includes("La cédula ya está registrada.") || error.message.includes("El correo electrónico ya está registrado.")
+         || error.message.includes("Faltan campos obligatorios")) {
            return res.status(400).json({ error: error.message });
       }
        console.error("Error en registrarUsuario:", error.message); 
@@ -102,54 +97,6 @@ class AuthController {
        }
        console.error("Error en loginUsuario:", error.message); 
       res.status(500).json({ error: "Error interno del servidor al iniciar sesión." });
-    }
-  }
-
-  async crearAdministrador(req, res){
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.split(" ")[1]; 
-
-    if(!token){
-      return res.status(401).json({ error: "Token de autenticación no proporcionado."})
-    }
-
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      if(decoded.id_rol !== ROL_SUPERADMIN ){ 
-        return res.status(403).json({ error: "Acceso denegado. Solo el superadministrador puede crear administradores." });
-      }
-
-      const data = req.body;
-      const adminData = {
-           nombre: data.nombre,
-           apellido: data.apellido,
-           telefono: data.telefono,
-           cedula: data.cedula,
-           gmail: data.gmail,
-           id_genero: data.id_genero,
-           id_rol: data.id_rol,
-           id_pregunta: data.id_pregunta, 
-           respuesta: data.respuesta, 
-           contraseña: data.contraseña,
-      };
-
-
-      if (adminData.id_rol !== ROL_ADMIN) {
-        return res.status(400).json({ error: `Solo se pueden crear usuarios con rol de administrador (ID ${ROL_ADMIN}).` });
-      }
-       
-      const userId = await UserModel.createUser(adminData); 
-      res.status(201).json({ message: "Administrador creado correctamente.", userId: userId });
-
-    } catch (error) {
-       if (error.message.includes("La cédula ya está registrada.") || error.message.includes("El correo electrónico ya está registrada.") || error.message.includes("Faltan campos obligatorios")) {
-           return res.status(400).json({ error: error.message });
-      }
-       console.error("Error en crearAdministrador:", error.message); 
-       if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-           return res.status(401).json({ error: "Token inválido o expirado." });
-       }
-      res.status(500).json({ error: "Error interno del servidor al crear administrador." });
     }
   }
 

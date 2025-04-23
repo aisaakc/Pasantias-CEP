@@ -33,7 +33,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="pt-20 py-16 px-6 ">
+    <div className="min-h-screen pt-20 py-16 px-6 ">
       
       <motion.section
         className="text-center max-w-3xl mx-auto mb-16"

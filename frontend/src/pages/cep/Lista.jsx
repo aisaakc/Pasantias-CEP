@@ -27,7 +27,7 @@ export default function Lista() {
   ];
 
   return (
-    <div className="pt-20 py-16 px-6 ">
+    <div className="min-h-screen pt-20 py-16 px-6 ">
       {/* Título */}
       <motion.h1
         className="text-4xl font-extrabold text-indigo-700 text-center mb-6"

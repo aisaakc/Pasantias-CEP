@@ -1,194 +1,255 @@
 // frontend/src/components/DashboardSidebar.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-// Importamos useAuth para el botón de cerrar sesión
 import { useAuth } from '../context/AuthContext';
-// Importamos íconos de Lucide React para los enlaces y los toggles
-// Asegúrate de tener instalada la librería lucide-react
-import { Home as HomeIcon, User, BookOpen, Menu, X, ChevronDown, ChevronUp, LogOut, Settings } from 'lucide-react';
+import { getParentClassificationsApi, getClasificacionItemsApi } from '../api/lookup.api'; // Importa la nueva función API
+
+import Modal from './Modal';
+
+import {
+    Menu,
+    X,
+    LogOut,
+    Settings,
+    ChevronDown,
+    ChevronUp,
+} from 'lucide-react';
+
 
 const DashboardSidebar = () => {
     const location = useLocation();
-    // Obtenemos la función logout del contexto de autenticación
     const { logout } = useAuth();
 
-    // --- Estado para controlar la visibilidad del sidebar móvil (gestionado por React) ---
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    // --- Estado para controlar si el acordeón de 'Más Opciones' está abierto (gestionado por React) ---
-    const [isMoreOptionsAccordionOpen, setIsMoreOptionsAccordionOpen] = useState(false);
 
-    // Define los enlaces de navegación principales del dashboard
-    const navLinks = [
-        { path: '/dashboard', name: 'Inicio', icon: <HomeIcon size={16} /> },
-        { path: '/dashboard/profile', name: 'Mi Perfil', icon: <User size={16} /> },
-        { path: '/dashboard/courses', name: 'Mis Cursos', icon: <BookOpen size={16} /> },
-    ];
+    const [parentClassifications, setParentClassifications] = useState([]);
+    const [loadingParents, setLoadingParents] = useState(true); // Renombrado para claridad
+    const [errorParents, setErrorParents] = useState(null);   // Renombrado para claridad
 
-    // Define los enlaces dentro del menú de acordeón 'Más Opciones'
-    const moreOptionsLinks = [
-        { path: '/more-options/option-1', name: 'Opción 1' },
-        { path: '/more-options/option-2', name: 'Opción 2' },
-        // Añade aquí los enlaces para las subsecciones de 'Más Opciones'
-    ];
+    const [isClasificacionesAccordionOpen, setIsClasificacionesAccordionOpen] = useState(false);
 
-    // Funciones para alternar el estado
+    // --- ESTADOS PARA LA MODAL Y LA CARGA DE SUS ITEMS ---
+    const [isModalOpenSidebar, setIsModalOpenSidebar] = useState(false);
+    const [modalParentClassification, setModalParentClassification] = useState(null); // Info del padre clickeado
+    const [modalItems, setModalItems] = useState([]); // Los items hijos cargados para la modal
+    const [loadingModalItems, setLoadingModalItems] = useState(false); // Estado de carga para los items de la modal
+    const [errorModalItems, setErrorModalItems] = useState(null);    // Estado de error para los items de la modal
+
+
+    // Cargar las clasificaciones principales al montar el componente
+    useEffect(() => {
+        const fetchParentClassifications = async () => {
+            try {
+                setLoadingParents(true);
+                const response = await getParentClassificationsApi();
+                setParentClassifications(response.data);
+                setLoadingParents(false);
+            } catch (err) {
+                console.error("Error fetching parent classifications:", err);
+                setErrorParents("Error al cargar clasificaciones principales.");
+                setLoadingParents(false);
+            }
+        };
+
+        fetchParentClassifications();
+    }, []);
+
+
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-    const toggleMoreOptionsAccordion = () => setIsMoreOptionsAccordionOpen(!isMoreOptionsAccordionOpen);
+    const toggleClasificacionesAccordion = () => setIsClasificacionesAccordionOpen(!isClasificacionesAccordionOpen);
 
-    // Helper para determinar las clases de estilo de un enlace (activo, inactivo, hover, etc.)
-    // Aplica clases basadas en el estilo Preline que proporcionaste
-    const getLinkClasses = (path, isAccordionToggle = false) => {
-        // Comprueba si el enlace actual coincide con la ruta actual
-        // Manejo especial para la ruta raíz del dashboard
-        const isActive = path === location.pathname || (path === '/dashboard' && location.pathname === '/dashboard/');
+    // --- FUNCIÓN para manejar el clic en un elemento de clasificación principal ---
+    const handleClassificationClick = async (event, parentClassification) => {
+        event.preventDefault(); // Evita la navegación
 
-        // Clases para enlace activo/inactivo/hover, basadas en el estilo Preline
-        const activeClasses = 'bg-gray-100 text-gray-800 dark:bg-neutral-700 dark:text-white'; // Fondo/texto para enlace activo
-        const inactiveClasses = 'text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700 dark:text-neutral-200'; // Fondo/texto para enlace inactivo y hover/focus
+        // 1. Guarda la info del padre y abre la modal inmediatamente (con estado de carga)
+        setModalParentClassification(parentClassification);
+        setModalItems([]); // Limpia items de modales anteriores
+        setLoadingModalItems(true);
+        setErrorModalItems(null);
+        setIsModalOpenSidebar(true); // Abre la modal
 
-        // Clases base comunes para todos los enlaces y botones de acordeón
-        const baseLinkClasses = 'flex items-center gap-x-3.5 py-2 px-2.5 text-sm rounded-lg transition-all duration-200 w-full'; // Estilos base
+        // Cierra el sidebar móvil si está abierto
+        if (isSidebarOpen && window.innerWidth < 1024) {
+            setIsSidebarOpen(false);
+        }
 
-        // Aplicamos las clases: activo si isActive es true y NO es un toggle de acordeón visualmente activo por sí mismo
-        // El toggle de acordeón puede tener un estilo diferente cuando su sección está abierta si lo deseas,
-        // pero por ahora usamos las mismas clases base + activo/inactivo.
-         const accordionToggleActiveClasses = isAccordionToggle && isMoreOptionsAccordionOpen ? 'bg-gray-100 dark:bg-neutral-700' : ''; // Opcional: resaltar el toggle cuando el acordeón está abierto
+        // 2. Carga los items hijos DE FORMA ASÍNCRONA
+        try {
+            const response = await getClasificacionItemsApi(parentClassification.id); // Llama a la nueva API
+            setModalItems(response.data); // Guarda los items cargados
+            setLoadingModalItems(false);
+        } catch (err) {
+            console.error(`Error fetching items for classification ID ${parentClassification.id}:`, err);
+            setErrorModalItems("Error al cargar los elementos.");
+            setLoadingModalItems(false);
+        }
+    };
 
-        return `${baseLinkClasses} ${isActive && !isAccordionToggle ? activeClasses : inactiveClasses} ${accordionToggleActiveClasses}`;
+    // --- FUNCIÓN para cerrar la modal ---
+    const closeModalSidebar = () => {
+        setIsModalOpenSidebar(false);
+        // Limpia los estados de la modal al cerrarla
+        setModalParentClassification(null);
+        setModalItems([]);
+        setErrorModalItems(null);
+        setLoadingModalItems(false); // Asegurarse de que el estado de carga se resetee también
     };
 
 
-    // Renderizamos la estructura completa del sidebar
+    // Helper para las clases de estilo de un enlace estático
+    // (Mantén si decides re-añadir enlaces estáticos)
+    const getLinkClasses = (path) => {
+        const isActive = path === location.pathname || (path === '/dashboard' && location.pathname === '/dashboard/');
+        const activeClasses = 'bg-gray-100 text-gray-800 dark:bg-neutral-700 dark:text-white';
+        const inactiveClasses = 'text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700 dark:text-neutral-200';
+        const baseLinkClasses = 'flex items-center gap-x-3.5 py-2 px-2.5 text-sm rounded-lg transition-all duration-200 w-full';
+        return `${baseLinkClasses} ${isActive ? activeClasses : inactiveClasses}`;
+    };
+
+    // Helper para las clases del BOTÓN toggle del acordeón
+    const getAccordionToggleClasses = (isOpen) => {
+        const baseClasses = 'flex items-center gap-x-3.5 py-2 px-2.5 text-sm rounded-lg transition-all duration-200 w-full';
+        const openClasses = 'bg-gray-100 text-gray-800 dark:bg-neutral-700 dark:text-white';
+        const closedClasses = 'text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700 dark:text-neutral-200';
+        return `${baseClasses} ${isOpen ? openClasses : closedClasses}`;
+    };
+
+
     return (
-        <> {/* Usamos un Fragment porque el botón de alternar está fuera del div principal del sidebar */}
+        <>
             {/* Botón de Alternar Navegación (Hamburguesa) para Móviles */}
-            {/* Su visibilidad y evento onClick son gestionados por React */}
-            <div className="lg:hidden py-4 px-4"> {/* Añadido padding */}
-              <button
-                type="button"
-                onClick={toggleSidebar} // Llama a la función de alternar del estado de React
-                className="py-2 px-3 inline-flex justify-center items-center gap-x-2 text-start bg-gray-800 border border-gray-800 text-white text-sm font-medium rounded-lg shadow-2xs align-middle hover:bg-gray-950 focus:outline-hidden focus:bg-gray-900 dark:bg-white dark:text-neutral-800 dark:hover:bg-neutral-200 dark:focus:bg-neutral-200"
-                aria-label="Abrir menú"
-                aria-expanded={isSidebarOpen ? 'true' : 'false'} // Refleja el estado de React
-                aria-controls="hs-sidebar" // Apunta al ID del sidebar div
-              >
-                 {/* Usamos ícono de Menú de Lucide */}
-                 <Menu size={20} />
-                Abrir Menú
-              </button>
+            <div className="lg:hidden py-4 px-4">
+                <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className="py-2 px-3 inline-flex justify-center items-center gap-x-2 text-start bg-gray-800 border border-gray-800 text-white text-sm font-medium rounded-lg shadow-2xs align-middle hover:bg-gray-950 focus:outline-hidden focus:bg-gray-900 dark:bg-white dark:text-neutral-800 dark:hover:bg-neutral-200 dark:focus:bg-neutral-200"
+                    aria-label="Abrir menú"
+                    aria-expanded={isSidebarOpen ? 'true' : 'false'}
+                    aria-controls="hs-sidebar"
+                >
+                    <Menu size={20} />
+                    Abrir Menú
+                </button>
             </div>
-            {/* Fin Botón de Alternar */}
 
             {/* Estructura Principal del Sidebar */}
-            {/* Su visibilidad y transición son gestionadas por el estado de React y clases CSS */}
             <div
-                id="hs-sidebar" // ID del sidebar
-                 // Clases para controlar la posición y visibilidad basadas en el estado isSidebarOpen
-                className={`${
-                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                } lg:block lg:translate-x-0 lg:end-auto lg:bottom-0 w-64 h-full fixed top-0 start-0 bottom-0 z-60
-                bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700
-                transition-transform duration-300 transform
-                 ${isSidebarOpen ? '' : 'hidden lg:block'} `} // Ocultar en móviles si no está abierto, pero mantener lg:block
+                id="hs-sidebar"
+                className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    } lg:block lg:translate-x-0 lg:end-auto lg:bottom-0 w-64 h-full fixed top-0 start-0 bottom-0 z-60
+                bg-white border-e border-gray-200 dark:bg-neutral-800 dark:border-neutral-700
+                transition-transform duration-300 transform`}
                 role="dialog"
                 tabIndex="-1"
                 aria-label="Sidebar"
+            // Ya no cerramos el sidebar aquí, lo hace handleClassificationClick
             >
-              <div className="relative flex flex-col h-full max-h-full ">
-                {/* Header del Sidebar */}
-                <header className="p-4 flex justify-between items-center gap-x-2">
-                  {/* Enlace de Marca/Logo - Usamos Link de React Router */}
-                  <Link to="/dashboard" className="flex-none font-semibold text-xl text-black focus:outline-hidden focus:opacity-80 dark:text-white" aria-label="Brand">CEP Admin</Link>
+                <div className="relative flex flex-col h-full max-h-full ">
+                    {/* Header del Sidebar */}
+                    <header className="p-4 flex justify-between items-center gap-x-2">
+                        <Link to="/dashboard" className="flex-none font-semibold text-xl text-black focus:outline-hidden focus:opacity-80 dark:text-white" aria-label="Brand">CEP Admin</Link>
+                        {/* Botón de Cierre para Móviles (oculto en lg) */}
+                        <div className="lg:hidden -me-2">
+                            <button
+                                type="button"
+                                onClick={toggleSidebar}
+                                className="flex justify-center items-center gap-x-3 size-6 bg-white border border-gray-200 text-sm text-gray-600 hover:bg-gray-100 rounded-full disabled:opacity-50 disabled:pointer-events-none focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700 dark:hover:text-neutral-200 dark:focus:text-neutral-200"
+                            >
+                                <X size={16} className="size-4" />
+                                <span className="sr-only">Close</span>
+                            </button>
+                        </div>
+                    </header>
 
-                  {/* Botón de Cierre para Móviles (oculto en lg) */}
-                  {/* Llama a la función de alternar del estado de React */}
-                  <div className="lg:hidden -me-2">
-                    <button
-                        type="button"
-                        onClick={toggleSidebar} // Llama a la función de alternar del estado de React
-                        className="flex justify-center items-center gap-x-3 size-6 bg-white border border-gray-200 text-sm text-gray-600 hover:bg-gray-100 rounded-full disabled:opacity-50 disabled:pointer-events-none focus:outline-hidden focus:bg-gray-100 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700 dark:hover:text-neutral-200 dark:focus:text-neutral-200"
-                    >
-                      {/* Usamos ícono de Cierre de Lucide */}
-                      <X size={16} className="size-4" />
-                      <span className="sr-only">Close</span>
-                    </button>
-                  </div>
-                </header>
-                {/* Fin Header */}
+                    {/* Cuerpo del Sidebar - Navegación */}
+                    <nav className="flex flex-col flex-grow h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
+                        <ul className="pb-2 px-2 w-full space-y-1">
 
-                {/* Cuerpo del Sidebar - Navegación y Acordeón */}
-                <nav className="h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
-                  {/* Usamos un div simple en lugar de hs-accordion-group */}
-                  <div className="pb-0 px-2 w-full flex flex-col"> {/* Clase flex-wrap no es necesaria sin hs-accordion-group */}
-                    <ul className="space-y-1">
+                            {/* --- Sección de Clasificaciones Dinámicas como Acordeón --- */}
+                            <li className="pt-0">
+                                {/* Botón Toggle del Acordeón */}
+                                <button
+                                    type="button"
+                                    onClick={toggleClasificacionesAccordion}
+                                    className={getAccordionToggleClasses(isClasificacionesAccordionOpen)}
+                                    aria-expanded={isClasificacionesAccordionOpen ? 'true' : 'false'}
+                                    aria-controls="clasificaciones-collapse"
+                                >
+                                    <Settings size={16} className="size-4" />
+                                    <span className="flex-grow text-start">Clasificaciones</span>
+                                    <span className="ms-auto">
+                                        {isClasificacionesAccordionOpen ? <ChevronUp size={16} className="size-4" /> : <ChevronDown size={16} className="size-4" />}
+                                    </span>
+                                </button>
 
-                      {/* --- Enlaces de Navegación Principales --- */}
-                      {navLinks.map(link => (
-                          <li key={link.path}>
-                              {/* Aplicamos las clases de estilo */}
-                              <Link to={link.path} className={getLinkClasses(link.path)}>
-                                  {/* Renderizamos el ícono */}
-                                   {React.cloneElement(link.icon, { className: 'size-4' })}
-                                  {link.name}
-                              </Link>
-                          </li>
-                      ))}
-                      {/* --- Fin Enlaces Principales --- */}
+                                {/* Contenido Colapsable del Acordeón (lista dinámica) */}
+                                {isClasificacionesAccordionOpen && (
+                                    <div id="clasificaciones-collapse" role="region" aria-labelledby="clasificaciones-accordion-toggle">
+                                        <ul className="pt-1 ps-7 space-y-1">
+                                            {loadingParents && <li><span className="px-2.5 text-sm text-gray-500 dark:text-neutral-400">Cargando...</span></li>}
+                                            {errorParents && <li><span className="px-2.5 text-sm text-red-500 dark:text-red-400">{errorParents}</span></li>}
 
-                      {/* --- Acordeón 'Más Opciones' (Gestionado por Estado de React) --- */}
-                      <li> {/* Elemento de lista para el acordeón */}
-                         <button
-                           type="button"
-                           onClick={toggleMoreOptionsAccordion} // Llama a la función para alternar el estado del acordeón
-                           className={getLinkClasses(null, true)} // Aplica clases base y posiblemente clase activa si está abierto
-                           aria-expanded={isMoreOptionsAccordionOpen ? 'true' : 'false'} // Refleja el estado de React
-                           aria-controls="more-options-collapse" // Apunta al ID del contenido colapsable
-                         >
-                            {/* Ícono para el toggle del acordeón */}
-                             <Settings size={16} className="size-4" /> {/* Ejemplo: Ícono de Ajustes */}
-                           <span className="flex-grow text-start">Más Opciones</span> {/* Texto con flex-grow para empujar el ícono a la derecha */}
-                            {/* Íconos para mostrar/ocultar acordeón, condicionales según el estado */}
-                             <span className="ms-auto">
-                               {isMoreOptionsAccordionOpen ? <ChevronUp size={16} className="size-4" /> : <ChevronDown size={16} className="size-4" />}
-                             </span>
-                         </button>
+                                            {/* Mapea las clasificaciones principales */}
+                                            {!loadingParents && !errorParents && parentClassifications.map(classification => (
+                                                <li key={classification.id}>
+                                                    {/* --- Este botón ahora abre la modal con los ITEMS --- */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleClassificationClick(e, classification)} // Llama a la función para cargar items y abrir modal
+                                                        className={getLinkClasses(`/dashboard/clasificaciones/${classification.id}`)} // Mantiene el estilo
+                                                    >
+                                                        {classification.nombre}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </li>
+                        </ul>
+                    </nav>
 
-                         {/* Contenido colapsable del acordeón */}
-                         {/* Renderizado condicional basado en el estado isMoreOptionsAccordionOpen */}
-                         {isMoreOptionsAccordionOpen && (
-                            <div id="more-options-collapse" className="w-full overflow-hidden transition-[height] duration-300" role="region" aria-labelledby="more-options-accordion"> {/* Clases para animación de altura */}
-                                <ul className="pt-1 ps-7 space-y-1">
-                                    {/* Mapeamos los enlaces del submenú */}
-                                    {moreOptionsLinks.map(subLink => (
-                                        <li key={subLink.path}>
-                                            {/* Aplicamos las clases de estilo a los sub-enlaces */}
-                                            <Link to={subLink.path} className={getLinkClasses(subLink.path)}>
-                                                {/* Puedes añadir íconos a los sub-enlaces si lo deseas */}
-                                                {subLink.name}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                         )}
-                      </li>
-                      {/* --- Fin Acordeón --- */}
-
-
-                       {/* --- Botón de Cerrar Sesión --- */}
-                       {/* Colocado después de los enlaces y acordeones */}
-                     
-                      {/* --- Fin Botón de Cerrar Sesión --- */}
-
-                    </ul>
-                  </div>
-                </nav>
-                {/* Fin Cuerpo */}
-
-              </div>
+                    {/* Botón de Cerrar Sesión - Aseguramos que esté al final */}
+                    <div className="px-2 pb-2 mt-auto">
+                        <button
+                            type="button"
+                            onClick={logout}
+                            className="flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-800 rounded-lg hover:bg-red-100 hover:text-red-700 focus:outline-hidden focus:bg-red-100 dark:text-neutral-200 dark:hover:bg-red-700 dark:hover:text-white dark:focus:bg-red-700 dark:focus:text-white transition-all duration-200 w-full"
+                        >
+                            <LogOut size={16} className="size-4" />
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
             </div>
-            {/* Fin Sidebar */}
+
+            {/* --- Componente Modal: Muestra la lista de ITEMS --- */}
+            <Modal
+                isOpen={isModalOpenSidebar}
+                onClose={closeModalSidebar}
+                // Título: Muestra el nombre de la clasificación padre si está disponible
+                title={modalParentClassification ? `Elementos de "${modalParentClassification.nombre}"` : 'Elementos de Clasificación'}
+            >
+                {/* Contenido de la Modal: Carga, Error o Lista de Items */}
+                {loadingModalItems ? (
+                    <p className="text-gray-500 dark:text-neutral-400">Cargando elementos...</p>
+                ) : errorModalItems ? (
+                    <p className="text-red-500 dark:text-red-400">Error al cargar elementos: {errorModalItems}</p>
+                ) : modalItems.length > 0 ? (
+                    <ul className="space-y-2">
+                        {modalItems.map(item => (
+                            <li key={item.id} className="text-gray-700 dark:text-neutral-300 border-b border-gray-200 dark:border-neutral-700 pb-1">
+                                <span className="font-semibold">{item.nombre}</span> (ID: {item.id})
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-gray-500 dark:text-neutral-400">No hay elementos relacionados para esta clasificación.</p>
+                )}
+
+            </Modal>
+
         </>
     );
 };

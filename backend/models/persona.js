@@ -83,6 +83,7 @@ class UserModel {
     }
   }
 
+ 
 
   async #hashDato(dato) {
     try {

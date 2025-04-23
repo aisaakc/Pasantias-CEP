@@ -99,7 +99,7 @@ class AuthController {
       res.status(500).json({ error: "Error interno del servidor al iniciar sesión." });
     }
   }
-
+  
 }
 
 export default new AuthController();

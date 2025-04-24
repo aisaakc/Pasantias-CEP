@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 
 class UserModel {
   // NUEVA FUNCIÓN HELPER: Obtiene el ID de un tipo de clasificación por su nombre
+ 
+
   async getClassificationTypeId(typeName) {
     const query = `
       SELECT id_clasificacion
@@ -23,8 +25,6 @@ class UserModel {
       throw new Error(`Error interno al obtener ID de tipo de clasificación.`);
     }
   }
-
-
   async getGeneros() {
     try {
       // Paso 1: Buscar el ID del tipo "Genero" dinámicamente por su nombre

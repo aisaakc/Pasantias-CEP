@@ -19,26 +19,6 @@ class Clasificacion {
         }
     }
 
-    // ✅ Corrección aquí: aceptar typeId como parámetro
-    async getItemsBytypeID(typeId) {
-        if (!typeId) {
-            throw new Error("Se requiere un typeId para obtener elementos de clasificación.");
-        }
-        try {
-            const query = `
-                SELECT id_clasificacion AS id, nombre, descripcion
-                FROM clasificacion
-                WHERE type_id = $1
-                ORDER BY orden, nombre;
-            `;
-            const result = await pool.query(query, [typeId]);
-            return result.rows;
-        } catch (error) {
-            console.error(`Error en ClasificacionModel.getItemsByTypeId (typeId: ${typeId}):`, error.message);
-            throw new Error("Error interno del servidor al obtener elementos de clasificación.");
-        }
-    }
-
     async create(nuevaClasificacion) {
         const { nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono } = nuevaClasificacion;
         try {
@@ -59,6 +39,37 @@ class Clasificacion {
             throw new Error("Error interno del servidor al crear la clasificación.");
         }
     }
+
+    async getAllDescendants(parentId) {
+        try {
+            const query = `
+                WITH RECURSIVE subclasificaciones AS (
+                    -- Clasificación principal (padre)
+                    SELECT id_clasificacion, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono
+                    FROM clasificacion
+                    WHERE id_clasificacion = $1  -- Usamos el parentId como el criterio de búsqueda
+                    UNION ALL
+                    -- Subclasificaciones (hijos), buscando por type_id
+                    SELECT c.id_clasificacion, c.nombre, c.descripcion, c.icono, c.imagen, c.orden, c.type_id, c.parent_id, c.id_icono
+                    FROM clasificacion c
+                    INNER JOIN subclasificaciones sc ON c.type_id = sc.id_clasificacion
+                )
+                SELECT id_clasificacion AS id, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono
+                FROM subclasificaciones
+                WHERE id_clasificacion != $1  -- Excluimos la clasificación principal (padre) de los resultados
+                ORDER BY orden, nombre;
+            `;
+            
+            const result = await pool.query(query, [parentId]);  // Pasamos el parentId como parámetro
+            return result.rows;
+        } catch (error) {
+            console.error("Error en getAllDescendants (pg):", error.message);
+            throw new Error("Error interno del servidor al obtener subclasificaciones.");
+        }
+    }
+    
+    
+    
 }
 
 export default new Clasificacion();

@@ -3,12 +3,9 @@ import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { checkAuthAsync } from './features/auth/authSlice'; 
-
-
 
 import Navbar from "./components/NavbarPublic";
 import Footer from "./components/Footer";
@@ -17,7 +14,7 @@ import Lista from "./pages/cep/Lista";
 import Contacto from "./pages/cep/Contacto";
 import Login from './pages/auth/Login';
 import Registro from './pages/auth/Registro';
-import DashboardIndex from './pages/dashboard/Index';
+import DashboardIndex from './pages/dashboard/Clasifiacion';
 import ProtectedRoute from './components/ProtectedRoute';
 
 
@@ -40,7 +37,6 @@ function App() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
   const shouldShowFooter = !location.pathname.startsWith('/dashboard');
 
-  // Tu lógica de renderizado condicional principal basada en isAuthPage se mantiene.
 
 
   if (isAuthPage) {
@@ -80,8 +76,7 @@ function App() {
 
         {shouldShowFooter && <Footer />}
 
-      </>  // ELIMINADO: // </AuthProvider> */}
-      // --- FIN CAMBIOS --- // ELIMINADO: Esta línea también
+      </>  
     );
   }
 }

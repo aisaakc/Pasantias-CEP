@@ -3,9 +3,7 @@ import bcrypt from 'bcryptjs';
 
 class UserModel {
   // NUEVA FUNCIÓN HELPER: Obtiene el ID de un tipo de clasificación por su nombre
- 
-
-  async getClassificationTypeId(typeName) {
+   async getClassificationTypeId(typeName) {
     const query = `
       SELECT id_clasificacion
       FROM clasificacion

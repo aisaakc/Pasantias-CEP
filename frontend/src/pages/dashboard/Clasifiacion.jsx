@@ -1,94 +1,142 @@
-import React, { useEffect } from 'react'; // Solo necesitamos useEffect ahora para el dispatch
+import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import DashboardSidebar from '../../components/DashboardSidebar';
 import DashboardNavbar from '../../components/DashboardNavbar';
-import { useSelector, useDispatch } from 'react-redux'; // Importamos hooks de Redux
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  fetchParentClassificationsAsync,
+  createClasificacionAsync,
+  clearCreateClasificacionError,
+} from '../../features/dashboard/dashboardFilterSlice';
 
-// Importamos el thunk que ya definiste en tu slice de Redux
-import { fetchParentClassificationsAsync } from '../../features/dashboard/dashboardFilterSlice';
+
+import CreateClasificacionModal from '../../components/CreateClasificacionModal';
 
 export default function Index() {
   const dispatch = useDispatch();
 
-  // Usamos useSelector para obtener el estado de las clasificaciones principales
-  // desde tu slice de Redux
+
   const {
-    parentClassificationsList,          // La lista de clasificaciones obtenida por el thunk
-    isLoadingParentClassifications,     // Estado de carga del thunk
-    parentClassificationsError,         // Estado de error del thunk
-    // selectedParentClasificacionId    // Este estado también viene del slice, pero no lo necesitamos
-                                        // directamente aquí para mostrar la lista completa.
-  } = useSelector((state) => state.dashboardFilter); // Asegúrate que 'dashboardFilter' coincide con el nombre de tu reducer en el store
+    parentClassificationsList,
+    isLoadingParentClassifications,
+    parentClassificationsError,
+    isLoadingCreateClasificacion,
+    createClasificacionError,
+  } = useSelector((state) => state.dashboardFilter);
 
-  // useEffect para disparar el thunk fetchParentClassificationsAsync cuando el componente se monta
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // --- Fin Estado local ---
+
+
+  // Efecto para disparar el thunk fetchParentClassificationsAsync cuando el componente se monta
   useEffect(() => {
-    // Esta condición opcional evita recargar los datos si ya están en el store
-    // al montar el componente (por ejemplo, si el usuario navega de vuelta a esta página).
-    // Si prefieres recargar siempre al entrar a la página, puedes quitar esta condición.
+    // Cargar las clasificaciones principales si no se han cargado ya
     if (parentClassificationsList.length === 0 && !isLoadingParentClassifications && !parentClassificationsError) {
-       dispatch(fetchParentClassificationsAsync());
+      dispatch(fetchParentClassificationsAsync());
     }
-  }, [dispatch, parentClassificationsList.length, isLoadingParentClassifications, parentClassificationsError]); // Dependencias para que el efecto se ejecute si cambian
+  }, [dispatch, parentClassificationsList.length, isLoadingParentClassifications, parentClassificationsError]);
 
+
+  // --- ✅ Función para manejar el cierre de la modal ---
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    // Opcional: Limpiar el error de creación en Redux al cerrar la modal
+    dispatch(clearCreateClasificacionError());
+  };
   return (
     <div className="flex min-h-screen ">
-      {/* El Sidebar se mantiene fijo a la izquierda en pantallas grandes */}
+      {/* El Sidebar y Navbar se mantienen como parte del layout */}
       <DashboardSidebar />
 
-      {/* Contenedor principal que ocupa el resto del espacio */}
       <div className="flex-grow flex flex-col lg:ml-64">
-        {/* Navbar en la parte superior */}
         <DashboardNavbar />
 
-        {/* Área de contenido principal con scroll vertical si es necesario */}
         <main className="flex-grow p-6 overflow-y-auto">
-          {/* Título de la sección */}
-          <h2 className="text-2xl font-semibold mb-6 text-gray-800">Clasificaciones Principales</h2>
 
-          {/* Indicador de carga basado en el estado de Redux */}
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Gestión de Clasificaciones</h1>
+
+
+          <div className="mb-6">
+          <button
+  onClick={() => setIsCreateModalOpen(true)}
+  disabled={isLoadingCreateClasificacion}
+  className={`px-6 py-3 rounded-2xl font-semibold text-white transition duration-300 ease-in-out
+    ${isLoadingCreateClasificacion
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95'}
+  `}
+>
+  {isLoadingCreateClasificacion ? (
+    <>
+      <span className="loading loading-spinner mr-2"></span>Creando...
+    </>
+  ) : (
+    <>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="inline-block w-5 h-5 mr-2"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+      Crear Nueva Clasificación
+    </>
+  )}
+</button>
+
+          </div>
+
+
+
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Clasificaciones Principales</h2> {/* Subtítulo para la lista */}
+
           {isLoadingParentClassifications && (
             <p className="text-gray-600">Cargando clasificaciones...</p>
           )}
 
-          {/* Mostrar mensaje de error basado en el estado de Redux */}
           {parentClassificationsError && (
             <div className="text-red-500 bg-red-100 border border-red-400 p-3 rounded">
-              Error: {parentClassificationsError}
+              Error al cargar clasificaciones: {parentClassificationsError}
             </div>
           )}
 
-          {/* Mostrar las cards solo si no está cargando, no hay error y hay datos */}
           {!isLoadingParentClassifications && !parentClassificationsError && parentClassificationsList.length > 0 && (
-            // Grid para mostrar las cards
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {/* Mapeamos sobre la lista obtenida del estado de Redux */}
               {parentClassificationsList.map((clasificacion) => (
-                // Una card simple para cada clasificación
                 <div
-                  key={clasificacion.id} // Es crucial tener una key única al mapear listas
+                  key={clasificacion.id}
                   className="bg-white rounded-lg shadow-md p-6 transform transition duration-300 hover:scale-105 hover:shadow-xl"
                 >
                   <h3 className="text-xl font-bold mb-2 text-gray-900">{clasificacion.nombre}</h3>
-                  {/* Puedes añadir la descripción si existe */}
                   {clasificacion.descripcion && (
-                      <p className="text-gray-700 text-sm">{clasificacion.descripcion}</p>
+                    <p className="text-gray-700 text-sm">{clasificacion.descripcion}</p>
                   )}
-                  {/* Espacio para ícono o imagen si los datos los incluyen */}
+
                 </div>
               ))}
             </div>
           )}
 
-           {/* Mensaje si no hay clasificaciones después de cargar y sin errores */}
-           {!isLoadingParentClassifications && !parentClassificationsError && parentClassificationsList.length === 0 && (
-               <p className="text-gray-600">No se encontraron clasificaciones principales.</p>
-           )}
+          {!isLoadingParentClassifications && !parentClassificationsError && parentClassificationsList.length === 0 && (
+            <p className="text-gray-600">No se encontraron clasificaciones principales.</p>
+          )}
 
 
-          {/* El Outlet para renderizar rutas anidadas */}
-           <Outlet />
+          <Outlet />
         </main>
       </div>
+
+      {/* --- ✅ Incluir el componente Modal de Creación --- */}
+      <CreateClasificacionModal
+        isOpen={isCreateModalOpen} // Controlamos la visibilidad
+        onClose={handleCloseCreateModal} // Función para cerrar la modal
+      // Los estados de carga/error se leen DENTRO de la modal ahora
+      />
+      {/* --- Fin Incluir Modal --- */}
+
     </div>
   );
 }

@@ -41,7 +41,7 @@ function CreateClasificacionModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-40 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex justify-center items-center bg-opacity-40 backdrop-blur-sm overflow-y-auto">
       <div className="relative p-4 w-full max-w-2xl max-h-full">
         <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
           {/* Header */}

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
+
+import * as iconos from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import DashboardSidebar from '../../components/DashboardSidebar';
 import DashboardNavbar from '../../components/DashboardNavbar';
 import { useSelector, useDispatch } from 'react-redux';
@@ -10,12 +14,15 @@ import {
 } from '../../features/dashboard/dashboardFilterSlice';
 
 
+<script src="https://kit.fontawesome.com/f4e2dd3dc8.js" crossorigin="anonymous"></script>
+
+
 import CreateClasificacionModal from '../../components/CreateClasificacionModal';
 
 export default function Index() {
   const dispatch = useDispatch();
 
-
+  
   const {
     parentClassificationsList,
     isLoadingParentClassifications,
@@ -25,12 +32,9 @@ export default function Index() {
   } = useSelector((state) => state.dashboardFilter);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  // --- Fin Estado local ---
-
-
-  // Efecto para disparar el thunk fetchParentClassificationsAsync cuando el componente se monta
+  
   useEffect(() => {
-    // Cargar las clasificaciones principales si no se han cargado ya
+ 
     if (parentClassificationsList.length === 0 && !isLoadingParentClassifications && !parentClassificationsError) {
       dispatch(fetchParentClassificationsAsync());
     }
@@ -43,6 +47,20 @@ export default function Index() {
     // Opcional: Limpiar el error de creación en Redux al cerrar la modal
     dispatch(clearCreateClasificacionError());
   };
+
+  const [selectedClasificacionId, setSelectedClasificacionId] = useState(null);
+
+const subclasificacionesPorPadre = useSelector(
+  (state) => state.dashboardFilter.subclasificacionesPorPadre
+);
+
+const handleClasificacionClick = (id) => {
+  setSelectedClasificacionId(id);
+  if (!subclasificacionesPorPadre[id]) {
+    dispatch(fetchSubclasificacionesByTypeIdAsync(id));
+  }
+};
+
   return (
     <div className="flex min-h-screen ">
       {/* El Sidebar y Navbar se mantienen como parte del layout */}
@@ -52,7 +70,7 @@ export default function Index() {
         <DashboardNavbar />
 
         <main className="flex-grow p-6 overflow-y-auto">
-
+    
 
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Gestión de Clasificaciones</h1>
 
@@ -105,18 +123,51 @@ export default function Index() {
 
           {!isLoadingParentClassifications && !parentClassificationsError && parentClassificationsList.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {parentClassificationsList.map((clasificacion) => (
-                <div
-                  key={clasificacion.id}
-                  className="bg-white rounded-lg shadow-md p-6 transform transition duration-300 hover:scale-105 hover:shadow-xl"
-                >
-                  <h3 className="text-xl font-bold mb-2 text-gray-900">{clasificacion.nombre}</h3>
-                  {clasificacion.descripcion && (
-                    <p className="text-gray-700 text-sm">{clasificacion.descripcion}</p>
-                  )}
+            {parentClassificationsList.map((clasificacion) => (
+  <div
+    key={clasificacion.id}
+    className="bg-white rounded-lg shadow-md p-6 transform transition duration-300 hover:scale-105 hover:shadow-xl place-self-center"
+  >
+   
+   
+   <div className="text-center">
+  <FontAwesomeIcon icon={iconos[clasificacion.nicono]} size ="4x" className="block mx-auto" />
+</div>
+  
+   
 
-                </div>
-              ))}
+    
+    <h3 className="text-xl font-bold mb-2 text-gray-900 text-center">{clasificacion.nombre}</h3>
+
+    {clasificacion.descripcion && (
+      <p className="text-gray-700 text-sm">{clasificacion.descripcion}</p>
+    )}
+
+    <button
+      onClick={() => handleClasificacionClick(clasificacion.id)}
+      className="mt-4 inline-block px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+    >
+      {selectedClasificacionId === clasificacion.id ? 'Ocultar' : 'Ver'} subclasificaciones
+    </button>
+
+    {selectedClasificacionId === clasificacion.id && subclasificacionesPorPadre[clasificacion.id] && (
+      <div className="mt-4 border-t pt-3">
+        <p className="text-gray-800 font-semibold mb-2">Subclasificaciones:</p>
+        {subclasificacionesPorPadre[clasificacion.id].length > 0 ? (
+          <ul className="list-disc ml-5 space-y-1">
+            {subclasificacionesPorPadre[clasificacion.id].map((sub) => (
+              <li key={sub.id} className="text-gray-700">{sub.nombre}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500">No tiene subclasificaciones.</p>
+        )}
+      </div>
+    )}
+  </div>
+))}
+
+
             </div>
           )}
 
@@ -129,14 +180,12 @@ export default function Index() {
         </main>
       </div>
 
-      {/* --- ✅ Incluir el componente Modal de Creación --- */}
       <CreateClasificacionModal
-        isOpen={isCreateModalOpen} // Controlamos la visibilidad
-        onClose={handleCloseCreateModal} // Función para cerrar la modal
-      // Los estados de carga/error se leen DENTRO de la modal ahora
+        isOpen={isCreateModalOpen} 
+        onClose={handleCloseCreateModal} 
+      
       />
-      {/* --- Fin Incluir Modal --- */}
-
+    
     </div>
   );
 }

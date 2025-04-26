@@ -142,8 +142,8 @@ export const authSlice = createSlice({
         state.isLoading = false; 
         state.isAuthenticated = false;
         state.user = null;
-        console.error("Check auth failed:", action.error.message); // Log del error
-        // No establecemos un error visible aquí a menos que quieras notificar al usuario que la verificación falló
+        console.error("Check auth failed:", action.error.message); 
+       
       })
 
       // ---- loginAsync ----
@@ -154,7 +154,7 @@ export const authSlice = createSlice({
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.isLoggingIn = false;
         state.isAuthenticated = true;
-        state.user = action.payload; // action.payload contiene el objeto user completo
+        state.user = action.payload; 
         state.loginError = null;
 
         const { nombre, apellido } = action.payload;
@@ -162,7 +162,7 @@ export const authSlice = createSlice({
         const nombreCompleto = [nombre, apellido].filter(Boolean).join(' '); 
 
         toast.success(`¡Bienvenido ${nombreCompleto || 'usuario'}!`);
-        // --- FIN CAMBIO ---
+
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.isLoggingIn = false;

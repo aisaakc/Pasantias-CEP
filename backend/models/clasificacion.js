@@ -6,10 +6,11 @@ class Clasificacion {
     async getParentClassifications() {
         try {
             const query = `
-                SELECT id_clasificacion AS id, nombre
-                FROM clasificacion
-                WHERE type_id IS NULL
-                ORDER BY nombre
+                SELECT c.*, i.nombre nicono
+                FROM clasificacion c LEFT JOIN clasificacion i
+                ON (c.id_icono = i.id_clasificacion ) 
+                WHERE c.type_id IS NULL 
+                ORDER BY c.orden, c.nombre
             `;
             const result = await pool.query(query);
             return result.rows;
@@ -40,33 +41,72 @@ class Clasificacion {
         }
     }
 
-    async getAllDescendants(parentId) {
-        try {
-            const query = `
-                WITH RECURSIVE subclasificaciones AS (
-                    -- Clasificación principal (padre)
-                    SELECT id_clasificacion, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono
-                    FROM clasificacion
-                    WHERE id_clasificacion = $1  -- Usamos el parentId como el criterio de búsqueda
-                    UNION ALL
-                    -- Subclasificaciones (hijos), buscando por type_id
-                    SELECT c.id_clasificacion, c.nombre, c.descripcion, c.icono, c.imagen, c.orden, c.type_id, c.parent_id, c.id_icono
-                    FROM clasificacion c
-                    INNER JOIN subclasificaciones sc ON c.type_id = sc.id_clasificacion
-                )
-                SELECT id_clasificacion AS id, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono
-                FROM subclasificaciones
-                WHERE id_clasificacion != $1  -- Excluimos la clasificación principal (padre) de los resultados
-                ORDER BY orden, nombre;
-            `;
+    // async getAllDescendants(parentId) {
+    //     try {
+    //         const query = `
+    //             WITH RECURSIVE subclasificaciones AS (
+    //                 -- Clasificación principal (padre)
+    //                 SELECT id_clasificacion, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono
+    //                 FROM clasificacion
+    //                 WHERE id_clasificacion = $1  -- Usamos el parentId como el criterio de búsqueda
+    //                 UNION ALL
+    //                 -- Subclasificaciones (hijos), buscando por type_id
+    //                 SELECT c.id_clasificacion, c.nombre, c.descripcion, c.icono, c.imagen, c.orden, c.type_id, c.parent_id, c.id_icono
+    //                 FROM clasificacion c
+    //                 INNER JOIN subclasificaciones sc ON c.type_id = sc.id_clasificacion
+    //             )
+    //             SELECT id_clasificacion AS id, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono
+    //             FROM subclasificaciones
+    //             WHERE id_clasificacion != $1  -- Excluimos la clasificación principal (padre) de los resultados
+    //             ORDER BY orden, nombre;
+    //         `;
             
-            const result = await pool.query(query, [parentId]);  // Pasamos el parentId como parámetro
+    //         const result = await pool.query(query, [parentId]);  // Pasamos el parentId como parámetro
+    //         return result.rows;
+    //     } catch (error) {
+    //         console.error("Error en getAllDescendants (pg):", error.message);
+    //         throw new Error("Error interno del servidor al obtener subclasificaciones.");
+    //     }
+    // } 
+
+
+    async getAllSubclasificaciones(type_id) {
+        try {
+          
+            const query = `
+             SELECT * FROM clasificacion c  INNER JOIN  clasificacion sc
+            ON (sc.type_id = c.id_clasificacion)
+            WHERE c.id_clasificacion = $1
+            ORDER BY sc.orden, sc.nombre;
+        `;
+            
+            const result = await pool.query(query, [type_id]);  // Pasamos el parentId como parámetro
             return result.rows;
         } catch (error) {
             console.error("Error en getAllDescendants (pg):", error.message);
             throw new Error("Error interno del servidor al obtener subclasificaciones.");
         }
-    }
+    } 
+
+
+    async getAllHijos(parent_id) {
+        try {
+          
+            const query = `
+             SELECT * FROM clasificacion c  INNER JOIN  clasificacion sc
+            ON (sc.parent_id = c.id_clasificacion)
+            WHERE c.id_clasificacion = $1
+            ORDER BY sc.orden, sc.nombre;
+        `;
+            
+            const result = await pool.query(query, [parent_id]);  // Pasamos el parentId como parámetro
+            return result.rows;
+        } catch (error) {
+            console.error("Error en getAllDescendants (pg):", error.message);
+            throw new Error("Error interno del servidor al obtener subclasificaciones.");
+        }
+    } 
+    
     
     
     

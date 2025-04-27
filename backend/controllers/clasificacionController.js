@@ -33,7 +33,7 @@ class clasificacionController {
     }
 
 
-    async getAllSubclasificaciones(req, res) {
+    async getAllHijos(req, res) {
         const parentId = parseInt(req.params.id); // Obtiene el ID de la clasificación principal desde la URL
         if (isNaN(parentId)) {
             return res.status(400).json({ error: "ID de clasificación inválido." });
@@ -41,7 +41,7 @@ class clasificacionController {
         
         try {
             // Llama a la función para obtener las subclasificaciones (hijos) basado en type_id
-            const descendants = await Clasificacion.getAllDescendants(parentId);
+            const descendants = await Clasificacion.getAllHijos(parentId);
             res.json(descendants); // Devuelve los descendientes como respuesta
         } catch (error) {
             console.error("Error en clasificacionController.getAllSubclasificaciones:", error.message);
@@ -50,16 +50,25 @@ class clasificacionController {
             });
         }
     }
-    
 
-    
-    
-    
-    
-    
-    
-    
-   
+
+    async getAllSubclasificaciones(req, res) {
+        const type_id = parseInt(req.params.id); // Obtiene el ID de la clasificación principal desde la URL
+        if (isNaN(type_id)) {
+            return res.status(400).json({ error: "ID de clasificación inválido." });
+        }
+        
+        try {
+            // Llama a la función para obtener las subclasificaciones (hijos) basado en type_id
+            const descendants = await Clasificacion.getAllDescendants(type_id);
+            res.json(descendants); // Devuelve los descendientes como respuesta
+        } catch (error) {
+            console.error("Error en clasificacionController.getAllSubclasificaciones:", error.message);
+            res.status(500).json({
+                error: "Error interno del servidor al obtener subclasificaciones."
+            });
+        }
+    }
     
 }
 

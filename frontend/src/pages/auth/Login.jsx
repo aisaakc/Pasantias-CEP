@@ -1,5 +1,3 @@
-// frontend/src/pages/auth/Login.jsx
-
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,7 +11,6 @@ export default function Login() {
 
   const dispatch = useDispatch();
 
-  // isLoggingIn y loginError se leen del estado de Redux
   const { isLoggingIn, loginError } = useSelector((state) => state.auth);
 
   const navigate = useNavigate();
@@ -28,17 +25,16 @@ export default function Login() {
   const togglePassword = () => setShowPassword(!showPassword);
 
   const handleChange = (e) => {
-    // No necesitas limpiar el error local aquí, Redux se encarga al iniciar el thunk
+
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
   };
 
-  const handleSubmit = async (e) => { // async es necesario porque .unwrap() devuelve una Promise
+  const handleSubmit = async (e) => { 
     e.preventDefault();
-    // No necesitas setLocalError('') ni setLoading(true) aquí, Redux maneja el estado isLoggingIn/loginError
-
+  
     if (!formData.email || !formData.password) {
         alert('Por favor, ingresa tu correo/cédula y contraseña.');
         return;
@@ -51,32 +47,23 @@ export default function Login() {
         contraseña: formData.password,
     };
 
-    // --- CAMBIOS AQUÍ ---
-    // Disparar el thunk loginAsync y encadenar .unwrap(), .then() y .catch()
-    try { // Usamos try/catch para manejar errores que podrían ocurrir ANTES del dispatch o en el .unwrap()
+    try { 
          await dispatch(loginAsync(credentialsToSend))
-            .unwrap() // Esto expone la promesa del thunk para poder usar .then() y .catch()
+            .unwrap() 
             .then(() => {
-              // Este bloque se ejecuta si el thunk loginAsync se completa exitosamente (fulfilled)
               console.log("Login successful via Redux thunk, navigating...");
-              navigate('/dashboard'); // <-- ¡Navegación aquí!
+              navigate('/dashboard'); 
             })
             .catch((error) => {
-              // Este bloque se ejecuta si el thunk loginAsync es rechazado (rejected)
+              
               console.error("Login failed via Redux thunk. Error handled by slice state:", error);
-              // El error ya está en el estado de Redux (loginError) y se muestra en el UI.
-              // El toast de error también se dispara desde el extraReducer.
-              // No necesitas hacer nada más aquí para mostrar el error.
+            
             });
 
     } catch (unexpectedError) {
-        // Este catch manejará errores que no sean rechazos del thunk (ej. error síncrono)
         console.error("An unexpected error occurred:", unexpectedError);
-        // Opcional: mostrar un toast o actualizar un estado local para errores inesperados
          toast.error("Ocurrió un error inesperado durante el proceso.");
     }
-    // El estado isLoggingIn en Redux se pondrá automáticamente a false cuando el thunk termine (fulfilled o rejected),
-    // lo cual habilitará el botón nuevamente.
 
   };
 

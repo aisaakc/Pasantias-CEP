@@ -1,29 +1,15 @@
-// frontend/src/pages/auth/Registro.jsx
 import React, { useEffect, useState } from 'react';
-// --- CAMBIOS AQUÍ ---
-// 1. ELIMINAR la importación del Contexto de Autenticación
-// import { useAuth } from '../../context/AuthContext';
-
-// 2. Importar hooks de react-redux
 import { useDispatch, useSelector } from 'react-redux';
-// 3. Importar el thunk registerAsync del slice de auth
 import { registerAsync } from '../../features/auth/authSlice';
-// --- FIN CAMBIOS ---
-
 import { useNavigate, Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { toast } from 'react-toastify';
-// --- CAMBIOS AQUÍ ---
-// Ya no usas *Yup* según tu código actual, así que la importación podría no ser necesaria
-// import * as Yup from 'yup';
-// --- FIN CAMBIOS ---
 import Section from '../../components/Section';
 
 import { fetchGeneros, fetchRoles, fetchPreguntasSeguridad } from '../../api/lookup.api';
 
-// La función de validación se mantiene igual, ya que valida los valores del formulario
 const validateFormFields = (values, step) => {
-    // ... tu lógica de validación existente ...
+    
     const errors = {};
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
     const phoneCedulaRegex = /^[0-9]+$/;
@@ -68,33 +54,18 @@ const validateFormFields = (values, step) => {
 
 export default function Registro() {
 
-    // --- CAMBIOS AQUÍ ---
-    // 1. ELIMINAR el hook useAuth
-    // const { register } = useAuth();
-    // 2. Obtener la función dispatch de Redux
     const dispatch = useDispatch();
-    // 3. Seleccionar el estado de carga y error del registro del slice de auth en Redux
+    
     const { isRegistering, registerError } = useSelector((state) => state.auth);
-    // --- FIN CAMBIOS ---
 
-    const navigate = useNavigate(); // Se mantiene igual
+    const navigate = useNavigate(); 
 
-    const [step, setStep] = useState(1); // Estado local se mantiene
-    const [generos, setGeneros] = useState([]); // Estado local se mantiene
-    const [roles, setRoles] = useState([]); // Estado local se mantiene
-    const [preguntas, setPreguntas] = useState([]); // Estado local se mantiene
+    const [step, setStep] = useState(1); 
+    const [generos, setGeneros] = useState([]); 
+    const [roles, setRoles] = useState([]); 
+    const [preguntas, setPreguntas] = useState([]); 
+    const [generalError, setGeneralError] = useState(''); 
 
-    // --- CAMBIOS AQUÍ ---
-    // Puedes usar el estado registerError de Redux para errores de API,
-    // y mantener generalError para errores de validación previa si lo deseas,
-    // o consolidarlos y usar solo registerError para errores de API
-    // y Formik.errors para validación. Vamos a usar registerError para API
-    // y generalError para validación previa.
-    const [generalError, setGeneralError] = useState(''); // Estado local se mantiene para validación previa
-    // --- FIN CAMBIOS ---
-
-
-    // Este useEffect para cargar datos lookup se mantiene igual
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -131,14 +102,11 @@ export default function Registro() {
         confirmarContraseña: ''
     };
 
-    // Función que se ejecuta al enviar el formulario final (Paso 2)
     const handleSubmit = async (values, { setSubmitting, setErrors, setFieldTouched }) => {
-        setGeneralError(''); // Limpiar errores generales locales
+        setGeneralError(''); 
 
-        // Validar TODOS los campos ANTES de disparar el thunk (validación del lado del cliente)
-        const errors = validateFormFields(values, 2); // Tu función de validación
+        const errors = validateFormFields(values, 2); 
 
-        // Marcar todos los campos como tocados para que Formik muestre errores de validación
         Object.keys(values).forEach(field => {
             setFieldTouched(field, true);
         });
@@ -146,13 +114,9 @@ export default function Registro() {
 
         if (Object.keys(errors).length > 0) {
             console.log("[SUBMIT] Errores de validación en submit:", errors);
-            setErrors(errors); // Mostrar errores en Formik
-            setGeneralError('Por favor corrige los errores en el formulario.'); // Mensaje general para validación fallida
+            setErrors(errors); 
+            setGeneralError('Por favor corrige los errores en el formulario.'); 
 
-            // Mostrar un toast por cada error (opcional, ya que Formik los muestra)
-            // Object.values(errors).forEach((msg) => {
-            //     toast.error(msg);
-            // });
 
             setSubmitting(false); // Formik ya no está 'submitting'
             return; // Detener el proceso si hay errores de validación

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux'
-import ProfileAvatar from './ProfileAvatar'; // Importamos el componente ProfileAvatar (se mantiene)
+import ProfileAvatar from './ProfileAvatar';
 
 const DashboardNavbar = () => {
 

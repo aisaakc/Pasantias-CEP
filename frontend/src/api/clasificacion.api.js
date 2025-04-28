@@ -27,12 +27,14 @@ export const createClasificacion = async (clasificacionData) => {
     }    
 };
 
-export const getSubclasificacionesByTypeId = async (typeId) => {
+export const getAllSubclasificacionesByType = async (typeId) => {
     try {
-        const response = await axios.get(`http://localhost:3001/api/clasificaciones/hijos-todos/${typeId}`);
+        const response = await axios.get(`http://localhost:3001/api/clasificaciones/tipo/${typeId}`);
         return response.data;
     } catch (error) {
-        console.error(`Error obteniendo subclasificaciones para el typeId ${typeId}:`, error.message);
+        console.error(`Error obteniendo subclasificaciones para typeId ${typeId} (API):`, error.message);
+         // Propagar el error para que pueda ser manejado por el thunk/componente
         throw error;
     }
 };
+

@@ -1,21 +1,15 @@
 // frontend/src/components/ProtectedRoute.jsx
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-export default function ProtectedRoute({ element }) {
-
-  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
-  
-  const location = useLocation();
-
-  if (isLoading) {
-    return <div>Cargando sesión...</div>;
-  }
+const ProtectedRoute = () => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   if (!isAuthenticated) {
-  
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
-  return element;
-}
+
+  return <Outlet />;  
+};
+
+export default ProtectedRoute;

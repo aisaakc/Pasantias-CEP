@@ -6,7 +6,7 @@ import dashboardFilterReducer from '../features/dashboard/dashboardFilterSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    dashboardFilter: dashboardFilterReducer, // Añade el nuevo reducer aquí
-    // Otros reducers...
+    dashboardFilter: dashboardFilterReducer, 
+  
   },
 });

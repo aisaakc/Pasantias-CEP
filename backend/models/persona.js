@@ -19,16 +19,14 @@ class UserModel {
       return result.rows[0].id_clasificacion;
     } catch (error) {
       console.error(`Error al obtener ID para tipo "${typeName}":`, error.message);
-      // Propaga un error genérico para no exponer detalles internos
       throw new Error(`Error interno al obtener ID de tipo de clasificación.`);
     }
   }
   async getGeneros() {
     try {
-      // Paso 1: Buscar el ID del tipo "Genero" dinámicamente por su nombre
-      const genderTypeId = await this.getClassificationTypeId('Genero');
+  
+      const genderTypeId = await this.getClassificationTypeId('Género');
 
-      // Paso 2: Usar el ID encontrado en la consulta principal
       const query = `
         SELECT id_clasificacion AS id, nombre
         FROM clasificacion
@@ -38,17 +36,16 @@ class UserModel {
       return result.rows;
     } catch (error) {
       console.error("Error en getGeneros:", error.message);
-      // Es buena práctica propagar el error original o uno más específico si es necesario
+    
       throw error;
     }
   }
 
   async getRoles() {
     try {
-      // Paso 1: Buscar el ID del tipo "Rol" dinámicamente por su nombre
+    
       const roleTypeId = await this.getClassificationTypeId('Rol');
 
-      // Paso 2: Usar el ID encontrado en la consulta principal
       const query = `
         SELECT id_clasificacion AS id, nombre
         FROM clasificacion
@@ -64,10 +61,9 @@ class UserModel {
 
   async getPreguntasSeguridad() {
     try {
-      // Paso 1: Buscar el ID del tipo "Pregunta" dinámicamente por su nombre
+    
       const questionTypeId = await this.getClassificationTypeId('Pregunta');
 
-      // Paso 2: Usar el ID encontrado en la consulta principal
       const query = `
         SELECT id_clasificacion AS id, nombre
         FROM clasificacion
@@ -82,7 +78,6 @@ class UserModel {
   }
 
  
-
   async #hashDato(dato) {
     try {
       if (dato === null || dato === undefined) {
@@ -110,13 +105,16 @@ class UserModel {
       contraseña,
     } = data;
 
-    if (!nombre || !apellido || !telefono || !cedula || !gmail || id_genero === undefined || id_rol === undefined || id_pregunta === undefined || !respuesta || !contraseña) {
+    if (!nombre || !apellido || !telefono || !cedula || !gmail || 
+      id_genero === undefined || id_rol === undefined || id_pregunta === undefined || !respuesta || !contraseña) {
       throw new Error("Faltan campos obligatorios para crear el usuario.");
     }
 
     try {
       const checkQuery = `
-        SELECT cedula, gmail FROM personas WHERE cedula = $1 OR gmail = $2;
+        SELECT cedula, gmail 
+        FROM personas 
+        WHERE cedula = $1 OR gmail = $2;
       `;
       const checkResult = await pool.query(checkQuery, [cedula, gmail]);
 
@@ -186,14 +184,12 @@ class UserModel {
     }
   }
 
-  // Modificar loginUser para aceptar { cedula, gmail, contraseña }
   async loginUser({ cedula, gmail, contraseña }) {
-    // Validar que al menos se proporcione cedula O gmail, y la contraseña
+    
     if ((!cedula && !gmail) || !contraseña) {
       throw new Error("Debe proporcionar cédula o correo electrónico, y la contraseña.");
     }
 
-    // Construir la consulta basada en si se proporciona cédula o gmail
     let query = `SELECT * FROM personas WHERE `;
     const values = [];
 
@@ -204,13 +200,12 @@ class UserModel {
 
     if (gmail) {
       if (values.length > 0) {
-        query += ` OR `; // Si ya se añadió cedula, usar OR
+        query += ` OR `; 
       }
-      query += `gmail = $${values.length + 1}`; // Usar el siguiente placeholder
-      values.push(gmail.toLowerCase()); // Convertir a lowercase para búsqueda de email
+      query += `gmail = $${values.length + 1}`; 
+      values.push(gmail.toLowerCase()); 
     }
 
-    
     if (values.length === 0) {
       throw new Error("Debe proporcionar cédula o correo electrónico.");
     }

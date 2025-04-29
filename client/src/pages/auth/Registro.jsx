@@ -3,23 +3,37 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { toast } from "sonner";
 import { register } from "../../api/auth.api";
 import { useAuthStore } from "../../store/authStore";
-import { Link, useNavigate } from "react-router-dom"; // Importamos useNavigate
+import { Link, useNavigate } from "react-router-dom";
+import { registroSchema } from "../../schemas/registro.shema";
+
+
 
 export default function Registro() {
   const { generos, roles, preguntas, fetchOpcionesRegistro } = useAuthStore();
   const [loading, setLoading] = useState(false);
-
-  // Inicializamos el hook useNavigate para la redirección
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchOpcionesRegistro();
   }, []);
 
+  // Validación con Zod
+  const validateWithZod = (values) => {
+    try {
+      registroSchema.parse(values);
+      return {};
+    } catch (error) {
+      const formErrors = {};
+      error.errors.forEach((err) => {
+        formErrors[err.path[0]] = err.message;
+      });
+      return formErrors;
+    }
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden"> {/* Asegura que no haya scroll */}
+    <div className="flex h-screen overflow-hidden">
       
-      {/* Bloque de bienvenida */}
       <div className="w-1/2 h-full bg-gradient-to-br from-blue-900 to-blue-600 flex justify-center items-center p-10">
         <div className="text-white text-center space-y-6 max-w-md">
           <h1 className="text-4xl font-bold leading-tight drop-shadow-md">
@@ -54,24 +68,14 @@ export default function Registro() {
               respuesta: "",
               contraseña: "",
             }}
-            validate={(values) => {
-              const errors = {};
-              for (const key in values) {
-                if (!values[key]) {
-                  errors[key] = "Este campo es obligatorio";
-                }
-              }
-              return errors;
-            }}
+            validate={validateWithZod}
             onSubmit={async (values, { resetForm }) => {
               setLoading(true);
               try {
                 await register(values);
                 toast.success("Usuario registrado correctamente");
                 resetForm();
-                
-                // Redirigir al login después de registro exitoso
-                navigate("/login");  // Esto redirige al login
+                navigate("/login");
               } catch (error) {
                 const msg = error.response?.data?.error || "Error al registrar";
                 toast.error(msg);
@@ -106,8 +110,8 @@ export default function Registro() {
                 <ErrorMessage name="id_genero" component="div" className="text-red-500 text-sm" />
 
                 <Field as="select" name="id_rol" className="w-full p-2 border rounded">
-                  <option value="">Selecciona un rol</option>
-                  {roles.map((r) => (
+                  <option value="">Selecciona un tipo de participante</option>
+                  {roles.filter((r) => [12, 13, 14].includes(r.id)).map((r) => (
                     <option key={r.id} value={r.id}>{r.nombre}</option>
                   ))}
                 </Field>

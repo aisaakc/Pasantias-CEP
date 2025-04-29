@@ -1,8 +1,7 @@
 import UserModel from "../models/persona.js";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js"; 
-
-const JWT_EXPIRES_IN = "2h"; 
+ 
 class AuthController {
   
   async obtenerGeneros(req, res) {
@@ -63,11 +62,11 @@ class AuthController {
   }
 
   async loginUsuario(req, res) {
-    // Ahora aceptamos cédula o gmail (o ambos) del cuerpo de la solicitud
+  
     const { cedula, gmail, contraseña } = req.body; 
 
     try {
-      // Pasamos cedula y gmail (si existen en el body) y contraseña al modelo
+     
       const usuario = await UserModel.loginUser({ cedula, gmail, contraseña }); 
 
       const payload = {
@@ -77,7 +76,7 @@ class AuthController {
         id_rol: usuario.id_rol,       
       };
 
-      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+      const token = jwt.sign(payload, JWT_SECRET);
 
       res.status(200).json({
         message: `¡Bienvenido ${usuario.nombre} ${usuario.apellido}!`, 

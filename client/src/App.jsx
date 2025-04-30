@@ -4,34 +4,54 @@ import Lista from "./pages/cep/Lista";
 import Contacto from "./pages/cep/Contacto";
 import Login from "./pages/auth/Login";
 import Registro from "./pages/auth/Registro";
+import Clasificacion from "./pages/dashboard/Clasificacion";
+import Layout from "./components/Layout"; 
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
-import { Toaster, toast } from 'sonner'; // ✅
-
+import { Toaster } from 'sonner';
+import React from 'react'; 
 
 export default function App() {
-  const location = useLocation();
 
-  const hideLayout = ["/login", "/registro"].includes(location.pathname);
+
+  const location = useLocation();
+  const hideLayout = ["/login", "/registro"].includes(location.pathname) || location.pathname.startsWith("/dashboard");
+
+  const mainContent = (
+   
+    <main className={`flex-grow ${!hideLayout ? 'mb-16' : ''}`}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/lista" element={<Lista />} />       
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/dashboard" element={<Layout />}>
+          <Route index element={<Clasificacion/>} />
+          <Route path="clasificacion" element={< Clasificacion/>}  />
+        </Route>
+      </Routes>
+    </main>
+  );
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {!hideLayout && <Navbar />}
 
-  <Toaster position="top-right" richColors expand={true} />
-      <main className="flex-grow mb-16">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/lista" element={<Lista />} />
-          <Route path="/contacto" element={<Contacto />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Registro />} />
-        </Routes>
-      </main>
+    <>
+    
+      <Toaster position="top-right" richColors expand={true} />
 
-      {!hideLayout && <Footer />}
-    </div>
+      {hideLayout ? (
+       
+        <div className="content-without-default-layout">{mainContent}</div>
+      ) : (
+        
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          {mainContent}
+          <Footer />
+        </div>
+      )}
+    </>
   );
 }

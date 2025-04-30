@@ -4,7 +4,7 @@ import Section from '../../components/Section';
 import useAuthStore from '../../store/authStore'; // 👈 importa el store
 import '../../css/login.css';
 
-export default function Login() {
+export default function Login({ redirectTo }) { // Aceptamos la prop redirectTo
   const navigate = useNavigate();
 
   const { loginUser, loading, error, successMessage, clearMessages } = useAuthStore();
@@ -45,10 +45,10 @@ export default function Login() {
     if (successMessage) {
       setTimeout(() => {
         clearMessages();
-        navigate('/dashboard');
+        navigate(redirectTo || '/dashboard'); // Redirige usando la prop `redirectTo`
       }, 1000); // esperar un poco antes de redirigir
     }
-  }, [successMessage, navigate, clearMessages]);
+  }, [successMessage, navigate, clearMessages, redirectTo]);
 
   return (
     <div className="login-page flex h-screen">

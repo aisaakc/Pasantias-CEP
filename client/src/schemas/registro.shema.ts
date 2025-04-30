@@ -1,11 +1,33 @@
-// src/schemas/registro.schema.ts
 import { z } from "zod";
 
 export const registroSchema = z.object({
-  nombre: z.string().min(1, "El nombre es obligatorio"),
-  apellido: z.string().min(1, "El apellido es obligatorio"),
-  telefono: z.string().min(1, "El teléfono es obligatorio"),
-  cedula: z.string().min(1, "La cédula es obligatoria"),
+  nombre: z
+    .string()
+    .min(1, "El nombre es obligatorio")
+    .refine(val => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(val), {
+      message: "El nombre no debe contener números ni caracteres especiales",
+    }),
+
+  apellido: z
+    .string()
+    .min(1, "El apellido es obligatorio")
+    .refine(val => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(val), {
+      message: "El apellido no debe contener números ni caracteres especiales",
+    }),
+
+    telefono: z
+    .string()
+    .min(1, "El teléfono es obligatorio")
+    .refine(val => /^\d+$/.test(val), {
+      message: "El teléfono solo debe contener números",
+    }),
+
+  cedula: z
+    .string()
+    .min(1, "La cédula es obligatoria")
+    .refine(val => /^\d+$/.test(val), {
+      message: "La cédula solo debe contener números",
+    }),
   gmail: z.string().email("Correo no válido"),
   id_genero: z.string().min(1, "Selecciona un género"),
   id_rol: z.string().min(1, "Selecciona un tipo de participante"),

@@ -50,25 +50,23 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  // Función para iniciar sesión
   loginUser: async (userAuth) => {
     set({ loading: true, error: null });
 
     try {
-      const response = await login(userAuth);  
-      
+      const response = await login(userAuth);  // Llama a la API de login
       set({
         loading: false,
         successMessage: 'Inicio de sesión exitoso.',
       });
     } catch (error) {
-      console.error('Error en el login:', error.message);
       set({
         loading: false,
         error: error.response?.data?.error || 'Error desconocido al iniciar sesión.',
       });
     }
   },
+
 
   clearMessages: () => set({ error: null, successMessage: null }),
 }));

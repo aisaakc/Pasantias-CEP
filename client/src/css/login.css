@@ -1,0 +1,39 @@
+
+.login-page {
+    display: flex;
+    height: 100vh; /* ⬅️ Pantalla completa */
+    width: 100vw;
+    overflow: hidden;
+  }
+  
+  /* Hero Section */
+  .hero-section {
+    flex: 1;
+    background: linear-gradient(135deg, #4f46e5, #9333ea);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    flex-direction: column;
+    padding: 2rem;
+  }
+  
+  /* Login Form */
+  .login-form {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+  }
+  
+  .login-form form {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 1rem;
+  }
+  
+
+  

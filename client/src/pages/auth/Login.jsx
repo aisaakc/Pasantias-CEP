@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Section from '../../components/Section';
-import useAuthStore from '../../store/authStore'; // 👈 importa el store
+import useAuthStore from '../../store/authStore';
+import { toast } from 'sonner'; // ✅ Importa toast desde sonner
 import '../../css/login.css';
 
-export default function Login({ redirectTo }) { // Aceptamos la prop redirectTo
+export default function Login({ redirectTo }) {
   const navigate = useNavigate();
 
   const { loginUser, loading, error, successMessage, clearMessages } = useAuthStore();
@@ -28,7 +29,7 @@ export default function Login({ redirectTo }) { // Aceptamos la prop redirectTo
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      alert('Por favor, ingresa tu correo/cédula y contraseña.');
+      toast.warning('Por favor, ingresa tu correo/cédula y contraseña.'); // ✅ Usa toast
       return;
     }
 
@@ -38,34 +39,31 @@ export default function Login({ redirectTo }) { // Aceptamos la prop redirectTo
       contraseña: formData.password,
     };
 
-    await loginUser(credentialsToSend); // 👈 llama al contexto
+    await loginUser(credentialsToSend);
   };
 
   useEffect(() => {
     if (successMessage) {
+      toast.success(successMessage); // ✅ Mostrar mensaje de éxito
       setTimeout(() => {
         clearMessages();
-        navigate(redirectTo || '/dashboard'); // Redirige usando la prop `redirectTo`
-      }, 1000); // esperar un poco antes de redirigir
+        navigate(redirectTo || '/dashboard');
+      }, 1200);
     }
-  }, [successMessage, navigate, clearMessages, redirectTo]);
+
+    if (error) {
+      toast.error(error); // ✅ Mostrar mensaje de error
+      clearMessages();
+    }
+  }, [successMessage, error, clearMessages, navigate, redirectTo]);
 
   return (
     <div className="login-page flex h-screen">
       <Section />
-
       <div className="flex w-1/2 justify-center items-center bg-white p-10">
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
           <h2 className="text-3xl font-bold text-gray-800">Iniciar Sesión</h2>
 
-          {/* Mostrar errores */}
-          {error && (
-            <div className="text-red-500 bg-red-100 p-2 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Campo email/cedula */}
           <div className="flex items-center border-2 border-gray-300 rounded-xl px-4 py-3">
             <span className="mr-3">📧</span>
             <input
@@ -79,7 +77,6 @@ export default function Login({ redirectTo }) { // Aceptamos la prop redirectTo
             />
           </div>
 
-          {/* Campo contraseña */}
           <div className="flex items-center border-2 border-gray-300 rounded-xl px-4 py-3">
             <span className="mr-3">🔒</span>
             <input
@@ -96,7 +93,6 @@ export default function Login({ redirectTo }) { // Aceptamos la prop redirectTo
             </div>
           </div>
 
-          {/* Botón login */}
           <button
             type="submit"
             disabled={loading}

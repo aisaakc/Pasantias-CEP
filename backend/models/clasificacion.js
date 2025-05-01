@@ -4,11 +4,12 @@ class Clasificacion {
     async getParentClassifications() {
         try {
             const query = `
-                SELECT c.*, i.nombre nicono
-                FROM clasificacion c LEFT JOIN clasificacion i
-                ON (c.id_icono = i.id_clasificacion ) 
-                WHERE c.type_id IS NULL 
-                ORDER BY c.orden, c.nombre
+                SELECT c.*, i.nombre AS nicono
+                FROM clasificacion c
+                LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
+                WHERE c.type_id IS NULL AND c.parent_id IS NULL
+                ORDER BY c.orden, c.nombre;
+
             `;
             const result = await pool.query(query);
             return result.rows;
@@ -43,11 +44,12 @@ class Clasificacion {
         try {
           
             const query = `
-             SELECT * FROM clasificacion c  
-             INNER JOIN  clasificacion sc
-             ON (sc.type_id = c.id_clasificacion)
-             WHERE c.id_clasificacion = $1
-             ORDER BY sc.orden, sc.nombre;
+            SELECT sc.*
+            FROM clasificacion sc
+            INNER JOIN clasificacion c ON sc.type_id = c.id_clasificacion
+            WHERE c.id_clasificacion = $1
+            ORDER BY sc.orden, sc.nombre;
+
         `;
             
             const result = await pool.query(query, [type_id]);  
@@ -61,7 +63,8 @@ class Clasificacion {
     async getAllHijos(parent_id) {
         try {          
             const query = `
-             SELECT * FROM clasificacion c  
+             SELECT * 
+             FROM clasificacion c  
              INNER JOIN  clasificacion sc
              ON (sc.parent_id = c.id_clasificacion)
              WHERE c.id_clasificacion = $1

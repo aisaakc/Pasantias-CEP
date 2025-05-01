@@ -5,51 +5,48 @@ import Contacto from "./pages/cep/Contacto";
 import Login from "./pages/auth/Login";
 import Registro from "./pages/auth/Registro";
 import Clasificacion from "./pages/dashboard/Clasificacion";
+import Tipos from "./pages/dashboard/Tipos";
 import Layout from "./components/Layout";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
 import { Toaster } from 'sonner';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 export default function App() {
-
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Si la ruta está en login o registro, no se muestra navbar y footer
-  const hideLayout = ["/login", "/registro"].includes(location.pathname) || location.pathname.startsWith("/dashboard");
-
-  const mainContent = (
-    <main className={`flex-grow ${!hideLayout ? 'mb-16' : ''}`}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/lista" element={<Lista />} />
-        <Route path="/contacto" element={<Contacto />} />
-        <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/dashboard" element={<Layout />}>
-          <Route index element={<Clasificacion />} />
-          <Route path="clasificacion" element={<Clasificacion />} />
-        </Route>
-      </Routes>
-    </main>
-  );
+  const dashboardRoute = location.pathname.startsWith("/dashboard");
 
   return (
     <>
       <Toaster position="top-right" richColors expand={true} />
 
-      {hideLayout ? (
-        <div className="content-without-default-layout">{mainContent}</div>
+      {dashboardRoute ? (
+        <Routes>
+          <Route path="/dashboard" element={<Layout />}>
+            <Route index element={<Clasificacion />} />
+            <Route path="clasificacion" element={<Clasificacion />} />
+            <Route path="tipos" element={<Tipos />} />
+          </Route>
+        </Routes>
       ) : (
         <div className="flex flex-col min-h-screen">
           <Navbar />
-          {mainContent}
+          <main className="flex-grow mb-16">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/lista" element={<Lista />} />
+              <Route path="/contacto" element={<Contacto />} />
+              <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
+              <Route path="/registro" element={<Registro />} />
+            </Routes>
+          </main>
           <Footer />
         </div>
       )}
     </>
   );
 }
+

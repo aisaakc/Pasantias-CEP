@@ -84,7 +84,6 @@ export default function Registro() {
     // Filtra los errores para considerar solo los campos en el paso actual
     const currentStepErrors = Object.keys(errors).filter(field => currentStepFields.includes(field));
 
-
     if (currentStepErrors.length > 0) {
     
       toast.error("Por favor, corrija los errores en el paso actual antes de continuar.");
@@ -140,7 +139,6 @@ export default function Registro() {
 
               {step === 1 ? (
                 <>
-                
                   <div>
                     <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre</label>
                     <Field name="nombre">

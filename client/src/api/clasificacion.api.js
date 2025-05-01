@@ -8,3 +8,4 @@ export const create = async (clasificacionData) =>
 
 export const getSubclasificaciones = async (id) => 
     axios.get(`http://localhost:3001/api/clasificaciones/tipo/${id}`);
+

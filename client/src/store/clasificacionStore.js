@@ -3,7 +3,7 @@ import { getParentClassifications, getSubclasificaciones } from '../api/clasific
 
 export const useClasificacionStore = create((set) => ({
   parentClasifications: [],  
-  subClasificaciones: [],     // NUEVO: subclasificaciones
+  subClasificaciones: [],     
   loading: false,            
   error: null,               
 

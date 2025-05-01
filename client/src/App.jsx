@@ -15,38 +15,43 @@ import { Toaster } from 'sonner';
 import React from 'react';
 
 export default function App() {
-  const location = useLocation();
 
-  const dashboardRoute = location.pathname.startsWith("/dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+
+  const hideLayout = ["/login", "/registro"].includes(location.pathname) || location.pathname.startsWith("/dashboard");
+
+  const mainContent = (
+    <main className={`flex-grow ${!hideLayout ? 'mb-16' : ''}`}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/lista" element={<Lista />} />
+        <Route path="/contacto" element={<Contacto />} />
+        <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/dashboard" element={<Layout />}>
+          <Route index element={<Clasificacion />} />
+          <Route path="clasificacion" element={<Clasificacion />} />
+          <Route path="tipos" element={<Tipos />} />
+        </Route>
+      </Routes>
+    </main>
+  );
 
   return (
     <>
       <Toaster position="top-right" richColors expand={true} />
 
-      {dashboardRoute ? (
-        <Routes>
-          <Route path="/dashboard" element={<Layout />}>
-            <Route index element={<Clasificacion />} />
-            <Route path="clasificacion" element={<Clasificacion />} />
-            <Route path="tipos" element={<Tipos />} />
-          </Route>
-        </Routes>
+      {hideLayout ? (
+        <div className="content-without-default-layout">{mainContent}</div>
       ) : (
         <div className="flex flex-col min-h-screen">
           <Navbar />
-          <main className="flex-grow mb-16">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/lista" element={<Lista />} />
-              <Route path="/contacto" element={<Contacto />} />
-              <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
-              <Route path="/registro" element={<Registro />} />
-            </Routes>
-          </main>
+          {mainContent}
           <Footer />
         </div>
       )}
     </>
   );
 }
-

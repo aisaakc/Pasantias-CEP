@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Section from '../../components/Section';
 import useAuthStore from '../../store/authStore';
-import { toast } from 'sonner'; // ✅ Importa toast desde sonner
+import { toast } from 'sonner'; 
 import '../../css/login.css';
 
 export default function Login({ redirectTo }) {

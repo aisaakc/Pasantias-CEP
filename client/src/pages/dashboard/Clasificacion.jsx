@@ -3,6 +3,7 @@ import useClasificacionStore from '../../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons'; 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
+import { encodeId } from '../../utils/hashUtils';
 
 
 export default function Clasificacion() {
@@ -60,11 +61,12 @@ export default function Clasificacion() {
 
                   <div className="flex justify-center">
                   <button
-                    onClick={() => navigate('/dashboard/tipos')}
+                    onClick={() => navigate(`/dashboard/tipos/${encodeId(clasificacion.id_clasificacion)}`)}
                     className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Ver Subclasificaciones
-                  </button> 
+                  </button>
+
                   </div>
                 </div>
               </div>

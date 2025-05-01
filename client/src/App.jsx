@@ -33,7 +33,8 @@ export default function App() {
         <Route path="/dashboard" element={<Layout />}>
           <Route index element={<Clasificacion />} />
           <Route path="clasificacion" element={<Clasificacion />} />
-          <Route path="tipos" element={<Tipos />} />
+          <Route path="tipos/:id" element={<Tipos />} />
+
         </Route>
       </Routes>
     </main>

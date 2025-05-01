@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Section from '../../components/Section';
 import useAuthStore from '../../store/authStore';
 import { toast } from 'sonner'; 
-import '../../css/login.css';
+
 
 export default function Login({ redirectTo }) {
   const navigate = useNavigate();

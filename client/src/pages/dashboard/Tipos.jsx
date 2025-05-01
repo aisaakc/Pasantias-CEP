@@ -34,6 +34,7 @@ export default function Tipos() {
                 <th className="py-4 px-6 text-left text-sm uppercase tracking-wider">Nombre</th>
                 <th className="py-4 px-6 text-left text-sm uppercase tracking-wider">Descripción</th>
                 <th className="py-4 px-6 text-center text-sm uppercase tracking-wider">Ícono</th>
+                <th className="py-4 px-6 text-center text-sm uppercase tracking-wider">Acciones</th> {/* Nueva columna */}
               </tr>
             </thead>
             <tbody>
@@ -53,12 +54,30 @@ export default function Tipos() {
                         {/* Renderiza el ícono */}
                         <FontAwesomeIcon icon={Icon} size="lg" />
                       </td>
+                      <td className="py-4 px-6 text-center text-gray-500">
+                        {/* Acciones */}
+                        <div className="flex justify-center space-x-4">
+                          {/* Icono de editar */}
+                          <FontAwesomeIcon
+                            icon={iconos.faPen}
+                            size="lg"
+                            className="text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+                          />
+                          {/* Icono de eliminar */}
+                          <FontAwesomeIcon
+                            icon={iconos.faTrash}
+                            size="lg"
+                            className="text-red-600 cursor-pointer hover:text-red-800 transition-colors"
+                          />
+                         
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="3" className="py-6 text-center text-gray-500">
+                  <td colSpan="4" className="py-6 text-center text-gray-500">
                     No hay subclasificaciones.
                   </td>
                 </tr>

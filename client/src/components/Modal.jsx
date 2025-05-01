@@ -1,60 +1,67 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 
 const Modal = ({ isOpen, onClose }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(isOpen);
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
+      setShouldRender(true);
     } else {
-      // Cuando se cierra la modal, damos tiempo a la animación
-      setTimeout(() => setIsVisible(false), 500); 
+      const timeout = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timeout);
     }
   }, [isOpen]);
 
-  if (!isVisible) return null;
+  if (!shouldRender) return null;
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className={`fixed inset-0 z-50 flex justify-center items-center bg-opacity-60 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
     >
       <div
-        className={`relative m-4 p-8 w-2/5 min-w-[40%] max-w-[40%] rounded-lg bg-white shadow-lg transform transition-all duration-500 ease-out ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'}`}
+        className={`bg-white w-full max-w-lg rounded-xl shadow-xl p-6 transform transition-all duration-300 ${
+          isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'
+        }`}
       >
-        <div className="flex items-center pb-4 text-xl font-medium text-slate-800">
-          Agregar Nueva Clasificación
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Agregar Clasificación</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Nombre</label>
+            <input
+              type="text"
+              placeholder="Nombre de la clasificación"
+              className="mt-1 p-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Descripción</label>
+            <textarea
+              placeholder="Descripción"
+              className="mt-1 p-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
+            ></textarea>
+          </div>
         </div>
 
-        <div className="relative border-t border-slate-200 py-4 leading-normal text-slate-600 font-light">
-          <label className="block text-sm font-medium text-gray-700">Nombre</label>
-          <input
-            type="text"
-            placeholder="Nombre de la clasificación"
-            className="mt-2 p-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-
-          <label className="block mt-4 text-sm font-medium text-gray-700">Descripción</label>
-          <textarea
-            placeholder="Descripción de la clasificación"
-            className="mt-2 p-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
-          ></textarea>
-        </div>
-
-        <div className="flex justify-end pt-4 space-x-4">
+        <div className="flex justify-end mt-6 space-x-3">
           <button
             onClick={onClose}
-            className="py-2 px-4 border border-transparent text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 transition-colors"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition"
           >
             Cancelar
           </button>
           <button
-            className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
           >
             Guardar
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

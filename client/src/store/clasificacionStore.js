@@ -1,20 +1,25 @@
 import { create } from 'zustand';  
-import { getParentClassifications, getSubclasificaciones } from '../api/clasificacion.api'; 
+import { getParentClassifications,
+   getSubclasificaciones, 
+   create as createClasificacionAPI,
+    getClasificacionHijos,
+     getAllClasificaciones } from '../api/clasificacion.api';
 
-export const useClasificacionStore = create((set) => ({
+export const useClasificacionStore = create((set, get) => ({
   parentClasifications: [],  
   subClasificaciones: [],     
+  clasificacionHijos: [],    // Nuevo estado
+  allClasificaciones: [],    // Nuevo estado
   loading: false,            
   error: null,               
 
-  // Clasificaciones principales
+  // Obtener clasificaciones principales
   fetchParentClasifications: async () => {
     set({ loading: true, error: null });
-
     try {
       const response = await getParentClassifications();
       set({
-        parentClasifications: response.data, 
+        parentClasifications: response.data,
         loading: false,
       });
     } catch (error) {
@@ -26,10 +31,9 @@ export const useClasificacionStore = create((set) => ({
     }
   },
 
-  // NUEVO: obtener subclasificaciones por ID
+  // Obtener subclasificaciones
   fetchSubClasificaciones: async (id) => {
     set({ loading: true, error: null });
-
     try {
       const response = await getSubclasificaciones(id);
       set({
@@ -45,7 +49,65 @@ export const useClasificacionStore = create((set) => ({
     }
   },
 
-  clearError: () => set({ error: null }), 
+  // Obtener hijos de una clasificación
+  fetchClasificacionHijos: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getClasificacionHijos(id);
+      set({
+        clasificacionHijos: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error al obtener los hijos de la clasificación:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener los hijos de la clasificación.',
+      });
+    }
+  },
+
+  // Obtener todas las clasificaciones
+  fetchAllClasificaciones: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getAllClasificaciones();
+      set({
+        allClasificaciones: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error al obtener todas las clasificaciones:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener todas las clasificaciones.',
+      });
+    }
+  },
+
+  // Crear clasificación
+  createClasificacion: async (data) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await createClasificacionAPI(data);
+
+      // Opcional: recargar clasificaciones principales
+      const updatedList = await getParentClassifications();
+      set({
+        parentClasifications: updatedList.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error al crear clasificación:", error);
+      let errorMsg = 'Error al crear la clasificación.';
+      if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      }
+      set({ loading: false, error: errorMsg });
+    }
+  },
+
+  clearError: () => set({ error: null }),
 }));
 
 export default useClasificacionStore;

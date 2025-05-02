@@ -5,12 +5,12 @@ import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import { encodeId } from '../../utils/hashUtils';
-import Modal from '../../components/Modal'; // Importamos el componente Modal
+import Modal from '../../components/Modal'; // Importa la Modal
 
 export default function Clasificacion() {
   const { parentClasifications, fetchParentClasifications, loading, error } = useClasificacionStore();
   const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar la visibilidad de la modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchParentClasifications();
@@ -24,17 +24,17 @@ export default function Clasificacion() {
     return <div className="text-red-500 text-center font-semibold">{error}</div>;
   }
 
-  const openModal = () => setIsModalOpen(true); // Abre la modal
-  const closeModal = () => setIsModalOpen(false); // Cierra la modal
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-4xl font-bold text-center text-blue-600 mb-12">Clasificaciones Principales</h1>
-      
+
       <div className="text-center mb-8">
         <button
-          onClick={openModal} // Muestra la modal al hacer clic
-          className="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-cyan-500 transition-colors"
+          onClick={openModal}
+          className="rounded-md bg-slate-800 py-2 px-4 text-white transition-all shadow-md hover:shadow-lg focus:bg-slate-700 focus:shadow-none active:bg-slate-700 ml-2"
         >
           Agregar Clasificación
         </button>

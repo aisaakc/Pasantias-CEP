@@ -9,3 +9,10 @@ export const create = async (clasificacionData) =>
 export const getSubclasificaciones = async (id) => 
     axios.get(`http://localhost:3001/api/clasificaciones/tipo/${id}`);
 
+export const getClasificacionHijos = async (id) =>
+    axios.get(`http://localhost:3001/api/clasificaciones/parent/${id}`);
+
+export const getAllClasificaciones = async () =>
+    axios.get('http://localhost:3001/api/clasificaciones/all');
+  
+

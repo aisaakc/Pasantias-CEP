@@ -11,4 +11,8 @@ router.get('/clasificaciones/tipo/:id', Clasificacion.getAllSubclasificaciones);
 
 router.get('/clasificaciones/parent/:id', Clasificacion.getAllHijos);
 
+router.get('/clasificaciones/all', Clasificacion.getAllClasificaciones);
+
+
+
 export default router;

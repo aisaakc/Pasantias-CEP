@@ -20,25 +20,26 @@ class Clasificacion {
     }
 
     async create(nuevaClasificacion) {
-        const { nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono } = nuevaClasificacion;
+        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = nuevaClasificacion;
         try {
             const query = `
-                INSERT INTO clasificacion (nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING id_clasificacion AS id, nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono;
+                INSERT INTO clasificacion (nombre, descripcion, imagen, orden, type_id, parent_id, id_icono)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
             `;
-            const values = [nombre, descripcion, icono, imagen, orden, type_id, parent_id, id_icono];
+            const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono];  // Cambié los valores para coincidir
             const result = await pool.query(query, values);
-            return result.rows[0]; 
+            return result.rows[0];
         } catch (error) {
             console.error("Error en ClasificacionModel.create:", error.message);
-    
-            if (error.code === '505') { 
-                 throw new Error("Ya existe una clasificación con este nombre.");
+            if (error.code === '23505') { 
+                throw new Error("Ya existe una clasificación con este nombre.");
             }
             throw new Error("Error interno del servidor al crear la clasificación.");
         }
     }
+    
+    
   
     async getAllSubclasificaciones(type_id) {
         try {
@@ -79,7 +80,22 @@ class Clasificacion {
             throw new Error("Error interno del servidor al obtener subclasificaciones.");
         }
     } 
-    
+
+    async getAllClasificaciones() {
+        try {
+          const query = `
+            SELECT * 
+            FROM public.clasificacion
+            ORDER BY id_clasificacion ASC;
+          `;
+          const result = await pool.query(query);
+          return result.rows;
+        } catch (error) {
+          console.error("Error en getAllClasificaciones (pg):", error.message);
+          throw new Error("Error interno del servidor al obtener todas las clasificaciones.");
+        }
+      }
+      
 }
 
 export default new Clasificacion();

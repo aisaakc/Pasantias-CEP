@@ -111,19 +111,18 @@ const Modal = ({ isOpen, onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Tipo</label>
             <select
-  name="type_id"
-  value={formData.type_id}
-  onChange={handleChange}
-  className="mt-1 p-2 w-full border rounded-lg"
->
-  <option value="">Selecciona un tipo</option>
-  {tiposUnicos.map((tipo) => (
-    <option key={tipo} value={tipo}>
-      Tipo {tipo}
-    </option>
-  ))}
-</select>
-
+              name="type_id"
+              value={formData.type_id}
+              onChange={handleChange}
+              className="mt-1 p-2 w-full border rounded-lg"
+            >
+              <option value="">Tipo</option>
+              {clasificaciones.map((c) => (
+                <option key={c.id_clasificacion} value={c.id_clasificacion}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -134,7 +133,7 @@ const Modal = ({ isOpen, onClose }) => {
               onChange={handleChange}
               className="mt-1 p-2 w-full border rounded-lg"
             >
-              <option value="">Sin padre (raíz)</option>
+              <option value="">Padre (raíz)</option>
               {clasificaciones.map((c) => (
                 <option key={c.id_clasificacion} value={c.id_clasificacion}>
                   {c.nombre}

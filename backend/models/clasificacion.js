@@ -45,12 +45,12 @@ class Clasificacion {
         try {
           
             const query = `
-            SELECT sc.*
+            SELECT sc.*, i.nombre AS nicono
             FROM clasificacion sc
             INNER JOIN clasificacion c ON sc.type_id = c.id_clasificacion
+            LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
             WHERE c.id_clasificacion = $1
             ORDER BY sc.orden, sc.nombre;
-
         `;
             
             const result = await pool.query(query, [type_id]);  

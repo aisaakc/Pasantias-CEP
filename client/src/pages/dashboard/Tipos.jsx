@@ -40,8 +40,9 @@ export default function Tipos() {
             <tbody>
               {subClasificaciones.length > 0 ? (
                 subClasificaciones.map((sub) => {
-                  // Verifica si el ícono existe y usa un valor predeterminado si no
-                  const Icon = iconos[sub.nicono] || iconos.faFile;  // Usa faFile como ícono predeterminado si no existe
+                  // Obtener el ícono correspondiente basado en el nombre del ícono
+                  const iconName = sub.nicono || 'faFile';  // Si no hay ícono, usar faFile como predeterminado
+                  const Icon = iconos[iconName] || iconos.faFile;
 
                   return (
                     <tr
@@ -51,7 +52,6 @@ export default function Tipos() {
                       <td className="py-4 px-6 font-medium text-gray-800">{sub.nombre}</td>
                       <td className="py-4 px-6 text-gray-600">{sub.descripcion}</td>
                       <td className="py-4 px-6 text-center text-gray-500">
-                        {/* Renderiza el ícono */}
                         <FontAwesomeIcon icon={Icon} size="lg" />
                       </td>
                       <td className="py-4 px-6 text-center text-gray-500">

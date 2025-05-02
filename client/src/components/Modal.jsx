@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXmark, faSave, faTimes, faFolder, faImage, faLayerGroup, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 const Modal = ({ isOpen, onClose }) => {
   const { createClasificacion, loading, error, clearError } = useClasificacionStore();
@@ -15,21 +17,24 @@ const Modal = ({ isOpen, onClose }) => {
   });
 
   const [clasificaciones, setClasificaciones] = useState([]);
-
   const [shouldRender, setShouldRender] = useState(isOpen);
+  const [activeField, setActiveField] = useState('');
+  const [animationClass, setAnimationClass] = useState('');
 
-  // Mostrar u ocultar el modal suavemente
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => setAnimationClass('animate-modal-in'), 10);
       fetchClasificaciones();
     } else {
+      setAnimationClass('animate-modal-out');
+      document.body.style.overflow = 'unset';
       const timeout = setTimeout(() => setShouldRender(false), 300);
       return () => clearTimeout(timeout);
     }
   }, [isOpen]);
 
-  // Reset al cerrar
   useEffect(() => {
     if (!isOpen) {
       setFormData({
@@ -40,10 +45,10 @@ const Modal = ({ isOpen, onClose }) => {
         id_icono: ''
       });
       clearError();
+      setActiveField('');
     }
   }, [isOpen, clearError]);
 
-  // Cargar opciones para selects
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
@@ -58,7 +63,13 @@ const Modal = ({ isOpen, onClose }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const tiposUnicos = [...new Set(clasificaciones.map(c => c.type_id))];
+  const handleFocus = (fieldName) => {
+    setActiveField(fieldName);
+  };
+
+  const handleBlur = () => {
+    setActiveField('');
+  };
 
   const handleSubmit = async () => {
     try {
@@ -75,113 +86,202 @@ const Modal = ({ isOpen, onClose }) => {
       console.error("Error al guardar:", err);
     }
   };
-  
 
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-      <div className={`bg-white w-full max-w-lg rounded-xl shadow-xl p-6 transform transition-all duration-300 ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Agregar Clasificación</h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Nombre</label>
-            <input
-              type="text"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              placeholder="Nombre de la clasificación"
-              className="mt-1 p-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Descripción</label>
-            <textarea
-              name="descripcion"
-              value={formData.descripcion}
-              onChange={handleChange}
-              placeholder="Descripción"
-              className="mt-1 p-2 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Tipo</label>
-            <select
-              name="type_id"
-              value={formData.type_id}
-              onChange={handleChange}
-              className="mt-1 p-2 w-full border rounded-lg"
+    <div className="fixed inset-0 z-50 flex items-center justify-center perspective-1000">
+      <div 
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-500 ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`} 
+        onClick={onClose}
+      />
+      
+      <div 
+        className={`relative w-full max-w-xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 ${
+          animationClass
+        }`}
+      >
+        {/* Encabezado con animación de brillo */}
+        <div className="relative overflow-hidden p-6 border-b border-gray-100">
+          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              Agregar Clasificación
+            </h2>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full transform hover:rotate-90 duration-300"
             >
-              <option value="">Tipo</option>
-              {clasificaciones.map((c) => (
-                <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
+              <FontAwesomeIcon icon={faXmark} className="text-xl" />
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Clasificación Padre</label>
-            <select
-              name="parent_id"
-              value={formData.parent_id}
-              onChange={handleChange}
-              className="mt-1 p-2 w-full border rounded-lg"
-            >
-              <option value="">Padre (raíz)</option>
-              {clasificaciones.map((c) => (
-                <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Icono</label>
-            <select
-              name="id_icono"
-              value={formData.id_icono}
-              onChange={handleChange}
-              className="mt-1 p-2 w-full border rounded-lg"
-            >
-              <option value="">Selecciona un ícono</option>
-              {clasificaciones.map((c) => (
-                <option key={c.id_clasificacion} value={c.id_icono}>
-                  {c.nombre} (ID Icono: {c.id_icono})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {error && <div className="text-sm text-red-600">{error}</div>}
         </div>
 
-        <div className="flex justify-end mt-6 space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-            disabled={loading}
-          >
-            {loading ? 'Guardando...' : 'Guardar'}
-          </button>
+        {/* Contenido con animación de entrada escalonada */}
+        <div className="p-6 space-y-5">
+          {[
+            { name: 'nombre', icon: faFolder, label: 'Nombre' },
+            { name: 'descripcion', icon: faLayerGroup, label: 'Descripción' },
+            { name: 'type_id', icon: faLayerGroup, label: 'Tipo' },
+            { name: 'parent_id', icon: faArrowUp, label: 'Clasificación Padre' },
+            { name: 'id_icono', icon: faImage, label: 'Icono' }
+          ].map((field, index) => (
+            <div 
+              key={field.name}
+              className={`transform transition-all duration-300 animate-fade-slide-up`}
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
+                {field.label}
+              </label>
+              {field.name === 'descripcion' ? (
+                <textarea
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  onFocus={() => handleFocus(field.name)}
+                  onBlur={handleBlur}
+                  placeholder={`${field.label} detallado...`}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none"
+                />
+              ) : field.name.includes('_id') ? (
+                <select
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  onFocus={() => handleFocus(field.name)}
+                  onBlur={handleBlur}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white"
+                >
+                  <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                  {clasificaciones.map((c) => (
+                    <option key={c.id_clasificacion} value={c.id_clasificacion}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  onFocus={() => handleFocus(field.name)}
+                  onBlur={handleBlur}
+                  placeholder={`${field.label}...`}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
+                />
+              )}
+            </div>
+          ))}
+
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake">
+              <FontAwesomeIcon icon={faTimes} className="text-red-500" />
+              <p>{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pie del modal con animación de brillo */}
+        <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl">
+          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105"
+              disabled={loading}
+            >
+              <FontAwesomeIcon icon={faTimes} className="mr-2" />
+              <span>Cancelar</span>
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105 disabled:opacity-50 group"
+              disabled={loading}
+            >
+              <FontAwesomeIcon 
+                icon={faSave} 
+                className={`mr-2 ${loading ? 'animate-spin' : 'group-hover:rotate-12 transition-transform duration-300'}`} 
+              />
+              <span>{loading ? 'Guardando...' : 'Guardar'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>,
     document.body
   );
 };
+
+// Añadir estilos necesarios en tu archivo CSS global
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px) rotateX(-10deg);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0) rotateX(0);
+    }
+  }
+
+  @keyframes modalOut {
+    from {
+      opacity: 1;
+      transform: scale(1) translateY(0) rotateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px) rotateX(10deg);
+    }
+  }
+
+  @keyframes shine {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes fadeSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .animate-modal-in {
+    animation: modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-modal-out {
+    animation: modalOut 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-shine {
+    animation: shine 2s infinite;
+  }
+
+  .animate-fade-slide-up {
+    animation: fadeSlideUp 0.5s ease-out forwards;
+  }
+`;
+document.head.appendChild(style);
 
 export default Modal;

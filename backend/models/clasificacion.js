@@ -39,8 +39,6 @@ class Clasificacion {
         }
     }
     
-    
-  
     async getAllSubclasificaciones(type_id) {
         try {
           
@@ -96,6 +94,47 @@ class Clasificacion {
         }
       }
       
+    async updateClasificacion(id, clasificacionActualizada) {
+        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = clasificacionActualizada;
+        try {
+            const query = `
+                UPDATE clasificacion 
+                SET nombre = $1, 
+                    descripcion = $2, 
+                    imagen = $3, 
+                    orden = $4, 
+                    type_id = $5, 
+                    parent_id = $6, 
+                    id_icono = $7
+                WHERE id_clasificacion = $8
+                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
+            `;
+            const values = [
+                nombre, 
+                descripcion, 
+                imagen, 
+                orden, 
+                type_id || null, 
+                parent_id || null, 
+                id_icono || null,
+                id
+            ];
+            
+            const result = await pool.query(query, values);
+            
+            if (result.rows.length === 0) {
+                throw new Error("Clasificación no encontrada.");
+            }
+            
+            return result.rows[0];
+        } catch (error) {
+            console.error("Error en ClasificacionModel.update:", error.message);
+            if (error.code === '23505') {
+                throw new Error("Ya existe una clasificación con este nombre.");
+            }
+            throw new Error("Error interno del servidor al actualizar la clasificación.");
+        }
+    }
 }
 
 export default new Clasificacion();

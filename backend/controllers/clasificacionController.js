@@ -79,7 +79,30 @@ class clasificacionController {
         }
       }
       
-    
+    async updateClasificacion(req, res) {
+        const id = parseInt(req.params.id);
+        const datosActualizacion = req.body;
+
+        if (isNaN(id)) {
+            return res.status(400).json({ error: "ID de clasificación inválido." });
+        }
+
+        try {
+            const clasificacionActualizada = await Clasificacion.updateClasificacion(id, datosActualizacion);
+            res.json(clasificacionActualizada);
+        } catch (error) {
+            console.error("Error en clasificacionController.updateClasificacion:", error.message);
+            if (error.message === "Clasificación no encontrada.") {
+                return res.status(404).json({ error: error.message });
+            }
+            if (error.message === "Ya existe una clasificación con este nombre.") {
+                return res.status(409).json({ error: error.message });
+            }
+            res.status(500).json({
+                error: "Error interno del servidor al actualizar la clasificación."
+            });
+        }
+    }
 }
 
 export default new clasificacionController();

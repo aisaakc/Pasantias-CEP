@@ -154,6 +154,31 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
+  // Crear subclasificación
+  createSubclasificacion: async (data) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await createClasificacionAPI(data);
+
+      // Actualizar la lista de subclasificaciones
+      const currentState = get();
+      set({
+        subClasificaciones: [...currentState.subClasificaciones, response.data],
+        loading: false
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Error al crear subclasificación:", error);
+      let errorMsg = 'Error al crear la subclasificación.';
+      if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      }
+      set({ loading: false, error: errorMsg });
+      throw error;
+    }
+  },
+
   clearError: () => set({ error: null }),
 }));
 

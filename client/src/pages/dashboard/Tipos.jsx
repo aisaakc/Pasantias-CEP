@@ -5,6 +5,7 @@ import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { decodeId } from '../../utils/hashUtils';
 import EditSubclasificacionModal from '../../components/EditSubclasificacionModal';
+import CreateSubclasificacionModal from '../../components/CreateSubclasificacionModal';
 
 export default function Tipos() {
   const { id: encodedId } = useParams();
@@ -12,6 +13,7 @@ export default function Tipos() {
   const [busqueda, setBusqueda] = useState('');
   const [ordenAscendente, setOrdenAscendente] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
 
   const { subClasificaciones, fetchSubClasificaciones, loading, error } = useClasificacionStore();
@@ -45,9 +47,18 @@ export default function Tipos() {
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600 mb-10 transform hover:scale-105 transition-transform duration-300">
-          Subclasificaciones
-        </h1>
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600 transform hover:scale-105 transition-transform duration-300">
+            Subclasificaciones
+          </h1>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
+          >
+            <FontAwesomeIcon icon={iconos.faPlus} />
+            <span>Crear Subclasificación</span>
+          </button>
+        </div>
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -162,10 +173,19 @@ export default function Tipos() {
           onClose={() => {
             setIsEditModalOpen(false);
             setSelectedClasificacion(null);
-            // Recargar las subclasificaciones después de cerrar el modal
             fetchSubClasificaciones(realId);
           }}
           clasificacionToEdit={selectedClasificacion}
+        />
+
+        {/* Modal de Creación */}
+        <CreateSubclasificacionModal
+          isOpen={isCreateModalOpen}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            fetchSubClasificaciones(realId);
+          }}
+          parentId={realId}
         />
       </div>
     </div>

@@ -61,6 +61,13 @@ export default function Registro() {
 
   // Manejador de envío del formulario
   const handleSubmit = async (values, { setSubmitting }) => {
+    // Verificar que las contraseñas coincidan
+    if (values.contraseña !== values.confirmarContraseña) {
+      toast.error("Las contraseñas no coinciden");
+      setSubmitting(false);
+      return;
+    }
+
     await registerUser(values);
   
     if (successMessage) {
@@ -113,14 +120,14 @@ export default function Registro() {
           confirmarContraseña: 'Confirmar Contraseña',
        };
        const label = fieldLabelMap[field.name] || field.name;
-      toast.error(`Error en el campo ${label}: ${form.errors[field.name]}`);
+      toast.error(`Error en ${label}: ${form.errors[field.name]}`);
     }
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Section /> 
-      <div className="flex w-1/2 justify-center items-center bg-gray-50 p-10">
+      <div className="flex w-1/2 justify-center items-center p-10">
         <Formik
           initialValues={initialValues}
           validate={validateWithZod} 
@@ -129,241 +136,275 @@ export default function Registro() {
           validateOnBlur={true}   
         >
           {({ isSubmitting, errors, touched, values }) => ( 
-            <Form className="w-full max-w-md space-y-6 bg-white p-8 rounded-lg shadow-xl">
-              <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Crear Cuenta</h2>
+            <Form className="w-full max-w-md space-y-8 bg-white p-10 rounded-2xl shadow-2xl transform transition-all duration-300 hover:shadow-3xl">
+              <div className="text-center">
+                <h2 className="text-4xl font-bold text-gray-800 mb-2">Crear Cuenta</h2>
+                <p className="text-gray-600">Únete a nuestra comunidad</p>
+              </div>
 
-              <div className="flex justify-center space-x-2 mb-6">
-                <div className={`w-8 h-2 rounded-full ${step === 1 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
-                <div className={`w-8 h-2 rounded-full ${step === 2 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+              <div className="flex justify-center space-x-3 mb-8">
+                <div className={`w-12 h-2 rounded-full transition-all duration-300 ${step === 1 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                <div className={`w-12 h-2 rounded-full transition-all duration-300 ${step === 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
               </div>
 
               {step === 1 ? (
-                <>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="nombre" className="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
+                      <Field name="nombre">
+                        {({ field, form }) => ( 
+                          <input
+                            {...field} 
+                            id="nombre"
+                            placeholder="Tu nombre"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                            onBlur={(e) => handleBlurAndShowToast(e, field, form)} 
+                          />
+                        )}
+                      </Field>
+                      {touched.nombre && errors.nombre && <div className="text-red-500 text-sm mt-1">{errors.nombre}</div>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="apellido" className="block text-sm font-semibold text-gray-700 mb-2">Apellido</label>
+                      <Field name="apellido">
+                        {({ field, form }) => (
+                          <input
+                            {...field}
+                            id="apellido"
+                            placeholder="Tu apellido"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                            onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                          />
+                        )}
+                      </Field>
+                      {touched.apellido && errors.apellido && <div className="text-red-500 text-sm mt-1">{errors.apellido}</div>}
+                    </div>
+                  </div>
+
                   <div>
-                    <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre</label>
-                    <Field name="nombre">
-                      {({ field, form }) => ( 
+                    <label htmlFor="telefono" className="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
+                    <Field name="telefono">
+                      {({ field, form }) => (
                         <input
-                          {...field} 
-                          id="nombre"
-                          placeholder="Nombre"
-                          className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                          onBlur={(e) => handleBlurAndShowToast(e, field, form)} 
+                          {...field}
+                          id="telefono"
+                          placeholder="Tu número de teléfono"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
                         />
                       )}
                     </Field>
-            
-                    {touched.nombre && errors.nombre && <div className="text-red-500 text-sm">{errors.nombre}</div>}
+                    {touched.telefono && errors.telefono && <div className="text-red-500 text-sm mt-1">{errors.telefono}</div>}
                   </div>
 
                   <div>
-                    <label htmlFor="apellido" className="block text-sm font-medium text-gray-700">Apellido</label>
-                    <Field name="apellido">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="apellido"
-                            placeholder="Apellido"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
-                    </Field>
-                    {touched.apellido && errors.apellido && <div className="text-red-500 text-sm">{errors.apellido}</div>}
-                  </div>
-
-                   <div>
-                    <label htmlFor="telefono" className="block text-sm font-medium text-gray-700">Teléfono</label>
-                    <Field name="telefono">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="telefono"
-                            placeholder="Teléfono"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
-                    </Field>
-                    {touched.telefono && errors.telefono && <div className="text-red-500 text-sm">{errors.telefono}</div>}
-                  </div>
-
-                   <div>
-                    <label htmlFor="cedula" className="block text-sm font-medium text-gray-700">Cédula</label>
+                    <label htmlFor="cedula" className="block text-sm font-semibold text-gray-700 mb-2">Cédula</label>
                     <Field name="cedula">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="cedula"
-                            placeholder="Cédula"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
+                      {({ field, form }) => (
+                        <input
+                          {...field}
+                          id="cedula"
+                          placeholder="Tu número de cédula"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                        />
+                      )}
                     </Field>
-                    {touched.cedula && errors.cedula && <div className="text-red-500 text-sm">{errors.cedula}</div>}
-                  </div>
-
-                   <div>
-                    <label htmlFor="gmail" className="block text-sm font-medium text-gray-700">Correo electrónico</label>
-                    <Field name="gmail">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="gmail"
-                            type="email"
-                            placeholder="Correo electrónico"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
-                    </Field>
-                    {touched.gmail && errors.gmail && <div className="text-red-500 text-sm">{errors.gmail}</div>}
+                    {touched.cedula && errors.cedula && <div className="text-red-500 text-sm mt-1">{errors.cedula}</div>}
                   </div>
 
                   <div>
-                    <label htmlFor="id_genero" className="block text-sm font-medium text-gray-700">Género</label>
-                     <Field name="id_genero">
-                       {({ field, form }) => (
-                         <select
-                            {...field}
-                            id="id_genero"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         >
-                           <option value="">Seleccionar...</option>
-                            {generos.map((g) => (
-                              <option key={g.id} value={g.id}>{g.nombre}</option>
-                            ))}
-                          </select>
-                       )}
-                     </Field>
-                    {touched.genero && errors.genero && <div className="text-red-500 text-sm">{errors.genero}</div>}
+                    <label htmlFor="gmail" className="block text-sm font-semibold text-gray-700 mb-2">Correo electrónico</label>
+                    <Field name="gmail">
+                      {({ field, form }) => (
+                        <input
+                          {...field}
+                          id="gmail"
+                          type="email"
+                          placeholder="tu@email.com"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                        />
+                      )}
+                    </Field>
+                    {touched.gmail && errors.gmail && <div className="text-red-500 text-sm mt-1">{errors.gmail}</div>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="id_genero" className="block text-sm font-semibold text-gray-700 mb-2">Género</label>
+                    <Field name="id_genero">
+                      {({ field, form }) => (
+                        <select
+                          {...field}
+                          id="id_genero"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                        >
+                          <option value="">Seleccionar género</option>
+                          {generos.map((g) => (
+                            <option key={g.id} value={g.id}>{g.nombre}</option>
+                          ))}
+                        </select>
+                      )}
+                    </Field>
+                    {touched.genero && errors.genero && <div className="text-red-500 text-sm mt-1">{errors.genero}</div>}
                   </div>
 
                   <button
                     type="button" 
                     onClick={() => handleNextStep(values, errors)}
-                    className="w-full py-3 mt-4 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-200"
+                    className="w-full py-3.5 mt-6 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
-                    Siguiente
+                    Continuar
                   </button>
-                </>
+                </div>
               ) : (
-                // Paso 2 del formulario
-                <>
-                  {/* Campo Tipo de participante (Select) */}
-                   <div>
-                    <label htmlFor="id_rol" className="block text-sm font-medium text-gray-700">Tipo de participante</label>
-                    <Field name="id_rol">
-                       {({ field, form }) => (
-                         <select
-                            {...field}
-                            id="id_rol"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         >
-                            {roles.filter((r) => [12, 13, 14].includes(r.id)).map((r) => (
-                    <option key={r.id} value={r.id}>{r.nombre}</option>
-                  ))}
-                         </select>
-                       )}
-                     </Field>
-                    {touched.id_rol && errors.id_rol && <div className="text-red-500 text-sm">{errors.id_rol}</div>}
-                  </div>
-
-                   <div>
-                    <label htmlFor="id_pregunta" className="block text-sm font-medium text-gray-700">Pregunta de seguridad</label>
-                     <Field name="id_pregunta">
-                       {({ field, form }) => (
-                         <select
-                            {...field}
-                            id="id_pregunta"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         >
-                           <option value="">Selecciona una pregunta</option>
-                  {preguntas.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
-                  ))}
-                         </select>
-                       )}
-                     </Field>
-                    {touched.id_pregunta && errors.id_pregunta && <div className="text-red-500 text-sm">{errors.id_pregunta}</div>}
-                  </div>
-
-                   <div>
-                    <label htmlFor="respuesta" className="block text-sm font-medium text-gray-700">Respuesta</label>
-                     <Field name="respuesta">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="respuesta"
-                            placeholder="Respuesta"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
-                     </Field>
-                    {touched.respuesta && errors.respuesta && <div className="text-red-500 text-sm">{errors.respuesta}</div>}
-                  </div>
-
-                   <div>
-                    <label htmlFor="contraseña" className="block text-sm font-medium text-gray-700">Contraseña</label>
-                     <Field name="contraseña">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="contraseña"
-                            type="password"
-                            placeholder="Contraseña"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
-                     </Field>
-                    {touched.contraseña && errors.contraseña && <div className="text-red-500 text-sm">{errors.contraseña}</div>}
-                  </div>
-
-                  {/* Campo Confirmar Contraseña */}
+                <div className="space-y-6">
                   <div>
-                    <label htmlFor="confirmarContraseña" className="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
-                     <Field name="confirmarContraseña">
-                       {({ field, form }) => (
-                         <input
-                            {...field}
-                            id="confirmarContraseña"
-                            type="password"
-                            placeholder="Confirmar Contraseña"
-                            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
-                         />
-                       )}
-                     </Field>
-                    {touched.confirmarContraseña && errors.confirmarContraseña && <div className="text-red-500 text-sm">{errors.confirmarContraseña}</div>}
+                    <label htmlFor="id_rol" className="block text-sm font-semibold text-gray-700 mb-2">Tipo de participante</label>
+                    <Field name="id_rol">
+                      {({ field, form }) => (
+                        <select
+                          {...field}
+                          id="id_rol"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                        >
+                          <option value="">Seleccionar tipo</option>
+                          {roles.filter((r) => [12, 13, 14].includes(r.id)).map((r) => (
+                            <option key={r.id} value={r.id}>{r.nombre}</option>
+                          ))}
+                        </select>
+                      )}
+                    </Field>
+                    {touched.id_rol && errors.id_rol && <div className="text-red-500 text-sm mt-1">{errors.id_rol}</div>}
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`w-full py-3 mt-4 text-white bg-blue-600 rounded-md ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 transition duration-200'}`}
-                  >
-                    {isSubmitting ? 'Cargando...' : 'Registrarme'}
-                  </button>
-                   
-                   <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="w-full py-3 mt-2 text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition duration-200"
-                  >
-                    Atrás
-                  </button>
-                </>
+                  <div>
+                    <label htmlFor="id_pregunta" className="block text-sm font-semibold text-gray-700 mb-2">Pregunta de seguridad</label>
+                    <Field name="id_pregunta">
+                      {({ field, form }) => (
+                        <select
+                          {...field}
+                          id="id_pregunta"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                        >
+                          <option value="">Selecciona una pregunta</option>
+                          {preguntas.map((p) => (
+                            <option key={p.id} value={p.id}>{p.nombre}</option>
+                          ))}
+                        </select>
+                      )}
+                    </Field>
+                    {touched.id_pregunta && errors.id_pregunta && <div className="text-red-500 text-sm mt-1">{errors.id_pregunta}</div>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="respuesta" className="block text-sm font-semibold text-gray-700 mb-2">Respuesta</label>
+                    <Field name="respuesta">
+                      {({ field, form }) => (
+                        <input
+                          {...field}
+                          id="respuesta"
+                          placeholder="Tu respuesta"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                        />
+                      )}
+                    </Field>
+                    {touched.respuesta && errors.respuesta && <div className="text-red-500 text-sm mt-1">{errors.respuesta}</div>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="contraseña" className="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
+                    <Field name="contraseña">
+                      {({ field, form }) => (
+                        <input
+                          {...field}
+                          id="contraseña"
+                          type="password"
+                          placeholder="Tu contraseña"
+                          className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                            touched.contraseña && errors.contraseña 
+                              ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500' 
+                              : 'border-gray-300'
+                          }`}
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            if (form.values.confirmarContraseña) {
+                              if (e.target.value !== form.values.confirmarContraseña) {
+                                form.setFieldError('confirmarContraseña', 'Las contraseñas no coinciden');
+                              } else {
+                                form.setFieldError('confirmarContraseña', undefined);
+                              }
+                            }
+                          }}
+                        />
+                      )}
+                    </Field>
+                    {touched.contraseña && errors.contraseña && <div className="text-red-500 text-sm mt-1">{errors.contraseña}</div>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirmarContraseña" className="block text-sm font-semibold text-gray-700 mb-2">Confirmar Contraseña</label>
+                    <Field name="confirmarContraseña">
+                      {({ field, form }) => (
+                        <input
+                          {...field}
+                          id="confirmarContraseña"
+                          type="password"
+                          placeholder="Confirma tu contraseña"
+                          className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                            touched.confirmarContraseña && errors.confirmarContraseña 
+                              ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500' 
+                              : 'border-gray-300'
+                          }`}
+                          onBlur={(e) => handleBlurAndShowToast(e, field, form)}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            if (form.values.contraseña !== e.target.value) {
+                              form.setFieldError('confirmarContraseña', 'Las contraseñas no coinciden');
+                            } else {
+                              form.setFieldError('confirmarContraseña', undefined);
+                            }
+                          }}
+                        />
+                      )}
+                    </Field>
+                    {touched.confirmarContraseña && errors.confirmarContraseña && (
+                      <div className="text-red-500 text-sm mt-1">{errors.confirmarContraseña}</div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`w-full py-3.5 text-white bg-blue-600 rounded-lg transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                      }`}
+                    >
+                      {isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="w-full py-3.5 text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                </div>
               )}
 
-              <p className="text-center text-sm text-gray-600 mt-6">
+              <p className="text-center text-sm text-gray-600 mt-8">
                 ¿Ya tienes cuenta?{' '}
-                <Link to="/login" className="text-blue-600 hover:underline font-medium">Inicia Sesión</Link>
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200">Inicia Sesión</Link>
               </p>
             </Form>
           )}

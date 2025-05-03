@@ -58,7 +58,7 @@ export const useAuthStore = create((set) => ({
       localStorage.setItem('user', JSON.stringify(response.data.user));
       set({
         loading: false,
-        successMessage: 'Inicio de sesión exitoso.',
+        successMessage: `¡Bienvenido ${response.data.user.nombre} ${response.data.user.apellido}!`,
         isAuthenticated: true,
       });
     } catch (error) {

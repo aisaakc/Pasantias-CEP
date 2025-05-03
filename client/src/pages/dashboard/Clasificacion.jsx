@@ -1,4 +1,3 @@
-// src/pages/Clasificacion.jsx
 import React, { useEffect, useState } from 'react';
 import useClasificacionStore from '../../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';

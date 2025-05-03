@@ -8,12 +8,11 @@ import { getParentClassifications,
 export const useClasificacionStore = create((set, get) => ({
   parentClasifications: [],  
   subClasificaciones: [],     
-  clasificacionHijos: [],    // Nuevo estado
-  allClasificaciones: [],    // Nuevo estado
+  clasificacionHijos: [],    
+  allClasificaciones: [],    
   loading: false,            
   error: null,               
 
-  // Obtener clasificaciones principales
   fetchParentClasifications: async () => {
     set({ loading: true, error: null });
     try {

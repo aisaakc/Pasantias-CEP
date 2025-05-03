@@ -4,12 +4,15 @@ import useClasificacionStore from '../../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { decodeId } from '../../utils/hashUtils';
+import EditSubclasificacionModal from '../../components/EditSubclasificacionModal';
 
 export default function Tipos() {
   const { id: encodedId } = useParams();
   const realId = decodeId(encodedId);
   const [busqueda, setBusqueda] = useState('');
   const [ordenAscendente, setOrdenAscendente] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedClasificacion, setSelectedClasificacion] = useState(null);
 
   const { subClasificaciones, fetchSubClasificaciones, loading, error } = useClasificacionStore();
 
@@ -31,6 +34,12 @@ export default function Tipos() {
   // Función para cambiar el orden
   const cambiarOrden = () => {
     setOrdenAscendente(!ordenAscendente);
+  };
+
+  // Función para abrir el modal de edición
+  const handleEdit = (clasificacion) => {
+    setSelectedClasificacion(clasificacion);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -119,7 +128,10 @@ export default function Tipos() {
                           </td>
                           <td className="py-4 px-6">
                             <div className="flex justify-center space-x-4">
-                              <button className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300">
+                              <button 
+                                onClick={() => handleEdit(sub)}
+                                className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300"
+                              >
                                 <FontAwesomeIcon icon={iconos.faPen} size="lg" />
                               </button>
                               <button className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300">
@@ -143,6 +155,18 @@ export default function Tipos() {
             </div>
           </div>
         )}
+
+        {/* Modal de Edición */}
+        <EditSubclasificacionModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedClasificacion(null);
+            // Recargar las subclasificaciones después de cerrar el modal
+            fetchSubClasificaciones(realId);
+          }}
+          clasificacionToEdit={selectedClasificacion}
+        />
       </div>
     </div>
   );

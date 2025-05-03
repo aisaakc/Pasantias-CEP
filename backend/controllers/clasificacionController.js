@@ -30,9 +30,8 @@ class clasificacionController {
             error: "Error interno del servidor al crear la clasificación."
           });
         }
-      }
+    }
       
-
     async getAllHijos(req, res) {
         const parentId = parseInt(req.params.id); 
         if (isNaN(parentId)) {
@@ -57,10 +56,8 @@ class clasificacionController {
         }
         
         try {
-
             const descendants = await Clasificacion.getAllSubclasificaciones(type_id);
             res.json(descendants); 
-
         } catch (error) {
             console.error("Error en clasificacionController.getAllSubclasificaciones:", error.message);
             res.status(500).json({
@@ -77,27 +74,50 @@ class clasificacionController {
           console.error("Error en clasificacionController.getAllClasificaciones:", error.message);
           res.status(500).json({ error: "Error interno del servidor al obtener todas las clasificaciones." });
         }
-      }
+    }
       
     async updateClasificacion(req, res) {
         const id = parseInt(req.params.id);
         const datosActualizacion = req.body;
 
+        // Validación del ID
         if (isNaN(id)) {
             return res.status(400).json({ error: "ID de clasificación inválido." });
         }
 
+        // Validación de datos requeridos
+        if (!datosActualizacion || !datosActualizacion.nombre) {
+            return res.status(400).json({ error: "El nombre de la clasificación es obligatorio." });
+        }
+
         try {
+            // Verificar si la clasificación existe antes de actualizar
+            const clasificacionExistente = await Clasificacion.getAllClasificaciones();
+            const existe = clasificacionExistente.some(c => c.id_clasificacion === id);
+            if (!existe) {
+                return res.status(404).json({ error: "Clasificación no encontrada." });
+            }
+
             const clasificacionActualizada = await Clasificacion.updateClasificacion(id, datosActualizacion);
-            res.json(clasificacionActualizada);
+            
+            // Enviar respuesta exitosa
+            res.status(200).json({
+                mensaje: "Clasificación actualizada correctamente",
+                data: clasificacionActualizada
+            });
+
         } catch (error) {
             console.error("Error en clasificacionController.updateClasificacion:", error.message);
+            
+            // Manejar errores específicos
             if (error.message === "Clasificación no encontrada.") {
                 return res.status(404).json({ error: error.message });
             }
             if (error.message === "Ya existe una clasificación con este nombre.") {
                 return res.status(409).json({ error: error.message });
             }
+            
+            // Error general del servidor
             res.status(500).json({
                 error: "Error interno del servidor al actualizar la clasificación."
             });

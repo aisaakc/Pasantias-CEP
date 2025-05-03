@@ -6,6 +6,9 @@ export const getParentClassifications = async () =>
 export const create = async (clasificacionData) =>
     axios.post('http://localhost:3001/api/clasificaciones/create', clasificacionData);
 
+export const update = async (id, clasificacionData) =>
+    axios.put(`http://localhost:3001/api/clasificaciones/update/${id}`, clasificacionData);
+
 export const getSubclasificaciones = async (id) => 
     axios.get(`http://localhost:3001/api/clasificaciones/tipo/${id}`);
 

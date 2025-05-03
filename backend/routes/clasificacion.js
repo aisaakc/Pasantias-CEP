@@ -14,6 +14,6 @@ router.get('/clasificaciones/parent/:id', Clasificacion.getAllHijos);
 router.get('/clasificaciones/all', Clasificacion.getAllClasificaciones);
 
 // Ruta para actualizar una clasificación
-router.put('/clasificaciones/:id', Clasificacion.updateClasificacion);
+router.put('/clasificaciones/update/:id', Clasificacion.updateClasificacion);
 
 export default router;

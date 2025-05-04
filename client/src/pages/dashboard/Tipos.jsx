@@ -15,15 +15,20 @@ export default function Tipos() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
+  const [nombreClasificacion, setNombreClasificacion] = useState('');
 
-  const { subClasificaciones, fetchSubClasificaciones, loading, error } = useClasificacionStore();
+  const { subClasificaciones, fetchSubClasificaciones, fetchClasificacionById, loading, error } = useClasificacionStore();
 
-  // Llamamos a la API para obtener las subclasificaciones con el id real decodificado
+  // Llamamos a la API para obtener las subclasificaciones y la clasificación padre
   useEffect(() => {
     if (realId) {
-      fetchSubClasificaciones(realId);
+      fetchSubClasificaciones(realId).then(response => {
+        if (response?.data) {
+          setNombreClasificacion(response.data.nombre);
+        }
+      });
     }
-  }, [realId, fetchSubClasificaciones]);
+  }, [realId, fetchSubClasificaciones, fetchClasificacionById]);
 
   // Filtrar y ordenar subclasificaciones
   const subClasificacionesFiltradas = subClasificaciones
@@ -32,6 +37,11 @@ export default function Tipos() {
       const comparacion = a.nombre.localeCompare(b.nombre);
       return ordenAscendente ? comparacion : -comparacion;
     });
+
+// const parent_nombre = subClasificaciones[0].parent_nombre;
+
+// const parent_nombre = subClasificacionesFiltradas[0].parent_nombre;
+
 
   // Función para cambiar el orden
   const cambiarOrden = () => {
@@ -49,14 +59,27 @@ export default function Tipos() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600 transform hover:scale-105 transition-transform duration-300">
-            Subclasificaciones
+           
+          {subClasificaciones.length > 0 && subClasificaciones[0].parent_icono  && (
+            
+              <FontAwesomeIcon
+               
+                icon={iconos[subClasificaciones[0].parent_icono] || iconos.faFile}
+                size="lg"
+                className="text-blue-600 transform hover:scale-125 transition-all duration-300" 
+              />
+            )} &nbsp; 
+          {subClasificaciones.length > 0 ? subClasificaciones[0].parent_nombre : 'Cargando Subclasificaciones...'}
+
+          
+
           </h1>
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={iconos.faPlus} />
-            <span>Crear Subclasificación</span>
+            <span>Crear  {subClasificaciones.length > 0 ? subClasificaciones[0].parent_nombre : ''}</span>
           </button>
         </div>
 
@@ -90,7 +113,7 @@ export default function Tipos() {
                 </div>
                 <div className="ml-4">
                   <span className="text-sm text-gray-600">
-                    {subClasificacionesFiltradas.length} resultados encontrados
+                    {subClasificacionesFiltradas.length} resultados encontrados 
                   </span>
                 </div>
               </div>
@@ -99,7 +122,7 @@ export default function Tipos() {
             <div className="overflow-hidden bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
               <table className="min-w-full">
                 <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
+                  <tr key="header" className="bg-gradient-to-r from-blue-600 to-cyan-600">
                     <th 
                       className="py-4 px-6 text-left text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
                       onClick={cambiarOrden}
@@ -119,13 +142,13 @@ export default function Tipos() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {subClasificacionesFiltradas.length > 0 ? (
-                    subClasificacionesFiltradas.map((sub) => {
+                    subClasificacionesFiltradas.map((sub, index) => {
                       const iconName = sub.nicono || 'faFile';
                       const Icon = iconos[iconName] || iconos.faFile;
 
                       return (
                         <tr
-                          key={sub.id_clasificacion}
+                          key={`row-${sub.id_clasificacion}-${index}`}
                           className="transform hover:scale-[1.01] hover:bg-blue-50 transition-all duration-300"
                         >
                           <td className="py-4 px-6 font-medium text-gray-800">{sub.nombre}</td>
@@ -154,7 +177,7 @@ export default function Tipos() {
                       );
                     })
                   ) : (
-                    <tr>
+                    <tr key="no-results-row">
                       <td colSpan="4" className="py-8 text-center text-gray-500 animate-pulse">
                         <FontAwesomeIcon icon={iconos.faInbox} className="text-4xl mb-2" />
                         <p>No hay subclasificaciones que coincidan con tu búsqueda.</p>
@@ -176,6 +199,7 @@ export default function Tipos() {
             fetchSubClasificaciones(realId);
           }}
           clasificacionToEdit={selectedClasificacion}
+          // nombreClasificacion={subClasificaciones[0].parent_nombre}
         />
 
         {/* Modal de Creación */}
@@ -186,6 +210,7 @@ export default function Tipos() {
             fetchSubClasificaciones(realId);
           }}
           parentId={realId}
+          // nombreClasificacion={subClasificaciones[0].parent_nombre}
         />
       </div>
     </div>

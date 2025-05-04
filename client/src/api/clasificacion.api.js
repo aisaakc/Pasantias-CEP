@@ -17,5 +17,9 @@ export const getClasificacionHijos = async (id) =>
 
 export const getAllClasificaciones = async () =>
     axios.get('http://localhost:3001/api/clasificaciones/all');
+
+// export const getClasificacionById = async (id) =>
+//     axios.get(`http://localhost:3001/api/clasificaciones/id/${id}`);    
+
   
 

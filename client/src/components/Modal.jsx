@@ -4,15 +4,14 @@ import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faSave, faTimes, faFolder, faImage, faLayerGroup, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { toast } from 'sonner';
 
-const Modal = ({ isOpen, onClose }) => {
-  const { createClasificacion, loading, error, clearError } = useClasificacionStore();
+const Modal = ({ isOpen, onClose, editData = null }) => {
+  const { createClasificacion, updateClasificacion, loading, error, clearError } = useClasificacionStore();
 
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
-    type_id: '',
-    parent_id: '',
     id_icono: ''
   });
 
@@ -27,21 +26,28 @@ const Modal = ({ isOpen, onClose }) => {
       document.body.style.overflow = 'hidden';
       setTimeout(() => setAnimationClass('animate-modal-in'), 10);
       fetchClasificaciones();
+      
+      // Si hay datos de edición, cargarlos en el formulario
+      if (editData) {
+        setFormData({
+          nombre: editData.nombre || '',
+          descripcion: editData.descripcion || '',
+          id_icono: editData.id_icono || ''
+        });
+      }
     } else {
       setAnimationClass('animate-modal-out');
       document.body.style.overflow = 'unset';
       const timeout = setTimeout(() => setShouldRender(false), 300);
       return () => clearTimeout(timeout);
     }
-  }, [isOpen]);
+  }, [isOpen, editData]);
 
   useEffect(() => {
     if (!isOpen) {
       setFormData({
         nombre: '',
         descripcion: '',
-        type_id: '',
-        parent_id: '',
         id_icono: ''
       });
       clearError();
@@ -75,15 +81,29 @@ const Modal = ({ isOpen, onClose }) => {
     try {
       const dataToSend = {
         ...formData,
-        type_id: formData.type_id !== '' ? parseInt(formData.type_id) : null,
-        parent_id: formData.parent_id !== '' ? parseInt(formData.parent_id) : null,
         id_icono: formData.id_icono !== '' ? parseInt(formData.id_icono) : null,
       };
   
-      await createClasificacion(dataToSend);
+      if (editData) {
+        await updateClasificacion(editData.id_clasificacion, dataToSend);
+        toast.success('Clasificación actualizada correctamente', {
+          description: 'Los cambios han sido guardados exitosamente',
+          duration: 3000,
+        });
+      } else {
+        await createClasificacion(dataToSend);
+        toast.success('Clasificación creada correctamente', {
+          description: 'La nueva clasificación ha sido agregada exitosamente',
+          duration: 3000,
+        });
+      }
       onClose();
     } catch (err) {
       console.error("Error al guardar:", err);
+      toast.error('Error al guardar la clasificación', {
+        description: err.response?.data?.error || 'Ha ocurrido un error al procesar la solicitud',
+        duration: 4000,
+      });
     }
   };
 
@@ -108,7 +128,7 @@ const Modal = ({ isOpen, onClose }) => {
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              Agregar Clasificación
+              {editData ? 'Editar Clasificación' : 'Agregar Clasificación'}
             </h2>
             <button 
               onClick={onClose}
@@ -124,8 +144,6 @@ const Modal = ({ isOpen, onClose }) => {
           {[
             { name: 'nombre', icon: faFolder, label: 'Nombre' },
             { name: 'descripcion', icon: faLayerGroup, label: 'Descripción' },
-            { name: 'type_id', icon: faLayerGroup, label: 'Tipo' },
-            { name: 'parent_id', icon: faArrowUp, label: 'Clasificación Padre' },
             { name: 'id_icono', icon: faImage, label: 'Icono' }
           ].map((field, index) => (
             <div 
@@ -147,7 +165,7 @@ const Modal = ({ isOpen, onClose }) => {
                   placeholder={`${field.label} detallado...`}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none"
                 />
-              ) : field.name.includes('_id') ? (
+              ) : field.name === 'id_icono' ? (
                 <select
                   name={field.name}
                   value={formData[field.name]}
@@ -207,7 +225,7 @@ const Modal = ({ isOpen, onClose }) => {
                 icon={faSave} 
                 className={`mr-2 ${loading ? 'animate-spin' : 'group-hover:rotate-12 transition-transform duration-300'}`} 
               />
-              <span>{loading ? 'Guardando...' : 'Guardar'}</span>
+              <span>{loading ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
             </button>
           </div>
         </div>

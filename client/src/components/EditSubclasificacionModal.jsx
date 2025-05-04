@@ -150,7 +150,7 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
                   placeholder={`${field.label} detallado...`}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none"
                 />
-              ) : field.name.includes('_id') ? (
+              ) : field.name === 'type_id' || field.name === 'parent_id' || field.name === 'id_icono' ? (
                 <select
                   name={field.name}
                   value={formData[field.name]}

@@ -4,13 +4,16 @@ import { getParentClassifications,
    create as createClasificacionAPI,
    update as updateClasificacionAPI,
     getClasificacionHijos,
-     getAllClasificaciones } from '../api/clasificacion.api';
+    getAllClasificaciones,
+    // getClasificacionById
+    } from '../api/clasificacion.api';
 
 export const useClasificacionStore = create((set, get) => ({
   parentClasifications: [],  
   subClasificaciones: [],     
   clasificacionHijos: [],    
   allClasificaciones: [],    
+  // clasificacionById: [],
   loading: false,            
   error: null,               
 
@@ -27,6 +30,20 @@ export const useClasificacionStore = create((set, get) => ({
       set({
         loading: false,
         error: 'Error al obtener las clasificaciones principales.',
+      });
+    }
+  },
+
+  fetchClasificacionById: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getClasificacionById(id);
+      set({ clasificacionById: response.data, loading: false });
+    } catch (error) {
+      console.error("Error en fetchClasificacionById:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener la clasificación por ID.',
       });
     }
   },

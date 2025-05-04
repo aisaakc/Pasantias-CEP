@@ -66,6 +66,8 @@ class clasificacionController {
         }
     }
 
+ 
+
     async getAllClasificaciones(req, res) {
         try {
           const clasificaciones = await Clasificacion.getAllClasificaciones();

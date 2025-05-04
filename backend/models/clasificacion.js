@@ -9,7 +9,6 @@ class Clasificacion {
                 LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
                 WHERE c.type_id IS NULL AND c.parent_id IS NULL
                 ORDER BY c.orden, c.nombre;
-
             `;
             const result = await pool.query(query);
             return result.rows;
@@ -19,6 +18,8 @@ class Clasificacion {
         }
     }
 
+    
+
     async create(nuevaClasificacion) {
         const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = nuevaClasificacion;
         try {
@@ -27,7 +28,7 @@ class Clasificacion {
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
             `;
-            const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono];  // Cambié los valores para coincidir
+            const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono];  
             const result = await pool.query(query, values);
             return result.rows[0];
         } catch (error) {
@@ -43,9 +44,10 @@ class Clasificacion {
         try {
           
             const query = `
-            SELECT sc.*, i.nombre AS nicono
+            SELECT sc.*, i.nombre AS nicono , c.nombre As parent_nombre, c2.nombre as parent_icono
             FROM clasificacion sc
             INNER JOIN clasificacion c ON sc.type_id = c.id_clasificacion
+			INNER JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion 
             LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
             WHERE c.id_clasificacion = $1
             ORDER BY sc.orden, sc.nombre;
@@ -79,12 +81,15 @@ class Clasificacion {
         }
     } 
 
+    a
+
     async getAllClasificaciones() {
         try {
           const query = `
-            SELECT * 
-            FROM public.clasificacion
-            ORDER BY id_clasificacion ASC;
+        SELECT c_iconos.* 
+        FROM public.clasificacion AS c_iconos
+        INNER JOIN public.clasificacion AS c_tipos ON c_iconos.type_id = c_tipos.id_clasificacion
+        WHERE c_tipos.nombre = 'Ícono'
           `;
           const result = await pool.query(query);
           return result.rows;

@@ -10,6 +10,7 @@ export default function Clasificacion() {
   const { parentClasifications, fetchParentClasifications, loading, error } = useClasificacionStore();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
 
   useEffect(() => {
     fetchParentClasifications();
@@ -47,8 +48,20 @@ export default function Clasificacion() {
     );
   }
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openModal = () => {
+    setEditData(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (clasificacion) => {
+    setEditData(clasificacion);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditData(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 py-12 px-4 sm:px-6">
@@ -70,7 +83,9 @@ export default function Clasificacion() {
         {/* Grid de clasificaciones */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {parentClasifications && parentClasifications.length > 0 ? (
-            parentClasifications.map((clasificacion, index) => {
+            parentClasifications
+              .filter(clasificacion => clasificacion.type_id === null && clasificacion.parent_id === null)
+              .map((clasificacion, index) => {
               const Icon = iconos[clasificacion.nicono] || iconos.faFile;
               return (
                 <div
@@ -88,22 +103,32 @@ export default function Clasificacion() {
                         />
                       </div>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-800 text-center mb-3">
+                    <h2 className="text-2xl font-bold text-center mb-3 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                       {clasificacion.nombre}
                     </h2>
                     <p className="text-gray-600 text-center mb-6 line-clamp-2">
                       {clasificacion.descripcion}
                     </p>
-                    <div className="text-center">
+                    <div className="flex justify-center space-x-3">
                       <button
                         onClick={() => navigate(`/dashboard/tipos/${encodeId(clasificacion.id_clasificacion)}`)}
-                        className="inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-gray-800 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-gray-700"
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-gray-700"
                       >
                         Ver Detalles
                         <FontAwesomeIcon 
                           icon={iconos.faArrowRight} 
                           className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" 
                         />
+                      </button>
+                      <button
+                      title={'Editar '+clasificacion.nombre }
+                        onClick={() => openEditModal(clasificacion)}
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-blue-700"
+                      >
+                        <FontAwesomeIcon 
+                          icon={iconos.faEdit} 
+                          
+                        />   
                       </button>
                     </div>
                   </div>
@@ -126,7 +151,7 @@ export default function Clasificacion() {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} />
+      <Modal isOpen={isModalOpen} onClose={closeModal} editData={editData} />
 
       <style>{`
         @keyframes fadeIn {

@@ -81,15 +81,13 @@ class Clasificacion {
         }
     } 
 
-    a
-
     async getAllClasificaciones() {
         try {
           const query = `
-        SELECT c_iconos.* 
-        FROM public.clasificacion AS c_iconos
-        INNER JOIN public.clasificacion AS c_tipos ON c_iconos.type_id = c_tipos.id_clasificacion
-        WHERE c_tipos.nombre = 'Ícono'
+            SELECT c.*, i.nombre AS nicono
+            FROM clasificacion c
+            LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
+            ORDER BY c.orden, c.nombre;
           `;
           const result = await pool.query(query);
           return result.rows;
@@ -97,7 +95,7 @@ class Clasificacion {
           console.error("Error en getAllClasificaciones (pg):", error.message);
           throw new Error("Error interno del servidor al obtener todas las clasificaciones.");
         }
-      }
+    }
       
     async updateClasificacion(id, clasificacionActualizada) {
         const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = clasificacionActualizada;

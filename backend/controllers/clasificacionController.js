@@ -93,13 +93,6 @@ class clasificacionController {
         }
 
         try {
-            // Verificar si la clasificación existe antes de actualizar
-            const clasificacionExistente = await Clasificacion.getAllClasificaciones();
-            const existe = clasificacionExistente.some(c => c.id_clasificacion === id);
-            if (!existe) {
-                return res.status(404).json({ error: "Clasificación no encontrada." });
-            }
-
             const clasificacionActualizada = await Clasificacion.updateClasificacion(id, datosActualizacion);
             
             // Enviar respuesta exitosa

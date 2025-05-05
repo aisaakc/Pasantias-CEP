@@ -112,7 +112,7 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              Editar Subclasificación
+             Editar la subclasificación {clasificacionToEdit?.nombre}
             </h2>
             <button 
               onClick={onClose}

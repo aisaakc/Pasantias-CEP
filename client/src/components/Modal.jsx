@@ -7,7 +7,15 @@ import { faXmark, faSave, faTimes, faFolder, faImage, faLayerGroup, faArrowUp } 
 import { toast } from 'sonner';
 
 const Modal = ({ isOpen, onClose, editData = null }) => {
-  const { createClasificacion, updateClasificacion, loading, error, clearError } = useClasificacionStore();
+  const { 
+    createClasificacion, 
+    updateClasificacion, 
+    loading, 
+    error, 
+    clearError,
+    fetchAllClasificaciones,
+    fetchParentClasifications 
+  } = useClasificacionStore();
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -128,7 +136,7 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {editData ? 'Editar Clasificación' : 'Agregar Clasificación'}
+              {editData ? `Editar ${editData.nombre}` : 'Agregar Clasificación'}
             </h2>
             <button 
               onClick={onClose}

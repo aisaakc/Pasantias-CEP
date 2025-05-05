@@ -18,8 +18,6 @@ class Clasificacion {
         }
     }
 
-    
-
     async create(nuevaClasificacion) {
         const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = nuevaClasificacion;
         try {
@@ -41,8 +39,7 @@ class Clasificacion {
     }
     
     async getAllSubclasificaciones(type_id) {
-        try {
-          
+        try {          
             const query = `
             SELECT sc.*, i.nombre AS nicono , c.nombre As parent_nombre, c2.nombre as parent_icono
             FROM clasificacion sc
@@ -84,10 +81,10 @@ class Clasificacion {
     async getAllClasificaciones() {
         try {
           const query = `
-            SELECT c.*, i.nombre AS nicono
-            FROM clasificacion c
-            LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
-            ORDER BY c.orden, c.nombre;
+         SELECT c_iconos.* 
+         FROM public.clasificacion AS c_iconos
+         INNER JOIN public.clasificacion AS c_tipos ON c_iconos.type_id = c_tipos.id_clasificacion
+         WHERE c_tipos.nombre = 'Ícono';
           `;
           const result = await pool.query(query);
           return result.rows;
@@ -136,6 +133,30 @@ class Clasificacion {
                 throw new Error("Ya existe una clasificación con este nombre.");
             }
             throw new Error("Error interno del servidor al actualizar la clasificación.");
+        }
+    }
+
+    async delete(id){
+        try {
+            const query = `
+                DELETE FROM clasificacion 
+                WHERE id_clasificacion = $1
+                RETURNING id_clasificacion AS id;
+            `;
+            const result = await pool.query(query, [id]);
+
+            if (result.rows.length === 0){
+                throw new Error("No se encontro la clasificacion especificada");
+            }
+
+            return { mensanje: "Clasificacion eliminada correctamente"};
+        } catch (error) {
+            console.error("Error en clasificacionModel.delete:" , error.message);
+            if (error.code === '23503'){
+                throw new Error("No se puede eliminar esta clasificacion porque esta utilizada por otros registros en el sistema");
+            }
+            throw new error("Error interno del servidor al intertar eliminar la clasificacion");
+
         }
     }
 }

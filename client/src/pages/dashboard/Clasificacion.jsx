@@ -5,12 +5,22 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import { encodeId } from '../../utils/hashUtils';
 import Modal from '../../components/Modal';
+import DeleteModal from '../../components/DeleteModal';
+import { toast } from 'sonner';
 
 export default function Clasificacion() {
-  const { parentClasifications, fetchParentClasifications, loading, error } = useClasificacionStore();
+  const { 
+    parentClasifications, 
+    fetchParentClasifications, 
+    deleteClasificacion,
+    loading, 
+    error 
+  } = useClasificacionStore();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [deleteData, setDeleteData] = useState(null);
 
   useEffect(() => {
     fetchParentClasifications();
@@ -61,6 +71,27 @@ export default function Clasificacion() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditData(null);
+  };
+
+  const openDeleteModal = (clasificacion) => {
+    setDeleteData(clasificacion);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDeleteData(null);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteClasificacion(deleteData.id_clasificacion);
+      toast.success('Clasificación eliminada correctamente');
+      closeDeleteModal();
+    } catch (err) {
+      console.error("Error al eliminar:", err);
+      toast.error('Error al eliminar la clasificación');
+    }
   };
 
   return (
@@ -121,14 +152,18 @@ export default function Clasificacion() {
                         />
                       </button>
                       <button
-                      title={'Editar '+clasificacion.nombre }
+                        title={'Editar '+clasificacion.nombre}
                         onClick={() => openEditModal(clasificacion)}
                         className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-blue-700"
                       >
-                        <FontAwesomeIcon 
-                          icon={iconos.faEdit} 
-                          
-                        />   
+                        <FontAwesomeIcon icon={iconos.faEdit} />
+                      </button>
+                      <button
+                        title={'Eliminar '+clasificacion.nombre}
+                        onClick={() => openDeleteModal(clasificacion)}
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-red-700"
+                      >
+                        <FontAwesomeIcon icon={iconos.faTrash} />
                       </button>
                     </div>
                   </div>
@@ -152,6 +187,13 @@ export default function Clasificacion() {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} editData={editData} />
+      <DeleteModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={closeDeleteModal} 
+        onConfirm={handleDelete}
+        itemName={deleteData?.nombre}
+        itemType="clasificación"
+      />
 
       <style>{`
         @keyframes fadeIn {

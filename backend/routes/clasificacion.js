@@ -16,6 +16,8 @@ router.get('/clasificaciones/all', Clasificacion.getAllClasificaciones);
 // Ruta para actualizar una clasificación
 router.put('/clasificaciones/update/:id', Clasificacion.updateClasificacion);
 
+router.delete('/clasificaciones/delete/:id', Clasificacion.deleteClasificacion);
+
 
 
 

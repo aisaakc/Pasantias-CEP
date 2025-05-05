@@ -5,7 +5,7 @@ import { getParentClassifications,
    update as updateClasificacionAPI,
     getClasificacionHijos,
     getAllClasificaciones,
-    
+    deleteClasificacion
     } from '../api/clasificacion.api';
 
 export const useClasificacionStore = create((set, get) => ({
@@ -189,6 +189,37 @@ export const useClasificacionStore = create((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  // Eliminar clasificación
+  deleteClasificacion: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      await deleteClasificacion(id);
+
+      // Actualizar todos los estados necesarios
+      const [allClasificacionesResponse, parentClasificationsResponse] = await Promise.all([
+        getAllClasificaciones(),
+        getParentClassifications()
+      ]);
+
+      set({
+        allClasificaciones: allClasificacionesResponse.data,
+        parentClasifications: parentClasificationsResponse.data,
+        loading: false
+      });
+
+      return { success: true, message: 'Clasificación eliminada correctamente' };
+
+    } catch (error) {
+      console.error("Error al eliminar clasificacion en el store:", error);
+      let errorMsg = 'Error al eliminar la clasificación.';
+      if (error.response?.data?.error){
+        errorMsg = error.response.data.error;
+      }
+      set({ loading: false, error: errorMsg });
+      throw error;
+    }
+  },
 }));
 
 export default useClasificacionStore;

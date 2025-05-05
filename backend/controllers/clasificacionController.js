@@ -118,6 +118,23 @@ class clasificacionController {
             });
         }
     }
+
+    async deleteClasificacion(req, res) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return res.status(400).json({ error: "ID de clasificación inválido." });
+        }
+
+        try {
+            const resultado = await Clasificacion.delete(id);
+            res.status(200).json(resultado);
+        } catch (error) {
+            console.error("Error en clasificacionController.deleteClasificacion:", error.message);
+            res.status(500).json({
+                error: "Error interno del servidor al eliminar la clasificación."
+            });
+        }
+    }
 }
 
 export default new clasificacionController();

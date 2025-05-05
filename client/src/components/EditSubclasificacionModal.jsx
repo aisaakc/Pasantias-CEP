@@ -84,7 +84,7 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
       };
   
       await updateClasificacion(clasificacionToEdit.id_clasificacion, dataToSend);
-      toast.success('Clasificación editada correctamente');
+      toast.success(`Clasificación "${dataToSend.nombre}" editada correctamente`);
       onClose();
     } catch (err) {
       console.error("Error al actualizar:", err);
@@ -127,8 +127,7 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
           {[
             { name: 'nombre', icon: faFolder, label: 'Nombre' },
             { name: 'descripcion', icon: faLayerGroup, label: 'Descripción' },
-            { name: 'type_id', icon: faLayerGroup, label: 'Tipo' },
-            { name: 'parent_id', icon: faArrowUp, label: 'Clasificación Padre' },
+            
             { name: 'id_icono', icon: faImage, label: 'Icono' }
           ].map((field, index) => (
             <div 

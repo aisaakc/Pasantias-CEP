@@ -86,7 +86,7 @@ export default function Clasificacion() {
   const handleDelete = async () => {
     try {
       await deleteClasificacion(deleteData.id_clasificacion);
-      toast.success('Clasificación eliminada correctamente');
+      toast.success(`Clasificación "${deleteData.nombre}" eliminada correctamente`);
       closeDeleteModal();
     } catch (err) {
       console.error("Error al eliminar:", err);

@@ -6,6 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { decodeId } from '../../utils/hashUtils';
 import EditSubclasificacionModal from '../../components/EditSubclasificacionModal';
 import CreateSubclasificacionModal from '../../components/CreateSubclasificacionModal';
+import DeleteModal from '../../components/DeleteModal';
+import { toast } from 'sonner';
 
 export default function Tipos() {
   const { id: encodedId } = useParams();
@@ -14,10 +16,18 @@ export default function Tipos() {
   const [ordenAscendente, setOrdenAscendente] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
   const [nombreClasificacion, setNombreClasificacion] = useState('');
 
-  const { subClasificaciones, fetchSubClasificaciones, fetchClasificacionById, loading, error } = useClasificacionStore();
+  const { 
+    subClasificaciones, 
+    fetchSubClasificaciones, 
+    fetchClasificacionById, 
+    deleteClasificacion,
+    loading, 
+    error 
+  } = useClasificacionStore();
 
   // Llamamos a la API para obtener las subclasificaciones y la clasificación padre
   useEffect(() => {
@@ -52,6 +62,27 @@ export default function Tipos() {
   const handleEdit = (clasificacion) => {
     setSelectedClasificacion(clasificacion);
     setIsEditModalOpen(true);
+  };
+
+  // Función para abrir el modal de eliminación
+  const handleDelete = (clasificacion) => {
+    setSelectedClasificacion(clasificacion);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Función para confirmar la eliminación
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteClasificacion(selectedClasificacion.id_clasificacion);
+      toast.success(`Subclasificación "${selectedClasificacion.nombre}" eliminada correctamente`);
+      setIsDeleteModalOpen(false);
+      setSelectedClasificacion(null);
+      // Recargar la lista después de eliminar
+      fetchSubClasificaciones(realId);
+    } catch (error) {
+      console.error('Error al eliminar la clasificación:', error);
+      toast.error('Error al eliminar la subclasificación');
+    }
   };
 
   return (
@@ -168,7 +199,10 @@ export default function Tipos() {
                               >
                                 <FontAwesomeIcon icon={iconos.faPen} size="lg" />
                               </button>
-                              <button className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300">
+                              <button 
+                                onClick={() => handleDelete(sub)}
+                                className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
+                              >
                                 <FontAwesomeIcon icon={iconos.faTrash} size="lg" />
                               </button>
                             </div>
@@ -211,6 +245,18 @@ export default function Tipos() {
           }}
           parentId={realId}
           // nombreClasificacion={subClasificaciones[0].parent_nombre}
+        />
+
+        {/* Modal de Eliminación */}
+        <DeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedClasificacion(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          itemName={selectedClasificacion?.nombre || ''}
+          itemType="subclasificación"
         />
       </div>
     </div>

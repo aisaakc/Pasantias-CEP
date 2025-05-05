@@ -59,7 +59,7 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
         id_icono: formData.id_icono !== '' ? parseInt(formData.id_icono) : null,
       };
       await createSubclasificacion(dataToSend);
-      toast.success('Subclasificación creada correctamente');
+      toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
       onClose();
     } catch (error) {
       console.error('Error al crear subclasificación:', error);

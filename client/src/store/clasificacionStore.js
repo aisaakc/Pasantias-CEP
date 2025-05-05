@@ -8,15 +8,23 @@ import { getParentClassifications,
     deleteClasificacion
     } from '../api/clasificacion.api';
 
+/**
+ * Store de Zustand para manejar el estado de las clasificaciones
+ * Incluye funciones para gestionar clasificaciones, subclasificaciones y sus relaciones
+ */
 export const useClasificacionStore = create((set, get) => ({
-  parentClasifications: [],  
-  subClasificaciones: [],     
-  clasificacionHijos: [],    
-  allClasificaciones: [],    
+  // Estado inicial
+  parentClasifications: [],    // Clasificaciones padre
+  subClasificaciones: [],      // Subclasificaciones
+  clasificacionHijos: [],      // Hijos de una clasificación
+  allClasificaciones: [],      // Todas las clasificaciones
+  loading: false,              // Estado de carga
+  error: null,                 // Estado de error
 
-  loading: false,            
-  error: null,               
+  // Utilidades
+  clearError: () => set({ error: null }),
 
+  // Operaciones de lectura
   fetchParentClasifications: async () => {
     set({ loading: true, error: null });
     try {
@@ -102,124 +110,78 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  // Actualizar clasificación
-  updateClasificacion: async (id, data) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await updateClasificacionAPI(id, data);
-
-      // Actualizar todos los estados necesarios
-      const [allClasificacionesResponse, parentClasificationsResponse] = await Promise.all([
-        getAllClasificaciones(),
-        getParentClassifications()
-      ]);
-
-      set({
-        allClasificaciones: allClasificacionesResponse.data,
-        parentClasifications: parentClasificationsResponse.data,
-        loading: false
-      });
-
-      return response.data;
-
-    } catch (error) {
-      console.error("Error al actualizar clasificación:", error);
-      let errorMsg = 'Error al actualizar la clasificación.';
-      if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      }
-      set({ loading: false, error: errorMsg });
-      throw error;
-    }
-  },
-
-  // Crear clasificación
+  // Operaciones de escritura
   createClasificacion: async (data) => {
     set({ loading: true, error: null });
     try {
       const response = await createClasificacionAPI(data);
-
-      // Actualizar todos los estados necesarios
-      const [allClasificacionesResponse, parentClasificationsResponse] = await Promise.all([
-        getAllClasificaciones(),
-        getParentClassifications()
-      ]);
-
-      set({
-        allClasificaciones: allClasificacionesResponse.data,
-        parentClasifications: parentClasificationsResponse.data,
-        loading: false
-      });
-
+      await updateStoreState(set);
       return response.data;
     } catch (error) {
-      console.error("Error al crear clasificación:", error);
-      let errorMsg = 'Error al crear la clasificación.';
-      if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      }
-      set({ loading: false, error: errorMsg });
+      handleError(set, error, 'Error al crear la clasificación.');
       throw error;
     }
   },
 
-  // Crear subclasificación
   createSubclasificacion: async (data) => {
     set({ loading: true, error: null });
     try {
       const response = await createClasificacionAPI(data);
-
-      // Actualizar la lista de subclasificaciones
       const currentState = get();
       set({
         subClasificaciones: [...currentState.subClasificaciones, response.data],
         loading: false
       });
-
       return response.data;
     } catch (error) {
-      console.error("Error al crear subclasificación:", error);
-      let errorMsg = 'Error al crear la subclasificación.';
-      if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      }
-      set({ loading: false, error: errorMsg });
+      handleError(set, error, 'Error al crear la subclasificación.');
       throw error;
     }
   },
 
-  clearError: () => set({ error: null }),
+  updateClasificacion: async (id, data) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await updateClasificacionAPI(id, data);
+      await updateStoreState(set);
+      return response.data;
+    } catch (error) {
+      handleError(set, error, 'Error al actualizar la clasificación.');
+      throw error;
+    }
+  },
 
-  // Eliminar clasificación
   deleteClasificacion: async (id) => {
     set({ loading: true, error: null });
     try {
       await deleteClasificacion(id);
-
-      // Actualizar todos los estados necesarios
-      const [allClasificacionesResponse, parentClasificationsResponse] = await Promise.all([
-        getAllClasificaciones(),
-        getParentClassifications()
-      ]);
-
-      set({
-        allClasificaciones: allClasificacionesResponse.data,
-        parentClasifications: parentClasificationsResponse.data,
-        loading: false
-      });
-
+      await updateStoreState(set);
       return { success: true, message: 'Clasificación eliminada correctamente' };
-
     } catch (error) {
-      console.error("Error al eliminar clasificacion en el store:", error);
-      let errorMsg = 'Error al eliminar la clasificación.';
-      if (error.response?.data?.error){
-        errorMsg = error.response.data.error;
-      }
-      set({ loading: false, error: errorMsg });
+      handleError(set, error, 'Error al eliminar la clasificación.');
       throw error;
     }
   },
 }));
+
+// Funciones auxiliares
+const updateStoreState = async (set) => {
+  const [allClasificacionesResponse, parentClasificationsResponse] = await Promise.all([
+    getAllClasificaciones(),
+    getParentClassifications()
+  ]);
+
+  set({
+    allClasificaciones: allClasificacionesResponse.data,
+    parentClasifications: parentClasificationsResponse.data,
+    loading: false
+  });
+};
+
+const handleError = (set, error, defaultMessage) => {
+  console.error("Error en la operación:", error);
+  const errorMsg = error.response?.data?.error || defaultMessage;
+  set({ loading: false, error: errorMsg });
+};
 
 export default useClasificacionStore;

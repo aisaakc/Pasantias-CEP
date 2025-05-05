@@ -94,14 +94,14 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
   
       if (editData) {
         await updateClasificacion(editData.id_clasificacion, dataToSend);
-        toast.success('Clasificación actualizada correctamente', {
-          description: 'Los cambios han sido guardados exitosamente',
+        toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`, {
+          description: `Los cambios en la clasificación "${dataToSend.nombre}" han sido guardados exitosamente`,
           duration: 3000,
         });
       } else {
         await createClasificacion(dataToSend);
-        toast.success('Clasificación creada correctamente', {
-          description: 'La nueva clasificación ha sido agregada exitosamente',
+        toast.success(`Clasificación "${dataToSend.nombre}" creada correctamente`, {
+          description: `La clasificación "${dataToSend.nombre}" ha sido agregada exitosamente`,
           duration: 3000,
         });
       }

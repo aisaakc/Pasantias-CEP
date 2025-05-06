@@ -116,6 +116,14 @@ export const useClasificacionStore = create((set, get) => ({
     try {
       const response = await createClasificacionAPI(data);
       await updateStoreState(set);
+      // Si la clasificación tiene un type_id, actualizar las subclasificaciones
+      if (data.type_id) {
+        const subResponse = await getSubclasificaciones(data.type_id);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data
+        }));
+      }
       return response.data;
     } catch (error) {
       handleError(set, error, 'Error al crear la clasificación.');
@@ -127,11 +135,15 @@ export const useClasificacionStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await createClasificacionAPI(data);
-      const currentState = get();
-      set({
-        subClasificaciones: [...currentState.subClasificaciones, response.data],
-        loading: false
-      });
+      // Actualizar las subclasificaciones inmediatamente después de crear una nueva
+      if (data.type_id) {
+        const subResponse = await getSubclasificaciones(data.type_id);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data,
+          loading: false
+        }));
+      }
       return response.data;
     } catch (error) {
       handleError(set, error, 'Error al crear la subclasificación.');

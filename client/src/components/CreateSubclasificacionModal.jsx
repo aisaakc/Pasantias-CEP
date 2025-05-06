@@ -57,13 +57,29 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
         ...formData,
         type_id: parentId,
         id_icono: formData.id_icono !== '' ? parseInt(formData.id_icono) : null,
+        orden: '0'
       };
-      await createSubclasificacion(dataToSend);
-      toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
-      onClose();
+      
+      if (!dataToSend.nombre) {
+        toast.error('El nombre es obligatorio');
+        return;
+      }
+
+      const result = await createSubclasificacion(dataToSend);
+      if (result) {
+        toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
+        // Limpiar el formulario
+        setFormData({
+          nombre: '',
+          descripcion: '',
+          id_icono: ''
+        });
+        onClose();
+      }
     } catch (error) {
       console.error('Error al crear subclasificación:', error);
-      toast.error('Error al crear la subclasificación');
+      const errorMessage = error.response?.data?.error || 'Error al crear la subclasificación';
+      toast.error(errorMessage);
     }
   };
 

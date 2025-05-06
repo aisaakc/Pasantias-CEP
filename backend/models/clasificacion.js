@@ -41,19 +41,18 @@ class Clasificacion {
     async getAllSubclasificaciones(type_id) {
         try {          
             const query = `
-            SELECT sc.*, i.nombre AS nicono , c.nombre As parent_nombre, c2.nombre as parent_icono
+            SELECT sc.*, i.nombre AS nicono, c.nombre AS parent_nombre
             FROM clasificacion sc
-            INNER JOIN clasificacion c ON sc.type_id = c.id_clasificacion
-			INNER JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion 
+            LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
             LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
-            WHERE c.id_clasificacion = $1
+            WHERE sc.type_id = $1
             ORDER BY sc.orden, sc.nombre;
-        `;
+            `;
             
             const result = await pool.query(query, [type_id]);  
             return result.rows;
         } catch (error) {
-            console.error("Error en getAllDescendants (pg):", error.message);
+            console.error("Error en getAllSubclasificaciones:", error.message);
             throw new Error("Error interno del servidor al obtener subclasificaciones.");
         }
     } 

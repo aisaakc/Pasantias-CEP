@@ -4,17 +4,20 @@ import Section from '../../components/Section';
 import useAuthStore from '../../store/authStore';
 import { toast } from 'sonner';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { loginSchema } from '../../schemas/login.shema';
 
 export default function Login({ redirectTo }) {
   const navigate = useNavigate();
 
   const { loginUser, loading, error, successMessage, clearMessages } = useAuthStore();
+  
 
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [validationError, setValidationError] = useState('');
 
   const togglePassword = () => setShowPassword(!showPassword);
 
@@ -23,23 +26,31 @@ export default function Login({ redirectTo }) {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setValidationError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationError('');
 
-    if (!formData.email || !formData.password) {
-      toast.warning('Por favor, ingresa tu correo/cédula y contraseña.'); // ✅ Usa toast
+    try {
+      // Validar el formulario
+      loginSchema.parse(formData);
+
+      const credentialsToSend = {
+        gmail: formData.email.includes('@') ? formData.email : undefined,
+        cedula: !formData.email.includes('@') ? formData.email : undefined,
+        contraseña: formData.password,
+      };
+
+      await loginUser(credentialsToSend);
+    } catch (error) {
+      if (error.errors) {
+        setValidationError(error.errors[0].message);
+        toast.error(error.errors[0].message);
+      }
       return;
     }
-
-    const credentialsToSend = {
-      gmail: formData.email.includes('@') ? formData.email : undefined,
-      cedula: !formData.email.includes('@') ? formData.email : undefined,
-      contraseña: formData.password,
-    };
-
-    await loginUser(credentialsToSend);
   };
 
   useEffect(() => {

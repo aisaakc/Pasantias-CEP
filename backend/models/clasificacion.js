@@ -41,10 +41,11 @@ class Clasificacion {
     async getAllSubclasificaciones(type_id) {
         try {          
             const query = `
-            SELECT sc.*, i.nombre AS nicono, c.nombre AS parent_nombre
+            SELECT sc.*, i.nombre AS nicono, c.nombre AS parent_nombre, c2.nombre as parent_icono
             FROM clasificacion sc
             LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
             LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
+            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion
             WHERE sc.type_id = $1
             ORDER BY sc.orden, sc.nombre;
             `;

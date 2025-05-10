@@ -43,6 +43,7 @@ class Clasificacion {
         console.log("hola mundo 3");
         console.log(type_id, parent_id)
         try {          
+<<<<<<< HEAD
             let query = `
            SELECT sc.*, i.nombre AS nicono , sc.parent_id as parentID, c.nombre AS parent_nombre, c2.nombre as parent_icono 
            FROM clasificacion sc            
@@ -63,6 +64,19 @@ class Clasificacion {
               console.log(query);
             const result = await pool.query(query, queryParams );
             console.log('Resultado de la consulta:...', result.rows); // Para depuración
+=======
+            const query = `
+            SELECT sc.*, i.nombre AS nicono, c.nombre AS parent_nombre, c2.nombre as parent_icono
+            FROM clasificacion sc
+            LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
+            LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
+            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion
+            WHERE sc.type_id = $1
+            ORDER BY sc.orden, sc.nombre;
+            `;
+            
+            const result = await pool.query(query, [type_id]);  
+>>>>>>> 55f5d5c62450ff5235bc4e20455292b80905cf07
             return result.rows;
         } catch (error) {
             console.error("Error en getAllSubclasificaciones:", error.message);

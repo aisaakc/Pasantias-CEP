@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 
-export default function DeleteModal({ isOpen, onClose, onConfirm, itemName, itemType = "clasificación" }) {
+export default function DeleteModal({ isOpen, onClose, onConfirm, itemName, itemType = "clasificación", itemIcon }) {
   if (!isOpen) return null;
 
   return (
@@ -19,9 +19,10 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, itemName, item
             Confirmar Eliminación
           </h3>
           <p className="text-gray-600 text-lg mb-2">
-            ¿Estás seguro que deseas eliminar la {itemType}?
+            ¿Estás seguro  eliminar la {itemType}?
           </p>
-          <p className="text-gray-800 font-medium">
+          <p className="text-gray-800 font-medium flex items-center justify-center gap-2">
+            {itemIcon && <FontAwesomeIcon icon={itemIcon} className="text-xl" />}
             "{itemName}"
           </p>
           <p className="text-red-500 text-sm mt-2">

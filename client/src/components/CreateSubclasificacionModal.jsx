@@ -12,6 +12,7 @@ import {
   faImage, 
   faLayerGroup
 } from '@fortawesome/free-solid-svg-icons';
+import { modalSchema } from '../schemas/modal.schema';
 
 export default function CreateSubclasificacionModal({ isOpen, onClose, parentId, nombreClasificacion }) {
   const { createSubclasificacion, loading, error } = useClasificacionStore();
@@ -59,15 +60,33 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
         id_icono: formData.id_icono !== '' ? parseInt(formData.id_icono) : null,
         orden: '0'
       };
-      
-      if (!dataToSend.nombre) {
+
+  const parsedData = (values) => {
+    try {
+      modalSchema.parse(values);
+      return {};
+    } catch (error) {
+      const formErrors = {};
+      error.errors.forEach((err) => {
+        const field = err.path[0];
+        if (!formErrors[field]) {
+          formErrors[field] = err.message;
+        }
+      });
+      return formErrors;
+    }
+  }
+  
+  ;
+
+      if (!parsedData.nombre) {                   
         toast.error('El nombre es obligatorio');
         return;
       }
 
-      const result = await createSubclasificacion(dataToSend);
+      const result = await createSubclasificacion(parsedData);
       if (result) {
-        toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
+        toast.success(`Subclasificación "${parsedData.nombre}" creada correctamente`);
         // Limpiar el formulario
         setFormData({
           nombre: '',
@@ -115,7 +134,10 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form 
+        onSubmit={handleSubmit}
+        validate={parsedData}
+        >
           <div className="p-6 space-y-5">
             {[
               { name: 'nombre', icon: faFolder, label: 'Nombre' },
@@ -126,6 +148,7 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
                 key={field.name}
                 className={`transform transition-all duration-300 animate-fade-slide-up`}
                 style={{ animationDelay: `${index * 100}ms` }}
+                
               >
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />

@@ -8,6 +8,10 @@ router.get('/clasificaciones/parent', Clasificacion.getParentClasificaciones);
 router.post('/clasificaciones/create', Clasificacion.createClasificacion);
 
 router.get('/clasificaciones/tipo/:id', Clasificacion.getAllSubclasificaciones);
+router.get('/clasificaciones/tipo/:id/:id_parent', Clasificacion.getAllSubclasificaciones);
+
+
+
 
 router.get('/clasificaciones/parent/:id', Clasificacion.getAllHijos);
 

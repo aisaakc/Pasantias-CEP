@@ -5,7 +5,7 @@ import { getParentClassifications,
    update as updateClasificacionAPI,
     getClasificacionHijos,
     getAllClasificaciones,
-    deleteClasificacion
+    deleteClasificacion 
     } from '../api/clasificacion.api';
 
 /**

@@ -12,6 +12,7 @@ export default function Registro() {
     generos,
     roles,
     preguntas,
+    getSubclassificationsById,
     loading,
     error,
     successMessage,

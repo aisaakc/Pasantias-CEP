@@ -13,6 +13,7 @@ import {
   faLayerGroup, 
   faArrowUp 
 } from '@fortawesome/free-solid-svg-icons';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
 
 const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => {
   const { updateClasificacion, loading, error, clearError } = useClasificacionStore();
@@ -32,6 +33,8 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
 
   useEffect(() => {
     if (isOpen && clasificacionToEdit) {
+      console.log('Clasificación a editar:', clasificacionToEdit);
+      console.log('Ícono de la clasificación:', clasificacionToEdit.nicono);
       setFormData({
         nombre: clasificacionToEdit.nombre || '',
         descripcion: clasificacionToEdit.descripcion || '',
@@ -112,7 +115,13 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-             Editar la subclasificación {clasificacionToEdit?.nombre}
+              Editar {clasificacionToEdit?.nombre} {clasificacionToEdit?.nicono && (
+                <FontAwesomeIcon
+                  icon={iconos[clasificacionToEdit.nicono] || iconos.faFile}
+                  className="inline-block ml-2 text-blue-600"
+                  size="lg"
+                />
+              )}
             </h2>
             <button 
               onClick={onClose}

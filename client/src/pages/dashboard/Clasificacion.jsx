@@ -100,12 +100,11 @@ export default function Clasificacion() {
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent animate-fade-in">
-            Clasificaciones Principales
+            Configuración 
           </h1>
           <button
             onClick={openModal}
-            className="bg-gray-800 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-gray-700"
-          >
+            className="bg-blue-600 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-blue-900">
             <FontAwesomeIcon icon={iconos.faPlus} />
             <span>Agregar</span>
           </button>
@@ -115,7 +114,7 @@ export default function Clasificacion() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {parentClasifications && parentClasifications.length > 0 ? (
             parentClasifications
-              .filter(clasificacion => clasificacion.type_id === null && clasificacion.parent_id === null)
+              .filter(clasificacion => clasificacion.type_id === null )
               .map((clasificacion, index) => {
               const Icon = iconos[clasificacion.nicono] || iconos.faFile;
               return (
@@ -143,11 +142,10 @@ export default function Clasificacion() {
                     <div className="flex justify-center space-x-3">
                       <button
                         onClick={() => navigate(`/dashboard/tipos/${encodeId(clasificacion.id_clasificacion)}`)}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-gray-700"
-                      >
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-blue-800">
                         Ver Detalles
                         <FontAwesomeIcon 
-                          icon={iconos.faArrowRight} 
+                          icon={iconos.faListUl} 
                           className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" 
                         />
                       </button>

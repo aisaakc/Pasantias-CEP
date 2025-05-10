@@ -50,18 +50,26 @@ class clasificacionController {
     }
 
     async getAllSubclasificaciones(req, res) {
+        console.log("hola mundo 2");
         const type_id = parseInt(req.params.id); 
+        const parent_id = parseInt(req.params.id_parent);
+       
         if (isNaN(type_id)) {
             return res.status(400).json({ error: "ID de clasificación inválido." });
         }
+        // if (isNaN(parent_id)) {
+        //     return res.status(400).json({ error: "ID de parent inválido..." });
+        // }
+        
         
         try {
-            const descendants = await Clasificacion.getAllSubclasificaciones(type_id);
+            const descendants = await Clasificacion.getAllSubclasificaciones(type_id, parent_id);
+            
             res.json(descendants); 
         } catch (error) {
             console.error("Error en clasificacionController.getAllSubclasificaciones:", error.message);
             res.status(500).json({
-                error: "Error interno del servidor al obtener subclasificaciones."
+                error: "Error interno del servidor al obtener subclasificaciones...."
             });
         }
     }

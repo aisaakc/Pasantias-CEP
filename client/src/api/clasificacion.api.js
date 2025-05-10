@@ -12,6 +12,9 @@ export const update = async (id, clasificacionData) =>
 export const getSubclasificaciones = async (id) => 
     axios.get(`http://localhost:3001/api/clasificaciones/tipo/${id}`);
 
+export const getAllSubclasificaciones = async (id, id_parent) => 
+    axios.get(`http://localhost:3001/api/clasificaciones/tipo/${id}/${id_parent}`);
+
 export const getClasificacionHijos = async (id) =>
     axios.get(`http://localhost:3001/api/clasificaciones/parent/${id}`);
 

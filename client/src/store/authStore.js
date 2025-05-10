@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getGeneros, getRoles, getPreguntas, register, login } from '../api/auth.api';
+import { getGeneros, getRoles, getPreguntas, register, login, getSubclassificationsById } from '../api/auth.api';
 
 export const useAuthStore = create((set) => ({
   generos: [],
@@ -10,19 +10,31 @@ export const useAuthStore = create((set) => ({
   successMessage: null,
   isAuthenticated: !!localStorage.getItem('token'), // verifica si ya hay token
 
+
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
     try {
       set({ loading: true });
-      const [generosResponse, rolesResponse, preguntasResponse] = await Promise.all([
-        getGeneros(),
-        getRoles(),
-        getPreguntas(),
+      // const [generosResponse, rolesResponse, preguntasResponse, SubclassificationsResponse ] = await Promise.all([
+       const [ preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
+
+        // getGeneros(),    
+        // getRoles(),
+        // getPreguntas(),
+        getSubclassificationsById(8),
+        getSubclassificationsById(1),
+        getSubclassificationsById(3),
+        // getSubclassificationsById(ID_PREGUNTA),
+        // getSubclassificationsById(ID_GENERO),
+        // getSubclassificationsById(ID_ROLES),
+
+        
       ]);
       set({
-        generos: generosResponse.data,
+        // generos: generosResponse.data,
         roles: rolesResponse.data,
         preguntas: preguntasResponse.data,
+        generos : generosResponse.data,
         loading: false,
       });
     } catch (error) {

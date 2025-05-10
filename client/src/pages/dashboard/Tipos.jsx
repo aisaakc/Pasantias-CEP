@@ -4,12 +4,17 @@ import useClasificacionStore from '../../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { decodeId } from '../../utils/hashUtils';
+import { useNavigate } from 'react-router-dom';
+
 import EditSubclasificacionModal from '../../components/EditSubclasificacionModal';
 import CreateSubclasificacionModal from '../../components/CreateSubclasificacionModal';
+import { encodeId } from '../../utils/hashUtils';
+
 import DeleteModal from '../../components/DeleteModal';
 import { toast } from 'sonner';
 
 export default function Tipos() {
+  const navigate = useNavigate();
   const { id: encodedId } = useParams();
   const realId = decodeId(encodedId);
   const [busqueda, setBusqueda] = useState('');
@@ -60,12 +65,15 @@ export default function Tipos() {
 
   // Función para abrir el modal de edición
   const handleEdit = (clasificacion) => {
+    console.log('Clasificación seleccionada para editar:', clasificacion);
     setSelectedClasificacion(clasificacion);
     setIsEditModalOpen(true);
   };
 
   // Función para abrir el modal de eliminación
   const handleDelete = (clasificacion) => {
+    console.log('Clasificación a eliminar:', clasificacion);
+    console.log('Ícono de la clasificación:', clasificacion.nicono);
     setSelectedClasificacion(clasificacion);
     setIsDeleteModalOpen(true);
   };
@@ -204,6 +212,22 @@ export default function Tipos() {
                                 className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
                               >
                                 <FontAwesomeIcon icon={iconos.faTrash} size="lg" />
+
+                              </button>
+                             
+                              <button 
+                              onClick={() => navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeId(sub.id_clasificacion)}`)}
+                              className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
+                              >
+                                 <FontAwesomeIcon icon={iconos.faFolderTree} size="lg" />
+                                 {sub.id_clasificacion}
+                                  - 
+                                 {sub.parent_id}
+
+                                 {JSON.stringify(sub)}
+
+                               
+                             
                               </button>
                             </div>
                           </td>
@@ -257,6 +281,7 @@ export default function Tipos() {
           onConfirm={handleConfirmDelete}
           itemName={selectedClasificacion?.nombre || ''}
           itemType="subclasificación"
+          itemIcon={selectedClasificacion?.nicono ? iconos[selectedClasificacion.nicono] : iconos.faFile}
         />
       </div>
     </div>

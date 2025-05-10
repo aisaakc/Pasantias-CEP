@@ -7,7 +7,7 @@ class Clasificacion {
                 SELECT c.*, i.nombre AS nicono
                 FROM clasificacion c
                 LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
-                WHERE c.type_id IS NULL AND c.parent_id IS NULL
+                WHERE c.type_id IS NULL 
                 ORDER BY c.orden, c.nombre;
             `;
             const result = await pool.query(query);
@@ -23,7 +23,7 @@ class Clasificacion {
         try {
             const query = `
                 INSERT INTO clasificacion (nombre, descripcion, imagen, orden, type_id, parent_id, id_icono)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                VALUES (TRIM($1), TRIM($2, $3, $4, $5, $6, $7)
                 RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
             `;
             const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono];  
@@ -38,18 +38,31 @@ class Clasificacion {
         }
     }
     
-    async getAllSubclasificaciones(type_id) {
+    async getAllSubclasificaciones(type_id, parent_id) {
+        // const parent_id = 11;
+        console.log("hola mundo 3");
+        console.log(type_id, parent_id)
         try {          
-            const query = `
-            SELECT sc.*, i.nombre AS nicono, c.nombre AS parent_nombre
-            FROM clasificacion sc
-            LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
-            LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
-            WHERE sc.type_id = $1
-            ORDER BY sc.orden, sc.nombre;
-            `;
-            
-            const result = await pool.query(query, [type_id]);  
+            let query = `
+           SELECT sc.*, i.nombre AS nicono , sc.parent_id as parentID, c.nombre AS parent_nombre, c2.nombre as parent_icono 
+           FROM clasificacion sc            
+           LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
+           LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion                  
+           LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion        
+           WHERE sc.type_id = $1 `;
+            let queryParams = [type_id];
+
+            if (parent_id > 0) {
+                query += ` AND sc.parent_id = $2 `;
+                queryParams.push(parent_id);
+              } else {
+                query += ` AND sc.parent_id IS NULL `;
+              }
+          
+              query += ` ORDER BY sc.orden, sc.nombre;`;
+              console.log(query);
+            const result = await pool.query(query, queryParams );
+            console.log('Resultado de la consulta:...', result.rows); // Para depuración
             return result.rows;
         } catch (error) {
             console.error("Error en getAllSubclasificaciones:", error.message);
@@ -145,17 +158,16 @@ class Clasificacion {
             const result = await pool.query(query, [id]);
 
             if (result.rows.length === 0){
-                throw new Error("No se encontro la clasificacion especificada");
+                throw new Error("No se encontró la clasificación especificada");
             }
 
-            return { mensanje: "Clasificacion eliminada correctamente"};
+            return { mensaje: "Clasificación eliminada correctamente"};
         } catch (error) {
             console.error("Error en clasificacionModel.delete:" , error.message);
             if (error.code === '23503'){
-                throw new Error("No se puede eliminar esta clasificacion porque esta utilizada por otros registros en el sistema");
+                throw new Error("No se puede eliminar esta clasificación porque está utilizada por otros registros en el sistema");
             }
-            throw new error("Error interno del servidor al intertar eliminar la clasificacion");
-
+            throw new Error("Error interno del servidor al intentar eliminar la clasificación.");
         }
     }
 }

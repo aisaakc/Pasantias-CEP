@@ -9,11 +9,3 @@ export const login = async (userAuth) =>
 export const getSubclassificationsById = async (id) =>
     axios.get(`http://localhost:3001/api/auth/SubC/${id}`);
 
-export const getGeneros = async () =>
-    axios.get('http://localhost:3001/api/auth/generos');
-
-export const getRoles = async () => 
-    axios.get('http://localhost:3001/api/auth/roles');
-
-export const getPreguntas = async () => 
-    axios.get('http://localhost:3001/api/auth/preguntas');

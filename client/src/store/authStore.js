@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { getGeneros, getRoles, getPreguntas, register, login, getSubclassificationsById } from '../api/auth.api';
+
+import {
+   register, login, getSubclassificationsById } from '../api/auth.api';
 
 export const useAuthStore = create((set) => ({
   generos: [],
@@ -10,15 +12,13 @@ export const useAuthStore = create((set) => ({
   successMessage: null,
   isAuthenticated: !!localStorage.getItem('token'), 
 
-
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
     try {
       set({ loading: true });
      
        const [ preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
-
-      
+              
         getSubclassificationsById(8),
         getSubclassificationsById(1),
         getSubclassificationsById(3),

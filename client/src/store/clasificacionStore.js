@@ -1,5 +1,6 @@
 import { create } from 'zustand';  
-import { getParentClassifications,
+import { 
+   getParentClassifications,
    getSubclasificaciones, 
    create as createClasificacionAPI,
    update as updateClasificacionAPI,
@@ -9,10 +10,7 @@ import { getParentClassifications,
     getAllSubclasificaciones
     } from '../api/clasificacion.api';
 
-/**
- * Store de Zustand para manejar el estado de las clasificaciones
- * Incluye funciones para gestionar clasificaciones, subclasificaciones y sus relaciones
- */
+
 export const useClasificacionStore = create((set, get) => ({
   // Estado inicial
   parentClasifications: [],    // Clasificaciones padre
@@ -43,26 +41,26 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  fetchClasificacionById: async (id )  => {
-    set({ loading: true, error: null });
-    console.log("FETCH_ByID: "+id+ " - "+id_parent);
-    try {
-      const response = await getClasificacionById(id);
-      set({ clasificacionById: response.data, loading: false });
-    } catch (error) {
-      console.error("Error en fetchClasificacionById:", error);
-      set({
-        loading: false,
-        error: 'Error al obtener la clasificación por ID.',
-      });
-    }
-  },
+  // fetchClasificacionById: async (id )  => {
+  //   set({ loading: true, error: null });
+    
+  //   try {
+  //     const response = await getClasificacionById(id);
+  //     set({ clasificacionById: response.data, loading: false });
+  //   } catch (error) {
+  //     console.error("Error en fetchClasificacionById:", error);
+  //     set({
+  //       loading: false,
+  //       error: 'Error al obtener la clasificación por ID.',
+  //     });
+  //   }
+  // },
 
   // Obtener subclasificaciones
   fetchSubClasificaciones: async ( id, id_parent) => {
     set({ loading: true, error: null });
     // id_parent = 11;
-    console.log("FETCH: id:"+id+ " - id_parent:"+id_parent);
+    
     try {
       const response = await getAllSubclasificaciones(id , id_parent);
       set({

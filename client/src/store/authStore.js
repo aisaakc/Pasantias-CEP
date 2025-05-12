@@ -8,27 +8,23 @@ export const useAuthStore = create((set) => ({
   loading: false,
   error: null,
   successMessage: null,
-  isAuthenticated: !!localStorage.getItem('token'), // verifica si ya hay token
+  isAuthenticated: !!localStorage.getItem('token'), 
 
 
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
     try {
       set({ loading: true });
-      // const [generosResponse, rolesResponse, preguntasResponse, SubclassificationsResponse ] = await Promise.all([
+     
        const [ preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
 
-        // getGeneros(),    
-        // getRoles(),
-        // getPreguntas(),
+      
         getSubclassificationsById(8),
         getSubclassificationsById(1),
         getSubclassificationsById(3),
         // getSubclassificationsById(ID_PREGUNTA),
         // getSubclassificationsById(ID_GENERO),
         // getSubclassificationsById(ID_ROLES),
-
-        
       ]);
       set({
         // generos: generosResponse.data,

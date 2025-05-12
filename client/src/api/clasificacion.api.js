@@ -23,5 +23,3 @@ export const getAllClasificaciones = async () =>
 
 export const deleteClasificacion = async (id) =>
     axios.delete(`http://localhost:3001/api/clasificaciones/delete/${id}`);
-
-

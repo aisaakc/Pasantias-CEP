@@ -3,20 +3,24 @@ import { useParams } from 'react-router-dom';
 import useClasificacionStore from '../../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { decodeId } from '../../utils/hashUtils';
+import { decodeId  } from '../../utils/hashUtils';
+import { decodeParentId  } from '../../utils/hashUtils';
 import { useNavigate } from 'react-router-dom';
-
 import EditSubclasificacionModal from '../../components/EditSubclasificacionModal';
 import CreateSubclasificacionModal from '../../components/CreateSubclasificacionModal';
 import { encodeId } from '../../utils/hashUtils';
+import { encodeParentId} from '../../utils/hashUtils';
+
 
 import DeleteModal from '../../components/DeleteModal';
 import { toast } from 'sonner';
 
 export default function Tipos() {
   const navigate = useNavigate();
-  const { id: encodedId } = useParams();
+  const { id: encodedId, parentId: encodedParentId } = useParams();
+    console.log(JSON.stringify(useParams())+ " - parentId:"+encodedParentId);
   const realId = decodeId(encodedId);
+  const realParentId = decodeParentId(encodedParentId);
   const [busqueda, setBusqueda] = useState('');
   const [ordenAscendente, setOrdenAscendente] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -36,14 +40,15 @@ export default function Tipos() {
 
   // Llamamos a la API para obtener las subclasificaciones y la clasificación padre
   useEffect(() => {
+      console.log("useEffect > realParentId: "+realParentId);
     if (realId) {
-      fetchSubClasificaciones(realId).then(response => {
+      fetchSubClasificaciones(realId, realParentId).then(response => {
         if (response?.data) {
           setNombreClasificacion(response.data.nombre);
         }
       });
     }
-  }, [realId, fetchSubClasificaciones, fetchClasificacionById]);
+  }, [realId, realParentId, fetchSubClasificaciones, fetchClasificacionById]);
 
   // Filtrar y ordenar subclasificaciones
   const subClasificacionesFiltradas = subClasificaciones
@@ -216,15 +221,10 @@ export default function Tipos() {
                               </button>
                              
                               <button 
-                              onClick={() => navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeId(sub.id_clasificacion)}`)}
+                              onClick={() => navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeParentId(sub.id_clasificacion)}`)}
                               className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
                               >
                                  <FontAwesomeIcon icon={iconos.faFolderTree} size="lg" />
-                                 {sub.id_clasificacion}
-                                  - 
-                                 {sub.parent_id}
-
-                                 {JSON.stringify(sub)}
 
                                
                              
@@ -268,7 +268,8 @@ export default function Tipos() {
             fetchSubClasificaciones(realId);
           }}
           parentId={realId}
-          // nombreClasificacion={subClasificaciones[0].parent_nombre}
+          nombreClasificacion={subClasificaciones.length > 0 ? subClasificaciones[0].parent_nombre : 'Subclasificación'}
+          parentIcono={subClasificaciones.length > 0 ? subClasificaciones[0].parent_icono : null}
         />
 
         {/* Modal de Eliminación */}

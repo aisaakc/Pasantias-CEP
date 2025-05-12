@@ -5,7 +5,8 @@ import { getParentClassifications,
    update as updateClasificacionAPI,
     getClasificacionHijos,
     getAllClasificaciones,
-    deleteClasificacion 
+    deleteClasificacion,
+    getAllSubclasificaciones
     } from '../api/clasificacion.api';
 
 /**
@@ -42,8 +43,9 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  fetchClasificacionById: async (id) => {
+  fetchClasificacionById: async (id )  => {
     set({ loading: true, error: null });
+    console.log("FETCH_ByID: "+id+ " - "+id_parent);
     try {
       const response = await getClasificacionById(id);
       set({ clasificacionById: response.data, loading: false });
@@ -57,10 +59,12 @@ export const useClasificacionStore = create((set, get) => ({
   },
 
   // Obtener subclasificaciones
-  fetchSubClasificaciones: async (id) => {
+  fetchSubClasificaciones: async ( id, id_parent) => {
     set({ loading: true, error: null });
+    // id_parent = 11;
+    console.log("FETCH: id:"+id+ " - id_parent:"+id_parent);
     try {
-      const response = await getSubclasificaciones(id);
+      const response = await getAllSubclasificaciones(id , id_parent);
       set({
         subClasificaciones: response.data,
         loading: false,
@@ -134,19 +138,31 @@ export const useClasificacionStore = create((set, get) => ({
   createSubclasificacion: async (data) => {
     set({ loading: true, error: null });
     try {
+      // Validar datos requeridos
+      if (!data.nombre || !data.type_id) {
+        throw new Error('El nombre y el tipo son campos requeridos');
+      }
+
       const response = await createClasificacionAPI(data);
+      
       // Actualizar las subclasificaciones inmediatamente después de crear una nueva
       if (data.type_id) {
         const subResponse = await getSubclasificaciones(data.type_id);
         set(state => ({
           ...state,
           subClasificaciones: subResponse.data,
-          loading: false
+          loading: false,
+          error: null
         }));
       }
       return response.data;
     } catch (error) {
-      handleError(set, error, 'Error al crear la subclasificación.');
+      const errorMessage = error.response?.data?.error || error.message || 'Error al crear la subclasificación';
+      set(state => ({
+        ...state,
+        loading: false,
+        error: errorMessage
+      }));
       throw error;
     }
   },
@@ -154,11 +170,40 @@ export const useClasificacionStore = create((set, get) => ({
   updateClasificacion: async (id, data) => {
     set({ loading: true, error: null });
     try {
+      // Validar datos requeridos
+      if (!data.nombre) {
+        throw new Error('El nombre es un campo requerido');
+      }
+
       const response = await updateClasificacionAPI(id, data);
-      await updateStoreState(set);
+      
+      // Actualizar el estado después de la actualización
+      if (data.type_id) {
+        const subResponse = await getSubclasificaciones(data.type_id);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data,
+          loading: false,
+          error: null
+        }));
+      } else {
+        // Si no es una subclasificación, actualizar las clasificaciones principales
+        const parentResponse = await getParentClassifications();
+        set(state => ({
+          ...state,
+          parentClasifications: parentResponse.data,
+          loading: false,
+          error: null
+        }));
+      }
       return response.data;
     } catch (error) {
-      handleError(set, error, 'Error al actualizar la clasificación.');
+      const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar la clasificación';
+      set(state => ({
+        ...state,
+        loading: false,
+        error: errorMessage
+      }));
       throw error;
     }
   },

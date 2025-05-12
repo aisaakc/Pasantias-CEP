@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { 
   faXmark, 
   faSave, 
@@ -14,7 +15,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { modalSchema } from '../schemas/modal.schema';
 
-export default function CreateSubclasificacionModal({ isOpen, onClose, parentId, nombreClasificacion }) {
+export default function CreateSubclasificacionModal({ isOpen, onClose, parentId, nombreClasificacion, parentIcono }) {
   const { createSubclasificacion, loading, error } = useClasificacionStore();
   const [clasificaciones, setClasificaciones] = useState([]);
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -26,6 +27,14 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
     descripcion: '',
     id_icono: ''
   });
+
+  // Función para obtener el icono correcto
+  const getIcon = (iconName) => {
+    if (!iconName) return faFolder;
+    // Asegurarse de que el nombre del icono tenga el prefijo 'fa'
+    const iconKey = iconName.startsWith('fa') ? iconName : `fa${iconName}`;
+    return iconos[iconKey] || faFolder;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -44,7 +53,9 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
-      setClasificaciones(response.data);
+      // Filtrar solo los iconos (los que tienen type_id = 27)
+      const iconos = response.data.filter(c => c.type_id === 27);
+      setClasificaciones(iconos);
     } catch (err) {
       console.error('Error al cargar clasificaciones:', err);
       toast.error('Error al cargar las clasificaciones');
@@ -61,32 +72,24 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
         orden: '0'
       };
 
-  const parsedData = (values) => {
-    try {
-      modalSchema.parse(values);
-      return {};
-    } catch (error) {
-      const formErrors = {};
-      error.errors.forEach((err) => {
-        const field = err.path[0];
-        if (!formErrors[field]) {
-          formErrors[field] = err.message;
-        }
-      });
-      return formErrors;
-    }
-  }
-  
-  ;
-
-      if (!parsedData.nombre) {                   
-        toast.error('El nombre es obligatorio');
+      // Validate the data using the schema
+      try {
+        modalSchema.parse(dataToSend);
+      } catch (validationError) {
+        const formErrors = {};
+        validationError.errors.forEach((err) => {
+          const field = err.path[0];
+          if (!formErrors[field]) {
+            formErrors[field] = err.message;
+          }
+        });
+        Object.values(formErrors).forEach(error => toast.error(error));
         return;
       }
 
-      const result = await createSubclasificacion(parsedData);
+      const result = await createSubclasificacion(dataToSend);
       if (result) {
-        toast.success(`Subclasificación "${parsedData.nombre}" creada correctamente`);
+        toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
         // Limpiar el formulario
         setFormData({
           nombre: '',
@@ -125,7 +128,14 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
       <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all duration-300 ${animationClass}`}>
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">Crear {nombreClasificacion}</h2>
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            Crear {nombreClasificacion} {parentIcono && (
+              <FontAwesomeIcon 
+                icon={iconos[parentIcono] || faFolder} 
+                className="text-blue-600"
+              />
+            )}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -134,10 +144,7 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
           </button>
         </div>
 
-        <form 
-        onSubmit={handleSubmit}
-        validate={parsedData}
-        >
+        <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-5">
             {[
               { name: 'nombre', icon: faFolder, label: 'Nombre' },
@@ -148,7 +155,6 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
                 key={field.name}
                 className={`transform transition-all duration-300 animate-fade-slide-up`}
                 style={{ animationDelay: `${index * 100}ms` }}
-                
               >
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
@@ -165,21 +171,31 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none"
                   />
                 ) : field.name === 'id_icono' ? (
-                  <select
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    onFocus={() => handleFocus(field.name)}
-                    onBlur={handleBlur}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white"
-                  >
-                    <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                    {clasificaciones.map((c) => (
-                      <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                        {c.nombre}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      onFocus={() => handleFocus(field.name)}
+                      onBlur={handleBlur}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white"
+                    >
+                      <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                      {clasificaciones.map((c) => (
+                        <option key={c.id_clasificacion} value={c.id_clasificacion}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.id_icono && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <FontAwesomeIcon 
+                          icon={getIcon(clasificaciones.find(c => c.id_clasificacion === parseInt(formData.id_icono))?.nombre)} 
+                          className="text-blue-600"
+                        />
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <input
                     type="text"

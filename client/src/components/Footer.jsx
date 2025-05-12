@@ -1,11 +1,12 @@
 import React from 'react'
+import logo from '../assets/LOGO1.png'
 
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 text-white py-10 px-6 mt-auto">
         <div className='max-w mx-auto flex flex-col items-center space-y-6'> 
             <div className='flex flex-col items-center'>
-                <img src="" alt="" className='h-12 w-auto' />
+                <img src={logo} alt="Logo CEP" className='h-12 w-auto' />
                 <p className='text-sm mt-2 text-white/80 text-center'>
                 Coordinacion de extension profesional
                 </p>

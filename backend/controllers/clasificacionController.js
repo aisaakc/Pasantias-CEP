@@ -50,7 +50,7 @@ class clasificacionController {
     }
 
     async getAllSubclasificaciones(req, res) {
-        console.log("hola mundo 2");
+        console.log("LOG > getAllSubclasificaciones");
         const type_id = parseInt(req.params.id); 
         const parent_id = parseInt(req.params.id_parent);
        

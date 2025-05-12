@@ -66,9 +66,11 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
+      // La respuesta ya viene filtrada con los iconos desde el backend
       setClasificaciones(response.data);
     } catch (err) {
       console.error('Error al cargar clasificaciones:', err);
+      toast.error('Error al cargar las clasificaciones');
     }
   };
 
@@ -87,6 +89,12 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
 
   const handleSubmit = async () => {
     try {
+      // Validar campos requeridos
+      if (!formData.nombre) {
+        toast.error('El nombre es un campo requerido');
+        return;
+      }
+
       const dataToSend = {
         ...formData,
         id_icono: formData.id_icono !== '' ? parseInt(formData.id_icono) : null,
@@ -105,11 +113,22 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
           duration: 3000,
         });
       }
+      
+      // Limpiar el formulario y cerrar el modal
+      setFormData({
+        nombre: '',
+        descripcion: '',
+        id_icono: ''
+      });
       onClose();
+      
+      // Actualizar la lista de clasificaciones
+      await fetchParentClasifications();
     } catch (err) {
       console.error("Error al guardar:", err);
+      const errorMessage = err.response?.data?.error || err.message || 'Ha ocurrido un error al procesar la solicitud';
       toast.error('Error al guardar la clasificación', {
-        description: err.response?.data?.error || 'Ha ocurrido un error al procesar la solicitud',
+        description: errorMessage,
         duration: 4000,
       });
     }

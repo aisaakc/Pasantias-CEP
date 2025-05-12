@@ -23,7 +23,7 @@ class Clasificacion {
         try {
             const query = `
                 INSERT INTO clasificacion (nombre, descripcion, imagen, orden, type_id, parent_id, id_icono)
-                VALUES (TRIM($1), TRIM($2, $3, $4, $5, $6, $7)
+                VALUES (TRIM($1), TRIM($2), $3, $4, $5, $6, $7)
                 RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
             `;
             const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono];  
@@ -40,8 +40,8 @@ class Clasificacion {
     
     async getAllSubclasificaciones(type_id, parent_id) {
         // const parent_id = 11;
-        console.log("hola mundo 3");
-        console.log(type_id, parent_id)
+        console.log("PARENT_ID:");
+        console.log(type_id, parent_id);
         try {          
 
             let query = `
@@ -50,22 +50,21 @@ class Clasificacion {
            LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion                  
            LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion        
-           WHERE sc.type_id = $1 `;
+           WHERE `;
             let queryParams = [type_id];
 
-            if (parent_id > 0) {
-                query += ` AND sc.parent_id = $2 `;
-                queryParams.push(parent_id);
+            if (parent_id) {
+                query += ` sc.parent_id = $1 `;
+                // queryParams.push(parent_id);
+                queryParams = [parent_id];
               } else {
-                query += ` AND sc.parent_id IS NULL `;
+                query += ` sc.type_id = $1 `; // AND sc.parent_id IS NULL `;
               }
           
               query += ` ORDER BY sc.orden, sc.nombre;`;
               console.log(query);
             const result = await pool.query(query, queryParams );
-            console.log('Resultado de la consulta:...', result.rows); // Para depuración
-
-           
+            // console.log('Resultado de la consulta:...', result.rows); 
 
             return result.rows;
         } catch (error) {
@@ -100,7 +99,7 @@ class Clasificacion {
          SELECT c_iconos.* 
          FROM public.clasificacion AS c_iconos
          INNER JOIN public.clasificacion AS c_tipos ON c_iconos.type_id = c_tipos.id_clasificacion
-         WHERE c_tipos.nombre = 'Ícono';
+         WHERE c_tipos.nombre = 'Íconos';
           `;
           const result = await pool.query(query);
           return result.rows;

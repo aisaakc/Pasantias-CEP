@@ -118,7 +118,7 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
               Editar {clasificacionToEdit?.nombre} {clasificacionToEdit?.nicono && (
                 <FontAwesomeIcon
                   icon={iconos[clasificacionToEdit.nicono] || iconos.faFile}
-                  className="inline-block ml-2 text-blue-600"
+                  className="inline-block ml-2 text-blue-600 mt-5 "
                   size="lg"
                 />
               )}
@@ -158,22 +158,32 @@ const EditSubclasificacionModal = ({ isOpen, onClose, clasificacionToEdit }) => 
                   placeholder={`${field.label} detallado...`}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none"
                 />
-              ) : field.name === 'type_id' || field.name === 'parent_id' || field.name === 'id_icono' ? (
-                <select
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  onFocus={() => handleFocus(field.name)}
-                  onBlur={handleBlur}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white"
-                >
-                  <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                  {clasificaciones.map((c) => (
-                    <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </select>
+              ) : field.name === 'type_id'  || field.name === 'id_icono' ? (
+                <div className="relative">
+                  <select
+                    name={field.name}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    onFocus={() => handleFocus(field.name)}
+                    onBlur={handleBlur}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white"
+                  >
+                    <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                    {clasificaciones.map((c) => (
+                      <option key={c.id_clasificacion} value={c.id_clasificacion}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {field.name === 'id_icono' && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <FontAwesomeIcon 
+                        icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(formData.id_icono))?.nombre] || iconos.faFile} 
+                        className="text-blue-600"
+                      />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <input
                   type="text"

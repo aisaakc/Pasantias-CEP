@@ -16,8 +16,8 @@ import React from 'react';
 
 export default function App() {
   
-  const ID_ICONO = 27
-  const ID_GENERO = 1
+  // const ID_ICONO = 27
+  // const ID_GENERO = 1
 
   const location = useLocation();
   const navigate = useNavigate();

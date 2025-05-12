@@ -37,62 +37,7 @@ class UserModel {
       throw error;
     }
   }
-  // async getGeneros() {
-  //   try {
   
-  //     const genderTypeId = await this.getClassificationTypeId('Género');
-
-  //     const query = `
-  //       SELECT id_clasificacion AS id, nombre
-  //       FROM clasificacion
-  //       WHERE type_id = $1;
-  //     `;
-  //     const result = await pool.query(query, [genderTypeId]);
-  //     return result.rows;
-  //   } catch (error) {
-  //     console.error("Error en getGeneros:", error.message);
-    
-  //     throw error;
-  //   }
-  // }
-
-  // async getRoles() {
-  //   try {
-    
-  //     const roleTypeId = await this.getClassificationTypeId('Rol');
-
-  //     const query = `
-  //       SELECT id_clasificacion AS id, nombre
-  //       FROM clasificacion
-  //       WHERE type_id = $1;
-  //     `;
-  //     const result = await pool.query(query, [roleTypeId]);
-  //     return result.rows;
-  //   } catch (error) {
-  //     console.error("Error en getRoles:", error.message);
-  //     throw error;
-  //   }
-  // }
-
-  // async getPreguntasSeguridad() {
-  //   try {
-    
-  //     const questionTypeId = await this.getClassificationTypeId('Pregunta');
-
-  //     const query = `
-  //       SELECT id_clasificacion AS id, nombre
-  //       FROM clasificacion
-  //       WHERE type_id = $1;
-  //     `;
-  //     const result = await pool.query(query, [questionTypeId]);
-  //     return result.rows;
-  //   } catch (error) {
-  //     console.error("Error en getPreguntasSeguridad:", error.message);
-  //     throw error;
-  //   }
-  // }
-
- 
   async #hashDato(dato) {
     try {
       if (dato === null || dato === undefined) {

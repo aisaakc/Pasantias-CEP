@@ -9,9 +9,4 @@ router.get('/SubC/:id', AuthController.getSubclassificationsById);
 
 
 
-// router.get('/generos', AuthController.obtenerGeneros);
-// router.get('/roles', AuthController.obtenerRoles);
-// router.get('/preguntas', AuthController.obtenerPreguntas);
-
-
 export default router;

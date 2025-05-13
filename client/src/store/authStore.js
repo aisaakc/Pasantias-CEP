@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 
 import {
-   register, login, getSubclassificationsById } from '../api/auth.api';
+   register, 
+   login ,
+   getSubclassificationsById } from '../api/auth.api';
 
 export const useAuthStore = create((set) => ({
   generos: [],

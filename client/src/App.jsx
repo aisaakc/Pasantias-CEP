@@ -38,6 +38,7 @@ export default function App() {
           <Route path="clasificacion" element={<Clasificacion />} />
           <Route path="tipos/:id" element={<Tipos />} />
           <Route path="tipos/:id/:parentId" element={<Tipos />} />
+          
         </Route>
       </Routes>
     </main>

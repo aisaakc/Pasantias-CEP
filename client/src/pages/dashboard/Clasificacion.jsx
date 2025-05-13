@@ -99,8 +99,8 @@ export default function Clasificacion() {
       <div className="max-w-7xl mx-auto">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent animate-fade-in">
-            Configuración 
+          <h1 className="text-4xl md:text-5xl font-bd bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent animate-fade-in py-1 leading-tight">
+            Configuraciones
           </h1>
           <button
             onClick={openModal}

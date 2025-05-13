@@ -40,8 +40,7 @@ class Clasificacion {
     
     async getAllSubclasificaciones(type_id, parent_id) {
         // const parent_id = 11;
-        console.log("PARENT_ID:");
-        console.log(type_id, parent_id);
+     
         try {          
 
             let query = `
@@ -73,25 +72,7 @@ class Clasificacion {
         }
     } 
 
-    async getAllHijos(parent_id) {
-        try {          
-            const query = `
-             SELECT * 
-             FROM clasificacion c  
-             INNER JOIN  clasificacion sc
-             ON (sc.parent_id = c.id_clasificacion)
-             WHERE c.id_clasificacion = $1
-             ORDER BY sc.orden, sc.nombre;
-        `;
-            
-            const result = await pool.query(query, [parent_id]);  // Pasamos el parentId como parámetro
-            return result.rows;
-
-        } catch (error) {
-            console.error("Error en getAllDescendants (pg):", error.message);
-            throw new Error("Error interno del servidor al obtener subclasificaciones.");
-        }
-    } 
+   
 
     async getAllClasificaciones() {
         try {

@@ -28,14 +28,6 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
     id_icono: ''
   });
 
-  // Función para obtener el icono correcto
-  const getIcon = (iconName) => {
-    if (!iconName) return faFolder;
-    // Asegurarse de que el nombre del icono tenga el prefijo 'fa'
-    const iconKey = iconName.startsWith('fa') ? iconName : `fa${iconName}`;
-    return iconos[iconKey] || faFolder;
-  };
-
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
@@ -60,6 +52,14 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
       console.error('Error al cargar clasificaciones:', err);
       toast.error('Error al cargar las clasificaciones');
     }
+  };
+
+  // Función para obtener el icono correcto
+  const getIcon = (iconName) => {
+    if (!iconName) return faFolder;
+    // Asegurarse de que el nombre del icono tenga el prefijo 'fa'
+    const iconKey = iconName.startsWith('fa') ? iconName : `fa${iconName}`;
+    return iconos[iconKey] || faFolder;
   };
 
   const handleSubmit = async (e) => {
@@ -187,14 +187,12 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
                         </option>
                       ))}
                     </select>
-                    {formData.id_icono && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <FontAwesomeIcon 
-                          icon={getIcon(clasificaciones.find(c => c.id_clasificacion === parseInt(formData.id_icono))?.nombre)} 
-                          className="text-blue-600"
-                        />
-                      </div>
-                    )}
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <FontAwesomeIcon 
+                        icon={getIcon(clasificaciones.find(c => c.id_clasificacion === parseInt(formData.id_icono))?.nombre)} 
+                        className="text-blue-600"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <input

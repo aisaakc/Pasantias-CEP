@@ -39,8 +39,7 @@ class Clasificacion {
     }
     
     async getAllSubclasificaciones(type_id, parent_id) {
-        // const parent_id = 11;
-     
+            
         try {          
 
             let query = `

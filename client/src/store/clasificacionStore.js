@@ -23,6 +23,10 @@ export const useClasificacionStore = create((set, get) => ({
 
   // Utilidades
   clearError: () => set({ error: null }),
+  getClasificacionById: (id) => {
+    const { allClasificaciones } = get();
+    return allClasificaciones.find(c => c.id_clasificacion === id) || null;
+  },
 
   // Operaciones de lectura
   fetchParentClasifications: async () => {
@@ -41,6 +45,8 @@ export const useClasificacionStore = create((set, get) => ({
       });
     }
   },
+
+  
 
  
 

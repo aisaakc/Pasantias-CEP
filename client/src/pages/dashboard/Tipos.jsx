@@ -38,15 +38,18 @@ export default function Tipos() {
     error 
   } = useClasificacionStore();
 
+  const getClasificacionById = useClasificacionStore(state => state.getClasificacionById);
+
   // Llamamos a la API para obtener las subclasificaciones y la clasificación padre
   useEffect(() => {
       console.log("useEffect > realParentId: "+realParentId);
     if (realId) {
       fetchSubClasificaciones(realId, realParentId).then(response => {
-        if (response?.data) {
-          setNombreClasificacion(response.data.nombre);
+        if (response?.nombre) {
+          setNombreClasificacion(response.nombre);
         }
       });
+      
     }
   }, [realId, realParentId, fetchSubClasificaciones, fetchClasificacionById]);
 
@@ -97,6 +100,16 @@ export default function Tipos() {
       toast.error('Error al eliminar la subclasificación');
     }
   };
+
+  useEffect(() => {
+    if (realParentId) {
+      const clasificacion = getClasificacionById(realParentId);
+      if (clasificacion) {
+        setNombreClasificacion(clasificacion.nombre);
+      }
+    }
+  }, [realParentId, getClasificacionById]);
+  
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
@@ -225,9 +238,6 @@ export default function Tipos() {
                               className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
                               >
                                  <FontAwesomeIcon icon={iconos.faFolderTree} size="lg" />
-
-                               
-                             
                               </button>
                             </div>
                           </td>
@@ -236,7 +246,7 @@ export default function Tipos() {
                     })
                   ) : (
                     <tr key="no-results-row">
-                      <td colSpan="4" className="py-8 text-center text-gray-500 animate-pulse">
+                      <td colSpan="4" className="py-8 text-center text-gray-500 ">
                         <FontAwesomeIcon icon={iconos.faInbox} className="text-4xl mb-2" />
                         <p>No hay subclasificaciones que coincidan con tu búsqueda.</p>
                       </td>

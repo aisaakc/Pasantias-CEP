@@ -32,36 +32,17 @@ class clasificacionController {
         }
     }
       
-    // async getAllHijos(req, res) {
-    //     const parentId = parseInt(req.params.id); 
-    //     if (isNaN(parentId)) {
-    //         return res.status(400).json({ error: "ID de clasificación inválido." });
-    //     }
-        
-    //     try {
-    //         const descendants = await Clasificacion.getAllHijos(parentId);
-    //         res.json(descendants); 
-    //     } catch (error) {
-    //         console.error("Error en clasificacionController.getAllSubclasificaciones:", error.message);
-    //         res.status(500).json({
-    //             error: "Error interno del servidor al obtener subclasificaciones."
-    //         });
-    //     }
-    // }
+   
 
     async getAllSubclasificaciones(req, res) {
-        console.log("LOG > getAllSubclasificaciones");
+    
         const type_id = parseInt(req.params.id); 
         const parent_id = parseInt(req.params.id_parent);
        
         if (isNaN(type_id)) {
             return res.status(400).json({ error: "ID de clasificación inválido." });
         }
-        // if (isNaN(parent_id)) {
-        //     return res.status(400).json({ error: "ID de parent inválido..." });
-        // }
-        
-        
+      
         try {
             const descendants = await Clasificacion.getAllSubclasificaciones(type_id, parent_id);
             

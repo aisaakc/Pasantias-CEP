@@ -14,13 +14,11 @@ export function encodeId(id) {
   }
 
   export function encodeParentId(parentId) {
-    console.log("encodeParentId: "+parentId);
     if (parentId) return btoa(JSON.stringify({ parentId }));
     return btoa(JSON.stringify({ parentId: null }));
   }
 
   export function decodeParentId(encoded) {
-    if (encoded && encoded !== undefined) console.log("decodeParentId: "+atob(encoded));
     try {
       if (encoded === undefined) return null;
       const decoded = atob(encoded);

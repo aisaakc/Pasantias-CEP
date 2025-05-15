@@ -8,4 +8,3 @@ export const login = async (userAuth) =>
 
 export const getSubclassificationsById = async (id) =>
     axios.get(`http://localhost:3001/api/auth/SubC/${id}`);
-

@@ -4,35 +4,7 @@ import { JWT_SECRET } from "../config.js";
  
 class AuthController {
   
-  // async obtenerGeneros(req, res) {
-  //   try {
-  //     const generos = await UserModel.getGeneros();
-  //     res.json(generos);
-  //   } catch (error) { 
-  //     console.error("Error en AuthController.obtenerGeneros:", error.message); 
-  //     res.status(500).json({ error: "Error interno del servidor al obtener géneros." }); 
-  //   }
-  // }
-
-  // async obtenerRoles(req, res) {
-  //   try {
-  //     const roles = await UserModel.getRoles();
-  //     res.json(roles);
-  //   } catch (error) { 
-  //      console.error("Error en AuthController.obtenerRoles:", error.message); 
-  //      res.status(500).json({ error: "Error interno del servidor al obtener roles." }); 
-  //   }
-  // }
-
-  // async obtenerPreguntas(req, res) {
-  //   try {
-  //     const preguntas = await UserModel.getPreguntasSeguridad();
-  //     res.json(preguntas);
-  //   } catch (error) { 
-  //     console.error("Error en AuthController.obtenerPreguntas:", error.message); 
-  //     res.status(500).json({ error: "Error interno del servidor al obtener preguntas de seguridad." }); 
-  //   }
-  // }
+  
 
   async registrarUsuario(req, res) {
     const userData = {

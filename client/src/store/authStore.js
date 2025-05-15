@@ -24,9 +24,7 @@ export const useAuthStore = create((set) => ({
         getSubclassificationsById(8),
         getSubclassificationsById(1),
         getSubclassificationsById(3),
-        // getSubclassificationsById(ID_PREGUNTA),
-        // getSubclassificationsById(ID_GENERO),
-        // getSubclassificationsById(ID_ROLES),
+ 
       ]);
       set({
         // generos: generosResponse.data,

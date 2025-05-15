@@ -13,8 +13,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api', clasificacion);
 
 
-
-
 app.get('/', (req, res) => {
     res.send('API está funcionando.');
 });

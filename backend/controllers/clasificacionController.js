@@ -31,9 +31,7 @@ class clasificacionController {
           });
         }
     }
-      
-   
-
+    
     async getAllSubclasificaciones(req, res) {
     
         const type_id = parseInt(req.params.id); 
@@ -54,8 +52,6 @@ class clasificacionController {
             });
         }
     }
-
- 
 
     async getAllClasificaciones(req, res) {
         try {

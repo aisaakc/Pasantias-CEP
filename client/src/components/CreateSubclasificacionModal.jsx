@@ -183,15 +183,20 @@ export default function CreateSubclasificacionModal({ isOpen, onClose, parentId,
                       <option value="">Seleccionar {field.label.toLowerCase()}</option>
                       {clasificaciones.map((c) => (
                         <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                          {c.nombre}
+                          <div className="flex items-center gap-2">
+                            <FontAwesomeIcon icon={getIcon(c.nombre)} className="text-blue-600" />
+                            {c.nombre}
+                          </div>
                         </option>
                       ))}
                     </select>
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <FontAwesomeIcon 
-                        icon={getIcon(clasificaciones.find(c => c.id_clasificacion === parseInt(formData.id_icono))?.nombre)} 
-                        className="text-blue-600"
-                      />
+                      {formData.id_icono && (
+                        <FontAwesomeIcon 
+                          icon={getIcon(clasificaciones.find(c => c.id_clasificacion === parseInt(formData.id_icono))?.nombre || '')} 
+                          className="text-blue-600"
+                        />
+                      )}
                     </div>
                   </div>
                 ) : (

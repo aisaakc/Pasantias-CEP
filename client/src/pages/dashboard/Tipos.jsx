@@ -4,9 +4,8 @@ import useClasificacionStore from '../../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { decodeId, decodeParentId, encodeId, encodeParentId } from '../../utils/hashUtils';
-import EditSubclasificacionModal from '../../components/EditSubclasificacionModal';
-import CreateSubclasificacionModal from '../../components/CreateSubclasificacionModal';
 import DeleteModal from '../../components/DeleteModal';
+import Modal from '../../components/Modal';
 import { toast } from 'sonner';
 
 // Componente memoizado para la fila de la tabla
@@ -122,9 +121,8 @@ export default function Tipos() {
   
   const [busqueda, setBusqueda] = useState('');
   const [ordenAscendente, setOrdenAscendente] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
   const [nombreClasificacion, setNombreClasificacion] = useState('');
 
@@ -212,11 +210,6 @@ export default function Tipos() {
   }, [subClasificaciones, realId, realParentId]);
 
   // Memoizar las funciones de callback
-  const handleEdit = useCallback((clasificacion) => {
-    setSelectedClasificacion(clasificacion);
-    setIsEditModalOpen(true);
-  }, []);
-
   const handleDelete = useCallback((clasificacion) => {
     setSelectedClasificacion(clasificacion);
     setIsDeleteModalOpen(true);
@@ -304,6 +297,23 @@ export default function Tipos() {
     return items;
   }, [parentInfo, nombreClasificacion, realId, realParentId, selectedClasificacion]);
 
+  // Memoizar las funciones de callback
+  const handleEdit = useCallback((clasificacion) => {
+    setSelectedClasificacion(clasificacion);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCreate = useCallback(() => {
+    setSelectedClasificacion(null);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedClasificacion(null);
+    fetchSubClasificaciones(realId);
+  }, [fetchSubClasificaciones, realId]);
+
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <div className="max-w-7xl mx-auto">
@@ -330,7 +340,7 @@ export default function Tipos() {
             )}
           </div>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleCreate}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={iconos.faPlus} />
@@ -417,28 +427,17 @@ export default function Tipos() {
           </div>
         )}
 
-        {/* Modal de Edición */}
-        <EditSubclasificacionModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedClasificacion(null);
-            fetchSubClasificaciones(realId);
-          }}
-          clasificacionToEdit={selectedClasificacion}
-          // nombreClasificacion={subClasificaciones[0].parent_nombre}
-        />
-
-        {/* Modal de Creación */}
-        <CreateSubclasificacionModal
-          isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            fetchSubClasificaciones(realId);
-          }}
+        {/* Modal para crear/editar */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          editData={selectedClasificacion}
           parentId={realId}
-          nombreClasificacion={parentInfo.nombre}
-          parentIcono={parentInfo.icono}
+          parentInfo={{
+            type_id: realId,
+            nombre: parentInfo.nombre,
+            icono: parentInfo.icono
+          }}
         />
 
         {/* Modal de Eliminación */}

@@ -70,23 +70,6 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  // Obtener hijos de una clasificación
-  // fetchClasificacionHijos: async (id) => {
-  //   set({ loading: true, error: null });
-  //   try {
-  //     const response = await getClasificacionHijos(id);
-  //     set({
-  //       clasificacionHijos: response.data,
-  //       loading: false,
-  //     });
-  //   } catch (error) {
-  //     console.error("Error al obtener los hijos de la clasificación:", error);
-  //     set({
-  //       loading: false,
-  //       error: 'Error al obtener los hijos de la clasificación.',
-  //     });
-  //   }
-  // },
 
   // Obtener todas las clasificaciones
   fetchAllClasificaciones: async () => {
@@ -171,7 +154,7 @@ export const useClasificacionStore = create((set, get) => ({
       
       // Actualizar el estado después de la actualización
       if (data.type_id) {
-        const subResponse = await getSubclasificaciones(data.type_id);
+        const subResponse = await getAllSubclasificaciones(data.type_id, data.parent_id);
         set(state => ({
           ...state,
           subClasificaciones: subResponse.data,

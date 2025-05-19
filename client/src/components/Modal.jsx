@@ -10,12 +10,13 @@ import {
   faTimes, 
   faFolder, 
   faImage, 
-  faLayerGroup
+  faLayerGroup,
+  
 } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 
-const Modal = ({ isOpen, onClose, editData = null }) => {
+const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo = null }) => {
   const { 
     createClasificacion, 
     updateClasificacion, 
@@ -28,12 +29,15 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
   const [clasificaciones, setClasificaciones] = useState([]);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
+  const [nombreClasificacion, setNombreClasificacion] = useState('');
 
   // Valores iniciales del formulario
   const initialValues = {
     nombre: editData?.nombre || '',
     descripcion: editData?.descripcion || '',
-    id_icono: editData?.id_icono || ''
+    id_icono: editData?.id_icono || '',
+    type_id: editData?.type_id || parentInfo?.type_id || '',
+    parent_id: editData?.parent_id || parentId || ''
   };
 
   // Función de validación personalizada
@@ -43,9 +47,6 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
       errors.nombre = 'El nombre es requerido';
     } else if (values.nombre.length < 3) {
       errors.nombre = 'El nombre debe tener al menos 3 caracteres';
-    }
-    if (!values.descripcion.trim()) {
-      errors.descripcion = 'La descripción es requerida';
     }
     return errors;
   };
@@ -70,6 +71,16 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
     }
   }, [isOpen, clearError]);
 
+  useEffect(() => {
+    // Encontrar el nombre de la clasificación actual basado en el type_id
+    if (clasificaciones.length > 0) {
+      const clasificacionActual = clasificaciones.find(c => c.id_clasificacion === parseInt(parentInfo?.type_id));
+      if (clasificacionActual) {
+        setNombreClasificacion(clasificacionActual.nombre);
+      }
+    }
+  }, [clasificaciones, parentInfo?.type_id]);
+
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
@@ -85,14 +96,16 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
       const dataToSend = {
         ...values,
         id_icono: values.id_icono !== '' ? parseInt(values.id_icono) : null,
+        type_id: values.type_id ? parseInt(values.type_id) : null,
+        parent_id: editData ? (values.parent_id ? parseInt(values.parent_id) : null) : null // Solo usar parent_id al editar
       };
 
       if (editData) {
         await updateClasificacion(editData.id_clasificacion, dataToSend);
-        toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`);
+        toast.success(`Subclasificación "${dataToSend.nombre}" actualizada correctamente`);
       } else {
         await createClasificacion(dataToSend);
-        toast.success(`Clasificación "${dataToSend.nombre}" creada correctamente`);
+        toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
       }
 
       onClose();
@@ -100,7 +113,7 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
     } catch (err) {
       console.error("Error al guardar:", err);
       const errorMessage = err.response?.data?.error || err.message || 'Ha ocurrido un error al procesar la solicitud';
-      toast.error('Error al guardar la clasificación', {
+      toast.error('Error al guardar la subclasificación', {
         description: errorMessage,
         duration: 4000,
       });
@@ -130,7 +143,7 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {editData ? `Editar ${editData.nombre}` : 'Agregar Clasificación'}
+              {editData ? `Editar ${editData.nombre}` : `Agregar ${parentInfo?.nombre || 'Subclasificación'}`}
               {editData?.nicono && (
                 <FontAwesomeIcon
                   icon={iconos[editData.nicono] || iconos.faFile}
@@ -203,7 +216,7 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
                         </Field>
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                           <FontAwesomeIcon 
-                            icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values.id_icono))?.nombre] || iconos.faFile} 
+                            icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
                             className="text-blue-600"
                           />
                         </div>

@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faSave, faTimes, faFolder, faImage, faLayerGroup, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faXmark, 
+  faSave, 
+  faTimes, 
+  faFolder, 
+  faImage, 
+  faLayerGroup
+} from '@fortawesome/free-solid-svg-icons';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 
 const Modal = ({ isOpen, onClose, editData = null }) => {
@@ -13,20 +22,33 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
     loading, 
     error, 
     clearError,
-    fetchAllClasificaciones,
     fetchParentClasifications 
   } = useClasificacionStore();
 
-  const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    id_icono: ''
-  });
-
   const [clasificaciones, setClasificaciones] = useState([]);
   const [shouldRender, setShouldRender] = useState(isOpen);
-  const [activeField, setActiveField] = useState('');
   const [animationClass, setAnimationClass] = useState('');
+
+  // Valores iniciales del formulario
+  const initialValues = {
+    nombre: editData?.nombre || '',
+    descripcion: editData?.descripcion || '',
+    id_icono: editData?.id_icono || ''
+  };
+
+  // Función de validación personalizada
+  const validateForm = (values) => {
+    const errors = {};
+    if (!values.nombre.trim()) {
+      errors.nombre = 'El nombre es requerido';
+    } else if (values.nombre.length < 3) {
+      errors.nombre = 'El nombre debe tener al menos 3 caracteres';
+    }
+    if (!values.descripcion.trim()) {
+      errors.descripcion = 'La descripción es requerida';
+    }
+    return errors;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -34,39 +56,23 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
       document.body.style.overflow = 'hidden';
       setTimeout(() => setAnimationClass('animate-modal-in'), 10);
       fetchClasificaciones();
-      
-      // Si hay datos de edición, cargarlos en el formulario
-      if (editData) {
-        setFormData({
-          nombre: editData.nombre || '',
-          descripcion: editData.descripcion || '',
-          id_icono: editData.id_icono || ''
-        });
-      }
     } else {
       setAnimationClass('animate-modal-out');
       document.body.style.overflow = 'unset';
       const timeout = setTimeout(() => setShouldRender(false), 300);
       return () => clearTimeout(timeout);
     }
-  }, [isOpen, editData]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
-      setFormData({
-        nombre: '',
-        descripcion: '',
-        id_icono: ''
-      });
       clearError();
-      setActiveField('');
     }
   }, [isOpen, clearError]);
 
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
-      // La respuesta ya viene filtrada con los iconos desde el backend
       setClasificaciones(response.data);
     } catch (err) {
       console.error('Error al cargar clasificaciones:', err);
@@ -74,55 +80,22 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFocus = (fieldName) => {
-    setActiveField(fieldName);
-  };
-
-  const handleBlur = () => {
-    setActiveField('');
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      // Validar campos requeridos
-      if (!formData.nombre) {
-        toast.error('El nombre es un campo requerido');
-        return;
-      }
-
       const dataToSend = {
-        ...formData,
-        id_icono: formData.id_icono !== '' ? parseInt(formData.id_icono) : null,
+        ...values,
+        id_icono: values.id_icono !== '' ? parseInt(values.id_icono) : null,
       };
-  
+
       if (editData) {
         await updateClasificacion(editData.id_clasificacion, dataToSend);
-        toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`, {
-          description: `Los cambios en la clasificación "${dataToSend.nombre}" han sido guardados exitosamente`,
-          duration: 3000,
-        });
+        toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`);
       } else {
         await createClasificacion(dataToSend);
-        toast.success(`Clasificación "${dataToSend.nombre}" creada correctamente`, {
-          description: `La clasificación "${dataToSend.nombre}" ha sido agregada exitosamente`,
-          duration: 3000,
-        });
+        toast.success(`Clasificación "${dataToSend.nombre}" creada correctamente`);
       }
-      
-      // Limpiar el formulario y cerrar el modal
-      setFormData({
-        nombre: '',
-        descripcion: '',
-        id_icono: ''
-      });
+
       onClose();
-      
-      // Actualizar la lista de clasificaciones
       await fetchParentClasifications();
     } catch (err) {
       console.error("Error al guardar:", err);
@@ -131,6 +104,8 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
         description: errorMessage,
         duration: 4000,
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -148,14 +123,21 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
       <div 
         className={`relative w-full max-w-xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 ${
           animationClass
-        }`}
+        } flex flex-col max-h-[90vh]`}
       >
-        {/* Encabezado con animación de brillo */}
-        <div className="relative overflow-hidden p-6 border-b border-gray-100">
+        {/* Header fijo */}
+        <div className="relative overflow-hidden p-6 border-b border-gray-100 flex-shrink-0">
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
               {editData ? `Editar ${editData.nombre}` : 'Agregar Clasificación'}
+              {editData?.nicono && (
+                <FontAwesomeIcon
+                  icon={iconos[editData.nicono] || iconos.faFile}
+                  className="inline-block ml-2 text-blue-600"
+                  size="lg"
+                />
+              )}
             </h2>
             <button 
               onClick={onClose}
@@ -166,95 +148,122 @@ const Modal = ({ isOpen, onClose, editData = null }) => {
           </div>
         </div>
 
-        {/* Contenido con animación de entrada escalonada */}
-        <div className="p-6 space-y-5">
-          {[
-            { name: 'nombre', icon: faFolder, label: 'Nombre' },
-            { name: 'descripcion', icon: faLayerGroup, label: 'Descripción' },
-            { name: 'id_icono', icon: faImage, label: 'Icono' }
-          ].map((field, index) => (
-            <div 
-              key={field.name}
-              className={`transform transition-all duration-300 animate-fade-slide-up`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
-                {field.label}
-              </label>
-              {field.name === 'descripcion' ? (
-                <textarea
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  onFocus={() => handleFocus(field.name)}
-                  onBlur={handleBlur}
-                  placeholder={`${field.label} detallado...`}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none"
-                />
-              ) : field.name === 'id_icono' ? (
-                <select
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  onFocus={() => handleFocus(field.name)}
-                  onBlur={handleBlur}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white"
-                >
-                  <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                  {clasificaciones.map((c) => (
-                    <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  onFocus={() => handleFocus(field.name)}
-                  onBlur={handleBlur}
-                  placeholder={`${field.label}...`}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
-                />
-              )}
-            </div>
-          ))}
+        {/* Contenido con scroll */}
+        <div className="flex-1 overflow-y-auto">
+          <Formik
+            initialValues={initialValues}
+            validate={validateForm}
+            onSubmit={handleSubmit}
+            enableReinitialize
+          >
+            {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
+              <Form className="p-6 space-y-5">
+                {[
+                  { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
+                  { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
+                  { name: 'id_icono', icon: faImage, label: 'Icono', type: 'select' }
+                ].map((field, index) => (
+                  <div 
+                    key={field.name}
+                    className={`transform transition-all duration-300 animate-fade-slide-up`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
+                      {field.label}
+                    </label>
+                    {field.type === 'textarea' ? (
+                      <Field
+                        as="textarea"
+                        name={field.name}
+                        placeholder={`${field.label} detallado...`}
+                        className={`w-full px-4 py-3 rounded-lg border ${
+                          touched[field.name] && errors[field.name] 
+                            ? 'border-red-300 focus:ring-red-500' 
+                            : 'border-gray-200 focus:ring-blue-500'
+                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
+                      />
+                    ) : field.type === 'select' ? (
+                      <div className="relative">
+                        <Field
+                          as="select"
+                          name={field.name}
+                          className={`w-full px-4 py-3 rounded-lg border ${
+                            touched[field.name] && errors[field.name] 
+                              ? 'border-red-300 focus:ring-red-500' 
+                              : 'border-gray-200 focus:ring-blue-500'
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white`}
+                        >
+                          <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                          {clasificaciones.map((c) => (
+                            <option key={c.id_clasificacion} value={c.id_clasificacion}>
+                              {c.nombre}
+                            </option>
+                          ))}
+                        </Field>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <FontAwesomeIcon 
+                            icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values.id_icono))?.nombre] || iconos.faFile} 
+                            className="text-blue-600"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <Field
+                        type={field.type}
+                        name={field.name}
+                        placeholder={`${field.label}...`}
+                        className={`w-full px-4 py-3 rounded-lg border ${
+                          touched[field.name] && errors[field.name] 
+                            ? 'border-red-300 focus:ring-red-500' 
+                            : 'border-gray-200 focus:ring-blue-500'
+                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                      />
+                    )}
+                    <ErrorMessage
+                      name={field.name}
+                      component="div"
+                      className="mt-1 text-sm text-red-600"
+                    />
+                  </div>
+                ))}
 
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake">
-              <FontAwesomeIcon icon={faTimes} className="text-red-500" />
-              <p>{error}</p>
-            </div>
-          )}
-        </div>
+                {error && (
+                  <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake">
+                    <FontAwesomeIcon icon={faTimes} className="text-red-500" />
+                    <p>{error}</p>
+                  </div>
+                )}
 
-        {/* Pie del modal con animación de brillo */}
-        <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl">
-          <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-          <div className="flex justify-end space-x-4">
-            <button
-              onClick={onClose}
-              className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105"
-              disabled={loading}
-            >
-              <FontAwesomeIcon icon={faTimes} className="mr-2" />
-              <span>Cancelar</span>
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105 disabled:opacity-50 group"
-              disabled={loading}
-            >
-              <FontAwesomeIcon 
-                icon={faSave} 
-                className={`mr-2 ${loading ? 'animate-spin' : 'group-hover:rotate-12 transition-transform duration-300'}`} 
-              />
-              <span>{loading ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
-            </button>
-          </div>
+                {/* Footer fijo */}
+                <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
+                  <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105"
+                      disabled={isSubmitting}
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                      <span>Cancelar</span>
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105 disabled:opacity-50"
+                      disabled={isSubmitting}
+                    >
+                      <FontAwesomeIcon 
+                        icon={faSave} 
+                        className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
+                      />
+                      <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
+                    </button>
+                  </div>
+                </div>
+              </Form>
+            )}
+          </Formik>
         </div>
       </div>
     </div>,

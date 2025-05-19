@@ -1,0 +1,145 @@
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px) rotateX(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateX(0);
+  }
+}
+
+@keyframes modalOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px) rotateX(10deg);
+  }
+}
+
+@keyframes shine {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center perspective-1000;
+}
+
+.modal-backdrop {
+  @apply absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-500;
+}
+
+.modal-container {
+  @apply relative w-full max-w-xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 flex flex-col max-h-[90vh];
+}
+
+.modal-header {
+  @apply relative overflow-hidden p-6 border-b border-gray-100 flex-shrink-0;
+}
+
+.modal-content {
+  @apply flex-1 overflow-y-auto;
+}
+
+.modal-footer {
+  @apply relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0;
+}
+
+.modal-shine {
+  @apply animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+}
+
+.modal-title {
+  @apply text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent;
+}
+
+.modal-close-button {
+  @apply text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full transform hover:rotate-90 duration-300;
+}
+
+.modal-form-field {
+  @apply transform transition-all duration-300 animate-fade-slide-up;
+}
+
+.modal-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.modal-input {
+  @apply w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300;
+}
+
+.modal-textarea {
+  @apply modal-input min-h-[100px] resize-none;
+}
+
+.modal-icon-grid {
+  @apply grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg;
+}
+
+.modal-icon-button {
+  @apply flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all duration-300;
+}
+
+.modal-icon-button-selected {
+  @apply border-blue-500 bg-blue-50 text-blue-600;
+}
+
+.modal-icon-button-unselected {
+  @apply border-gray-200 hover:border-blue-300 hover:bg-gray-50;
+}
+
+.modal-error {
+  @apply bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake;
+}
+
+.modal-button {
+  @apply px-6 py-2.5 rounded-lg transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105;
+}
+
+.modal-button-cancel {
+  @apply modal-button text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50;
+}
+
+.modal-button-submit {
+  @apply modal-button text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 hover:shadow-lg disabled:opacity-50 group;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.animate-modal-in {
+  animation: modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-modal-out {
+  animation: modalOut 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-shine {
+  animation: shine 2s infinite;
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.5s ease-out forwards;
+} 

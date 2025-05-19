@@ -38,7 +38,7 @@ export default function App() {
   // const ID_GENERO = 1
 
   const location = useLocation();
-  const navigate = useNavigate();
+ 
 
 
   const hideLayout = ["/login", "/registro"].includes(location.pathname) || location.pathname.startsWith("/dashboard");

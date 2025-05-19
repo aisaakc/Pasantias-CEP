@@ -5,38 +5,15 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import esLocale from '@fullcalendar/core/locales/es'
-import Modal from '../../components/Modal'
-import { Formik, Form, Field } from 'formik'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons'
+import ModalCurso from '../../components/ModalCurso'
 
 function Curso() {
   const [showModal, setShowModal] = useState(false)
-  const [selectedStartDate, setSelectedStartDate] = useState(null)
+  const [selectedDate, setSelectedDate] = useState(null)
 
   const handleDateClick = (clickInfo) => {
-    setSelectedStartDate(clickInfo.date)
+    setSelectedDate(clickInfo.date)
     setShowModal(true)
-  }
-
-  const initialValues = {
-    fecha_fin: ''
-  }
-
-  const handleSubmit = (values) => {
-    if (!values.fecha_fin) return
-    
-    const endDate = new Date(values.fecha_fin)
-    if (endDate < selectedStartDate) {
-      alert('La fecha de finalización debe ser posterior a la fecha de inicio')
-      return
-    }
-
-    console.log('Nuevo curso:', {
-      start: selectedStartDate,
-      end: endDate
-    })
-    setShowModal(false)
   }
 
   return (
@@ -91,9 +68,7 @@ function Curso() {
                                 }
                               }}
                               dayHeaderFormat={{ weekday: 'long' }}
-                              events={[
-                                
-                              ]}
+                              events={[]}
                             />
                           </div>
                         </div>
@@ -106,6 +81,12 @@ function Curso() {
           </div>
         </div>
       </div>
+
+      <ModalCurso 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        selectedDate={selectedDate}
+      />
     </div>
   )
 }

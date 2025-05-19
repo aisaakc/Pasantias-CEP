@@ -8,12 +8,29 @@ import Clasificacion from "./pages/dashboard/Clasificacion";
 import Tipos from "./pages/dashboard/Tipos";
 import Curso from "./pages/dashboard/Curso";
 import Layout from "./components/Layout";
-
+import useAuthStore from "./store/authStore";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-
 import { Toaster } from 'sonner';
 import React from 'react';
+
+// Componente para proteger rutas
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return children;
+};
 
 export default function App() {
   
@@ -34,7 +51,11 @@ export default function App() {
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
         <Route path="/registro" element={<Registro />} />
-        <Route path="/dashboard" element={<Layout />}>
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Clasificacion />} />
           <Route path="clasificacion" element={<Clasificacion />} />
           <Route path="tipos/:id" element={<Tipos />} />
@@ -49,15 +70,9 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors expand={true} />
 
-      {hideLayout ? (
-        <div className="content-without-default-layout">{mainContent}</div>
-      ) : (
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
-          {mainContent}
-          <Footer />
-        </div>
-      )}
+      {!hideLayout && <Navbar />}
+      {mainContent}
+      {!hideLayout && <Footer />}
     </>
   );
 }

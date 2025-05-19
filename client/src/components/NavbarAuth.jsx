@@ -12,7 +12,9 @@ export default function NavbarAuth() {
   const handleLogout = () => {
     logoutUser();
     toast.success('¡Sesión cerrada correctamente!'); // ✅ Mensaje de éxito con Sonner
-    navigate('/login');
+    // Limpiar el historial del navegador y redirigir a login
+    window.history.pushState(null, '', '/login');
+    navigate('/login', { replace: true });
   };
 
   const goToProfile = () => {

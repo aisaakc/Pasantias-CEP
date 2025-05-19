@@ -99,8 +99,19 @@ export default function Clasificacion() {
       <div className="max-w-7xl mx-auto">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bd bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent animate-fade-in py-1 leading-tight">
-            Configuraciones
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 animate-fade-in py-1 leading-tight flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-100 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <FontAwesomeIcon 
+                icon={iconos.faCog} 
+                className="text-blue-600 relative z-10 animate-spin-slow group-hover:animate-spin-slow-hover transition-all duration-300" 
+                size="lg"
+              />
+            </div>
+            <span className="relative bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              Configuraciones
+              <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></div>
+            </span>
           </h1>
           <button
             onClick={openModal}
@@ -142,13 +153,11 @@ export default function Clasificacion() {
                     </p>
                     <div className="flex justify-center space-x-3">
                       <button
-                      onClick={() => navigate(`/dashboard/tipos/${encodeId(clasificacion.id_clasificacion)}`)}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-blue-800">
-                        Ver Detalles
+                      title={'Ver detalles de '+clasificacion.nombre}
+                        onClick={() => navigate(`/dashboard/tipos/${encodeId(clasificacion.id_clasificacion)}`)}
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:shadow-md transition-all duration-300 group hover:bg-blue-700">
                         <FontAwesomeIcon 
                           icon={iconos.faList} 
-
-                          className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" 
                         />
                       </button>
                       <button
@@ -212,12 +221,38 @@ export default function Clasificacion() {
           }
         }
 
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes spin-slow-hover {
+          from {
+            transform: rotate(0deg) scale(1.1);
+          }
+          to {
+            transform: rotate(360deg) scale(1.1);
+          }
+        }
+
         .animate-fade-in {
           animation: fadeIn 0.6s ease-out forwards;
         }
 
         .animate-fade-in-up {
           animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+
+        .animate-spin-slow-hover {
+          animation: spin-slow-hover 4s linear infinite;
         }
       `}</style>
     </div>

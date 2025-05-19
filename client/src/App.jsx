@@ -6,6 +6,7 @@ import Login from "./pages/auth/Login";
 import Registro from "./pages/auth/Registro";
 import Clasificacion from "./pages/dashboard/Clasificacion";
 import Tipos from "./pages/dashboard/Tipos";
+import Curso from "./pages/dashboard/Curso";
 import Layout from "./components/Layout";
 
 import Navbar from "./components/Navbar";
@@ -38,7 +39,7 @@ export default function App() {
           <Route path="clasificacion" element={<Clasificacion />} />
           <Route path="tipos/:id" element={<Tipos />} />
           <Route path="tipos/:id/:parentId" element={<Tipos />} />
-          
+          <Route path="cursos" element={<Curso />} />
         </Route>
       </Routes>
     </main>

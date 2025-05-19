@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaClipboardList } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaCog, FaGraduationCap } from 'react-icons/fa';
 import { useEffect } from 'react';
 import useClasificacionStore from '../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
@@ -33,16 +33,17 @@ export default function Sidebar() {
 
       <nav className="flex flex-col gap-2">
         <div className="relative group">
-          <div
+          <Link
+            to="/dashboard"
             className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
               location.pathname.startsWith('/dashboard/tipos')
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}
           >
-            <FaClipboardList className="w-5 h-5" />
+            <FaCog className="w-5 h-5" />
             <span className="font-medium">Configuración</span>
-          </div>
+          </Link>
 
           <div className="absolute left-0 right-0 mt-1 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
@@ -98,6 +99,18 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
+
+        <Link
+          to="/dashboard/cursos"
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
+            location.pathname === '/dashboard/cursos'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+          }`}
+        >
+          <FaGraduationCap className="w-5 h-5" />
+          <span className="font-medium">Cursos</span>
+        </Link>
       </nav>
     </aside>
   );

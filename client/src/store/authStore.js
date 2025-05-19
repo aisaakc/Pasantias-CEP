@@ -5,7 +5,14 @@ import {
    login ,
    getSubclassificationsById } from '../api/auth.api';
 
-export const useAuthStore = create((set) => ({
+// Constantes para los IDs de subclasificación
+const SUBCLASSIFICATION_IDS = {
+  PREGUNTAS: 8,
+  GENEROS: 1,
+  ROLES: 3
+};
+
+export const useAuthStore = create((set) => ({ 
   generos: [],
   roles: [],
   preguntas: [],
@@ -21,9 +28,9 @@ export const useAuthStore = create((set) => ({
      
        const [ preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
               
-        getSubclassificationsById(8),
-        getSubclassificationsById(1),
-        getSubclassificationsById(3),
+        getSubclassificationsById(SUBCLASSIFICATION_IDS.PREGUNTAS),
+        getSubclassificationsById(SUBCLASSIFICATION_IDS.GENEROS),
+        getSubclassificationsById(SUBCLASSIFICATION_IDS.ROLES),
  
       ]);
       set({

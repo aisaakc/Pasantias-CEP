@@ -28,18 +28,21 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate }) =
         <div className="flex justify-center space-x-4">
           <button 
             onClick={() => onEdit(sub)}
+            title={`Editar ${sub.nombre}`}
             className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300"
           >
             <FontAwesomeIcon icon={iconos.faPen} size="lg" />
           </button>
           <button 
             onClick={() => onDelete(sub)}
+            title={`Eliminar ${sub.nombre}`}
             className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
           >
             <FontAwesomeIcon icon={iconos.faTrash} size="lg" />
           </button>
           <button 
             onClick={() => onNavigate(sub)}
+            title={`Navegar a ${sub.nombre}`}
             className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
           >
             <FontAwesomeIcon icon={iconos.faFolderTree} size="lg" />
@@ -340,6 +343,7 @@ export default function Tipos() {
             )}
           </div>
           <button
+          
             onClick={handleCreate}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
           >

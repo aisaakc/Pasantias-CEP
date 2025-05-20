@@ -1,20 +1,97 @@
-import React, { useState } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import listPlugin from '@fullcalendar/list'
-import interactionPlugin from '@fullcalendar/interaction'
-import esLocale from '@fullcalendar/core/locales/es'
-import ModalCurso from '../../components/ModalCurso'
+import React, { useState } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import listPlugin from '@fullcalendar/list';
+import interactionPlugin from '@fullcalendar/interaction';
+import esLocale from '@fullcalendar/core/locales/es';
+import ModalCurso from '../../components/ModalCurso';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBook, faBriefcase, faCoffee, faUniversity } from '@fortawesome/free-solid-svg-icons'; // Importa faUniversity
 
 function Curso() {
-  const [showModal, setShowModal] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(null)
+  const [showModal, setShowModal] = useState(false);
+  const [selectedEventInfo, setSelectedEventInfo] = useState(null);
 
-  const handleDateClick = (clickInfo) => {
-    setSelectedDate(clickInfo.date)
-    setShowModal(true)
-  }
+  const handleDateClick = (selectInfo) => { // Cambiamos el nombre a handleDateClick para claridad
+    setSelectedEventInfo({
+      date: selectInfo.startStr.slice(0, 10),
+      start: selectInfo.startStr + 'T00:00', // Hora de inicio predeterminada al inicio del día
+      end: selectInfo.startStr + 'T01:00',   // Hora de fin predeterminada una hora después
+      title: '', // Indicador de que es un nuevo evento
+      icon: faUniversity, // Añadimos el icono de universidad para el nuevo curso
+      extendedProps: {
+        descripcion: '',
+        instructor: '',
+      },
+    });
+    setShowModal(true);
+  };
+
+  const handleEventClick = (clickInfo) => {
+    setSelectedEventInfo({
+      date: clickInfo.event.startStr.slice(0, 10), // Conservamos la fecha por si es útil
+      start: clickInfo.event.startStr, // Pasamos la cadena completa de inicio (YYYY-MM-DDTHH:mm:ss)
+      end: clickInfo.event.endStr,     // Pasamos la cadena completa de fin (YYYY-MM-DDTHH:mm:ss)
+      title: clickInfo.event.title,
+      idCurso: clickInfo.event.extendedProps.id_Curso, // Usamos el id_Curso correcto
+      icon: clickInfo.event.extendedProps.icon,
+      extendedProps: clickInfo.event.extendedProps,
+    });
+    setShowModal(true);
+  };
+
+  const eventosConJSX = [
+    {
+      id: '1',
+      title: 'Curso 1',
+      start: '2025-05-24T08:00:00',
+      end: '2025-05-25T10:00:00',
+      icon: faBook,
+    //   eventColor: '#FF6B6B',
+      color: '#FF6B6B',
+      extendedProps: {
+        id_Curso: 'CURSO001',
+        descripcion: 'Descripción del Curso 1',
+        instructor: 'Instructor A',
+      },
+    },
+    {
+      id: '2',
+      title: 'Curso 2',
+      start: '2025-05-24T08:00:00',
+      end: '2025-05-24T12:00:00',
+      icon: faBriefcase,
+      color: '#4ECDC4',
+      extendedProps: {
+        id_Curso: 'CURSO002',
+        descripcion: 'Descripción del Curso 2',
+        instructor: 'Instructor B',
+      },
+    },
+    {
+      id: '3',
+      title: 'Curso 3',
+      start: '2025-05-24T09:00:00',
+      end: '2025-05-25T15:00:00',
+      icon: faCoffee,
+      color: '#FFD93D',
+      extendedProps: {
+        id_Curso: 'CURSO003',
+        descripcion: 'Descripción del Curso 3',
+        instructor: 'Instructor C',
+      },
+    },
+  ];
+
+  const renderEventContent = (eventInfo) => {
+    return (
+      <>
+        <FontAwesomeIcon icon={eventInfo.event.extendedProps.icon} className="mr-2" />
+        <span>{eventInfo.event.title}</span>
+      </>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -23,7 +100,6 @@ function Curso() {
           <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
             <h1 className="text-xl font-semibold text-gray-900">Calendario Académico</h1>
           </div>
-
           <div className="p-4 sm:p-6">
             <div className="[&_.fc]:font-sans [&_.fc]:text-sm">
               <div className="[&_.fc-toolbar]:bg-gray-50 [&_.fc-toolbar]:p-4 [&_.fc-toolbar]:rounded-lg [&_.fc-toolbar]:mb-6 [&_.fc-toolbar]:border [&_.fc-toolbar]:border-gray-200">
@@ -46,7 +122,8 @@ function Curso() {
                               allDaySlot={true}
                               slotMinTime="06:00:00"
                               slotMaxTime="22:00:00"
-                              dateClick={handleDateClick}
+                              select={handleDateClick} // Usamos la prop 'select'
+                              eventClick={handleEventClick}
                               dayMaxEvents={true}
                               weekends={true}
                               buttonText={{
@@ -68,7 +145,9 @@ function Curso() {
                                 }
                               }}
                               dayHeaderFormat={{ weekday: 'long' }}
-                              events={[]}
+                              events={eventosConJSX}
+                              eventContent={renderEventContent}
+                              selectable={true} // Asegúrate de que selectable esté habilitado
                             />
                           </div>
                         </div>
@@ -82,13 +161,13 @@ function Curso() {
         </div>
       </div>
 
-      <ModalCurso 
+      <ModalCurso
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        selectedDate={selectedDate}
+        selectedEventInfo={selectedEventInfo}
       />
     </div>
-  )
+  );
 }
 
-export default Curso
+export default Curso;

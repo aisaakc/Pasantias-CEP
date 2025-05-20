@@ -1,27 +1,40 @@
-import React from 'react'
+import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUniversity } from '@fortawesome/free-solid-svg-icons';
 
-function ModalCurso({ isOpen, onClose, selectedDate }) {
-  if (!isOpen) return null
+function ModalCurso({ isOpen, onClose, selectedEventInfo }) {
+  if (!isOpen) return null;
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.target)
+    e.preventDefault();
+    const formData = new FormData(e.target);
     const cursoData = {
       nombre: formData.get('nombre'),
       descripcion: formData.get('descripcion'),
-      fecha_inicio: selectedDate,
+      fecha_inicio: formData.get('fecha_inicio'),
       fecha_fin: formData.get('fecha_fin'),
-      horario: formData.get('horario'),
-      instructor: formData.get('instructor')
-    }
-    console.log('Datos del curso:', cursoData)
-    onClose()
-  }
+      instructor: formData.get('instructor'),
+      idCurso: selectedEventInfo?.idCurso,
+    };
+    console.log('Datos del curso:', cursoData);
+    onClose();
+  };
+
+  const formatDateTimeInputValue = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4 text-center">
-        <div 
+        <div
           className="fixed inset-0 bg-gradient-to-br from-gray-900/90 to-black/90 transition-all duration-300 ease-in-out backdrop-blur-md animate-fadeIn"
           onClick={onClose}
         />
@@ -29,8 +42,18 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
         <div className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all duration-300 ease-in-out sm:my-8 sm:w-full sm:max-w-lg animate-slideIn">
           <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 px-8 py-6">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 animate-fadeIn">
-              <h3 className="text-2xl font-bold text-gray-900">
-                Crear Nuevo Curso
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                {selectedEventInfo?.title ? (
+                  <>
+                    <FontAwesomeIcon icon={selectedEventInfo.icon} className="mr-2" />
+                    {selectedEventInfo.title}
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faUniversity} className="mr-2" />
+                    Agregar Curso
+                  </>
+                )}
               </h3>
               <button
                 onClick={onClose}
@@ -41,8 +64,8 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
                 </svg>
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
+
+            <form onSubmit={handleSubmit} className="space-y-6" id="curso-form">
               <div className="space-y-1 animate-fadeInUp" style={{ animationDelay: '100ms' }}>
                 <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">
                   Nombre del Curso
@@ -55,6 +78,7 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-300"
                     placeholder="Ingrese el nombre del curso"
+                    defaultValue={selectedEventInfo?.title || ''}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,23 +99,24 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
                     rows="3"
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-300 resize-none"
                     placeholder="Describa el contenido del curso"
+                    defaultValue={selectedEventInfo?.extendedProps?.descripcion || ''}
                   />
                 </div>
               </div>
 
               <div className="space-y-1 animate-fadeInUp" style={{ animationDelay: '300ms' }}>
-                <label className="block text-sm font-medium text-gray-700">
-                  Fecha de Inicio
+                <label htmlFor="fecha_inicio" className="block text-sm font-medium text-gray-700">
+                  Fecha/Hora de Inicio
                 </label>
                 <div className="relative">
-                  <div className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 shadow-sm">
-                    {selectedDate?.toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
+                  <input
+                    type="datetime-local"
+                    id="fecha_inicio"
+                    name="fecha_inicio"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-300"
+                    defaultValue={selectedEventInfo?.start ? formatDateTimeInputValue(selectedEventInfo.start) : ''}
+                  />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -102,16 +127,17 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
 
               <div className="space-y-1 animate-fadeInUp" style={{ animationDelay: '400ms' }}>
                 <label htmlFor="fecha_fin" className="block text-sm font-medium text-gray-700">
-                  Fecha de Finalización
+                  Fecha/Hora de Finalización
                 </label>
                 <div className="relative">
                   <input
-                    type="date"
+                    type="datetime-local"
                     id="fecha_fin"
                     name="fecha_fin"
                     required
-                    min={selectedDate?.toISOString().split('T')[0]}
+                    min={selectedEventInfo?.start ? formatDateTimeInputValue(selectedEventInfo.start) : ''}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-300"
+                    defaultValue={selectedEventInfo?.end ? formatDateTimeInputValue(selectedEventInfo.end) : ''}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,27 +147,16 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
                 </div>
               </div>
 
-              <div className="space-y-1 animate-fadeInUp" style={{ animationDelay: '500ms' }}>
-                <label htmlFor="horario" className="block text-sm font-medium text-gray-700">
-                  Horario
+              <div>
+                <label htmlFor="color" className="block text-sm font-medium text-gray-700">
+                  Color
                 </label>
-                <div className="relative">
-                  <input
-                    type="time"
-                    id="horario"
-                    name="horario"
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-300"
-                  />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
+                <input type="color" name="color" id="color" />
               </div>
 
-              <div className="space-y-1 animate-fadeInUp" style={{ animationDelay: '600ms' }}>
+              {/* Eliminamos el campo de Horario independiente */}
+
+              <div className="space-y-1 animate-fadeInUp" style={{ animationDelay: '500ms' }}>
                 <label htmlFor="instructor" className="block text-sm font-medium text-gray-700">
                   Instructor
                 </label>
@@ -153,6 +168,7 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-300"
                     placeholder="Nombre del instructor"
+                    defaultValue={selectedEventInfo?.extendedProps?.instructor || ''}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -164,7 +180,7 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
             </form>
           </div>
 
-          <div className="bg-gradient-to-r from-gray-50 to-white px-8 py-5 border-t border-gray-200 animate-fadeInUp" style={{ animationDelay: '700ms' }}>
+          <div className="bg-gradient-to-r from-gray-50 to-white px-8 py-5 border-t border-gray-200 animate-fadeInUp" style={{ animationDelay: '600ms' }}>
             <div className="flex justify-end space-x-4">
               <button
                 type="button"
@@ -178,14 +194,14 @@ function ModalCurso({ isOpen, onClose, selectedDate }) {
                 form="curso-form"
                 className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm"
               >
-                Crear Curso
+                {selectedEventInfo?.title ? 'Guardar Cambios' : 'Agregar Curso'}
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default ModalCurso 
+export default ModalCurso;

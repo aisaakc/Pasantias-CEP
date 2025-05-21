@@ -5,7 +5,6 @@ import { JWT_SECRET } from "../config.js";
  
 class AuthController {
   
-  
 
   async registrarUsuario(req, res) {
     const userData = {

@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-05-14 10:41:46
+-- Started on 2025-05-21 08:02:49
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,6 +18,50 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- TOC entry 228 (class 1255 OID 91807)
+-- Name: check_fechas_horarios(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_fechas_horarios() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$BEGIN
+  IF NEW.fecha_hora_fin < NEW.fecha_hora_inicio THEN
+    RAISE EXCEPTION 'FECHA FIN INFERIOR';
+  END IF;
+  RETURN NEW;
+END;$$;
+
+
+ALTER FUNCTION public.check_fechas_horarios() OWNER TO postgres;
+
+--
+-- TOC entry 240 (class 1255 OID 91815)
+-- Name: obtener_parents(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.obtener_parents(p_id_clasificacion integer) RETURNS TABLE(id_clasificacion integer, nombre character varying, descripcion character varying)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_current_id INTEGER := p_id_clasificacion;
+BEGIN
+    WHILE v_current_id IS NOT NULL LOOP
+        RETURN QUERY
+        SELECT c.id_clasificacion, c.nombre, c.descripcion --, c.parent_id
+        FROM public.clasificacion c
+        WHERE c.id_clasificacion = v_current_id;
+
+        SELECT d.parent_id INTO v_current_id
+        FROM public.clasificacion d
+        WHERE d.id_clasificacion = v_current_id;
+    END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION public.obtener_parents(p_id_clasificacion integer) OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -57,7 +101,7 @@ CREATE SEQUENCE public.auditorias_id_auditoria_seq
 ALTER SEQUENCE public.auditorias_id_auditoria_seq OWNER TO postgres;
 
 --
--- TOC entry 4858 (class 0 OID 0)
+-- TOC entry 4869 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: auditorias_id_auditoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -101,7 +145,7 @@ CREATE SEQUENCE public.clasificacion_id_clasificacion_seq
 ALTER SEQUENCE public.clasificacion_id_clasificacion_seq OWNER TO postgres;
 
 --
--- TOC entry 4859 (class 0 OID 0)
+-- TOC entry 4870 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -127,7 +171,9 @@ CREATE TABLE public.cursos (
     id_facilitador bigint NOT NULL,
     id_foto bigint,
     id_modalidad bigint NOT NULL,
-    id_forma_pago bigint NOT NULL
+    id_forma_pago bigint NOT NULL,
+    fecha_hora_inicio timestamp without time zone,
+    fecha_hora_fin timestamp without time zone
 );
 
 
@@ -150,7 +196,7 @@ CREATE SEQUENCE public.cursos_id_curso_seq
 ALTER SEQUENCE public.cursos_id_curso_seq OWNER TO postgres;
 
 --
--- TOC entry 4860 (class 0 OID 0)
+-- TOC entry 4871 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: cursos_id_curso_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -191,13 +237,28 @@ CREATE SEQUENCE public.documentos_id_documento_seq
 ALTER SEQUENCE public.documentos_id_documento_seq OWNER TO postgres;
 
 --
--- TOC entry 4861 (class 0 OID 0)
+-- TOC entry 4872 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: documentos_id_documento_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
 ALTER SEQUENCE public.documentos_id_documento_seq OWNED BY public.documentos.id_documento;
 
+
+--
+-- TOC entry 227 (class 1259 OID 91783)
+-- Name: horarios; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.horarios (
+    id_curso bigint NOT NULL,
+    fecha_hora_inicio timestamp without time zone NOT NULL,
+    fecha_hora_fin timestamp without time zone NOT NULL,
+    "observación" character varying
+);
+
+
+ALTER TABLE public.horarios OWNER TO postgres;
 
 --
 -- TOC entry 225 (class 1259 OID 91655)
@@ -240,7 +301,7 @@ CREATE SEQUENCE public.personas_id_persona_seq
 ALTER SEQUENCE public.personas_id_persona_seq OWNER TO postgres;
 
 --
--- TOC entry 4862 (class 0 OID 0)
+-- TOC entry 4873 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: personas_id_persona_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -249,7 +310,7 @@ ALTER SEQUENCE public.personas_id_persona_seq OWNED BY public.personas.id_person
 
 
 --
--- TOC entry 4661 (class 2604 OID 91661)
+-- TOC entry 4667 (class 2604 OID 91661)
 -- Name: auditorias id_auditoria; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -257,7 +318,7 @@ ALTER TABLE ONLY public.auditorias ALTER COLUMN id_auditoria SET DEFAULT nextval
 
 
 --
--- TOC entry 4662 (class 2604 OID 91662)
+-- TOC entry 4668 (class 2604 OID 91662)
 -- Name: clasificacion id_clasificacion; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -265,7 +326,7 @@ ALTER TABLE ONLY public.clasificacion ALTER COLUMN id_clasificacion SET DEFAULT 
 
 
 --
--- TOC entry 4663 (class 2604 OID 91663)
+-- TOC entry 4669 (class 2604 OID 91663)
 -- Name: cursos id_curso; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -273,7 +334,7 @@ ALTER TABLE ONLY public.cursos ALTER COLUMN id_curso SET DEFAULT nextval('public
 
 
 --
--- TOC entry 4664 (class 2604 OID 91664)
+-- TOC entry 4670 (class 2604 OID 91664)
 -- Name: documentos id_documento; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -281,7 +342,7 @@ ALTER TABLE ONLY public.documentos ALTER COLUMN id_documento SET DEFAULT nextval
 
 
 --
--- TOC entry 4665 (class 2604 OID 91665)
+-- TOC entry 4671 (class 2604 OID 91665)
 -- Name: personas id_persona; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -289,7 +350,7 @@ ALTER TABLE ONLY public.personas ALTER COLUMN id_persona SET DEFAULT nextval('pu
 
 
 --
--- TOC entry 4843 (class 0 OID 91631)
+-- TOC entry 4853 (class 0 OID 91631)
 -- Dependencies: 217
 -- Data for Name: auditorias; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -299,7 +360,7 @@ COPY public.auditorias (id_auditoria, fecha_hora, ip, descripcion, id_persona, i
 
 
 --
--- TOC entry 4845 (class 0 OID 91637)
+-- TOC entry 4855 (class 0 OID 91637)
 -- Dependencies: 219
 -- Data for Name: clasificacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -312,11 +373,9 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 28	aaafaVenusMars	\N	\N	\N	27	\N	28
 8	Preguntas		\N	\N	\N	\N	9320
 14	Personal IUJO	\N	\N	\N	3	11	\N
-107	Aprende a programar en Python desde cero, con VSCode		\N	\N	5	\N	102
+107	Aprende a programar en Python desde cero, con VSCode		\N	\N	5	5	102
 100004	faMapLocationDot	xx	\N	\N	27	\N	100004
-108	Desarrollo web creativo: HTML, CSS y JAVASCRIPT		\N	\N	5	\N	102
 11	Participante 	Tiene acceso solo a participar a los cursos \n	\N	\N	3	\N	9503
-54	Cisco Academy 		\N	\N	4	\N	53
 109	Mantenimiento y Reparación de PC		\N	0	5	\N	102
 84	Cual es tu comida favorita?		\N	\N	8	\N	\N
 111	Informatica		\N	0	110	\N	102
@@ -335,6 +394,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 4	Programas		\N	\N	\N	\N	9503
 5	Cursos	\N	\N	\N	\N	4	9019
 6	Masculino	sexo masculino	\N	\N	1	\N	9053
+61	Informatica	estos son progrmas	\N	\N	4	4	8414
 7	Femenino	sexo femenino	\N	\N	1	\N	9790
 12	Estudiante IUJO	\N	\N	\N	3	11	9772
 8065	faArrowLeft		\N	\N	27	\N	8065
@@ -343,6 +403,9 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 123	Municipios	Lista de Municipios de Venezuela	\N	\N	\N	\N	9048
 1	Géneros		\N	\N	\N	\N	9792
 73	Permisos		\N	\N	\N	\N	9768
+54	Cisco Academy 		\N	\N	4	4	8657
+10001	Amazonas		\N	\N	122	122	\N
+108	Desarrollo web creativo: HTML, CSS y JAVASCRIPT		\N	\N	5	111	102
 8067	faArrowPointer		\N	\N	27	\N	8067
 8068	faArrowRight		\N	\N	27	\N	8068
 15	Super Administrador	Tiene acceso a todo el sistema	\N	\N	3	\N	97
@@ -362,8 +425,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 8076	faArrowTrendDown		\N	\N	27	\N	8076
 34	aaafaMapLocation	\N	\N	\N	27	\N	34
 35	aaafaIcons	\N	\N	\N	27	\N	35
-61	Informatica	estos son progrmas	\N	\N	4	\N	102
-10001	Amazonas		\N	\N	122	\N	\N
 10002	Anzoátegui		\N	\N	122	\N	\N
 10003	Apure		\N	\N	122	\N	\N
 8077	faArrowTrendUp		\N	\N	27	\N	8077
@@ -1946,8 +2007,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 8064	faArrowDownZA		\N	\N	27	\N	8064
 8020	faAirbnb		\N	\N	27	\N	8020
 41138	23 de enero		\N	\N	124	30462	100004
-100018	Isaac	xd	\N	0	5	\N	\N
-100020	sexo	anal	\N	0	110	\N	\N
+100028	Transferencia		\N	0	100026	\N	\N
 8083	faArrowUpAZ		\N	\N	27	\N	8083
 8084	faArrowUpFromBracket		\N	\N	27	\N	8084
 8085	faArrowUpFromGroundWater		\N	\N	27	\N	8085
@@ -3760,32 +3820,51 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 9892	faYoutube		\N	\N	27	\N	9892
 9893	faZ		\N	\N	27	\N	9893
 9894	faZhihu		\N	\N	27	\N	9894
-100019	enfermeridad	xd	\N	0	110	\N	\N
+100026	Forma de pago	pagos de los cursos	\N	\N	\N	\N	8809
+100027	Pago movil		\N	\N	100026	100026	\N
+100050	Modalidad		\N	\N	\N	\N	8266
+100051	Ninguna		\N	\N	110	110	\N
 \.
 
 
 --
--- TOC entry 4847 (class 0 OID 91643)
+-- TOC entry 4857 (class 0 OID 91643)
 -- Dependencies: 221
 -- Data for Name: cursos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, id_forma_pago) FROM stdin;
+COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, id_forma_pago, fecha_hora_inicio, fecha_hora_fin) FROM stdin;
+1	100009	100009	100009	7	nada	nada xd	3000000000	CEP-03	9	2	100009	100009	\N	\N
 \.
 
 
 --
--- TOC entry 4849 (class 0 OID 91649)
+-- TOC entry 4859 (class 0 OID 91649)
 -- Dependencies: 223
 -- Data for Name: documentos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.documentos (id_documento, id_tipo, fecha_hora, url, descripcion) FROM stdin;
+2	100009	2025-05-16 00:00:00	SDFDSFAS	XD
 \.
 
 
 --
--- TOC entry 4851 (class 0 OID 91655)
+-- TOC entry 4863 (class 0 OID 91783)
+-- Dependencies: 227
+-- Data for Name: horarios; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.horarios (id_curso, fecha_hora_inicio, fecha_hora_fin, "observación") FROM stdin;
+1	2025-05-17 17:00:00	2025-05-17 20:00:00	\N
+1	2025-05-18 18:00:00	2025-05-18 21:00:00	\N
+1	2025-05-17 17:00:00	2025-05-17 20:00:01	\N
+1	2025-05-17 20:00:01	2025-05-17 21:00:01	\N
+\.
+
+
+--
+-- TOC entry 4861 (class 0 OID 91655)
 -- Dependencies: 225
 -- Data for Name: personas; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -3798,11 +3877,12 @@ COPY public.personas (id_persona, nombre, apellido, telefono, "contraseña", id_
 8	javier	trujillo	041421492126	$2b$10$ZS82Roz4eNC8QLndn7MOd.SecqIfb9I7iqWt.3M6r6tI1pSv/fEQ6	6	12	9	30123123	trujillo@gmail.com	\N	\N	$2b$10$LS8vR4lJF89amEYnQ9Z98uxoDbO8fPq4BVTqck4thD9g5C5okiwna
 9	Isaac	Cattoni	04143173920	$2b$10$eIJOhMBycFYniSEvao/Zp.TXUUCJp5PuGnTO7p3hh/wIN71a5XScu	6	12	9	1234567	xd@gmail.com	\N	\N	$2b$10$JgexyWZVyAmexZUeqo8i/uSDOOnKvI2QEajW2.y8Df7jXbThdQrRC
 10	Isaac	Cattoni	04143173920	$2b$10$sS9cqXJUo5HfwL4ZiU57LuDQJYsWduQG46XSl2g1rwUjuLbyRKrri	6	12	9	1	isaac12@gmail.com	\N	\N	$2b$10$qJAnfDIuB.XrPd70JYKFdeNS.B2GNPlALHDjQlZ1TxeaSVgwilHfO
+11	isaac	Cattoni	04143173920	$2b$10$CasPanDwLlaWeJfFSvwzBOkVWvhVK7a/ZEmouJwzNOFy4p1o1WWEi	6	12	9	30551892	isaac123@gmail.com	\N	\N	$2b$10$Gj0yKBv9.Hzy8Ft1A/4gJOMieqe3wpNcokRq2XophUABNQ/BNrC8y
 \.
 
 
 --
--- TOC entry 4863 (class 0 OID 0)
+-- TOC entry 4874 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: auditorias_id_auditoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -3811,43 +3891,43 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 
 
 --
--- TOC entry 4864 (class 0 OID 0)
+-- TOC entry 4875 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100022, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100051, true);
 
 
 --
--- TOC entry 4865 (class 0 OID 0)
+-- TOC entry 4876 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 1, false);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 1, true);
 
 
 --
--- TOC entry 4866 (class 0 OID 0)
+-- TOC entry 4877 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: documentos_id_documento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.documentos_id_documento_seq', 1, false);
+SELECT pg_catalog.setval('public.documentos_id_documento_seq', 2, true);
 
 
 --
--- TOC entry 4867 (class 0 OID 0)
+-- TOC entry 4878 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 10, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 11, true);
 
 
 --
--- TOC entry 4667 (class 2606 OID 91667)
+-- TOC entry 4673 (class 2606 OID 91667)
 -- Name: auditorias auditorias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3856,7 +3936,7 @@ ALTER TABLE ONLY public.auditorias
 
 
 --
--- TOC entry 4669 (class 2606 OID 91669)
+-- TOC entry 4675 (class 2606 OID 91669)
 -- Name: clasificacion clasificacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3865,7 +3945,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4671 (class 2606 OID 91671)
+-- TOC entry 4677 (class 2606 OID 91671)
 -- Name: cursos cursos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3874,7 +3954,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4673 (class 2606 OID 91673)
+-- TOC entry 4679 (class 2606 OID 91673)
 -- Name: documentos documentos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3883,7 +3963,16 @@ ALTER TABLE ONLY public.documentos
 
 
 --
--- TOC entry 4675 (class 2606 OID 91675)
+-- TOC entry 4687 (class 2606 OID 91806)
+-- Name: horarios horarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.horarios
+    ADD CONSTRAINT horarios_pkey PRIMARY KEY (id_curso, fecha_hora_inicio, fecha_hora_fin) INCLUDE (id_curso, fecha_hora_inicio, fecha_hora_fin);
+
+
+--
+-- TOC entry 4681 (class 2606 OID 91675)
 -- Name: personas personas_cedula_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3892,7 +3981,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4677 (class 2606 OID 91677)
+-- TOC entry 4683 (class 2606 OID 91677)
 -- Name: personas personas_gmail_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3901,7 +3990,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4679 (class 2606 OID 91679)
+-- TOC entry 4685 (class 2606 OID 91679)
 -- Name: personas personas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3910,7 +3999,15 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4680 (class 2606 OID 91680)
+-- TOC entry 4707 (class 2620 OID 91808)
+-- Name: horarios tr_check_fechas_horarios; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER tr_check_fechas_horarios BEFORE INSERT OR UPDATE ON public.horarios FOR EACH ROW EXECUTE FUNCTION public.check_fechas_horarios();
+
+
+--
+-- TOC entry 4688 (class 2606 OID 91680)
 -- Name: auditorias auditorias_id_evento_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3919,7 +4016,7 @@ ALTER TABLE ONLY public.auditorias
 
 
 --
--- TOC entry 4681 (class 2606 OID 91685)
+-- TOC entry 4689 (class 2606 OID 91685)
 -- Name: auditorias auditorias_id_persona_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3928,7 +4025,7 @@ ALTER TABLE ONLY public.auditorias
 
 
 --
--- TOC entry 4682 (class 2606 OID 91690)
+-- TOC entry 4690 (class 2606 OID 91690)
 -- Name: clasificacion clasificacion_id_icono_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3937,7 +4034,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4683 (class 2606 OID 91695)
+-- TOC entry 4691 (class 2606 OID 91695)
 -- Name: clasificacion clasificacion_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3946,7 +4043,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4684 (class 2606 OID 91700)
+-- TOC entry 4692 (class 2606 OID 91700)
 -- Name: clasificacion clasificacion_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3955,7 +4052,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4685 (class 2606 OID 91705)
+-- TOC entry 4693 (class 2606 OID 91705)
 -- Name: cursos cursos_id_facilitador_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3964,7 +4061,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4686 (class 2606 OID 91710)
+-- TOC entry 4694 (class 2606 OID 91710)
 -- Name: cursos cursos_id_forma_pago_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3973,7 +4070,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4687 (class 2606 OID 91715)
+-- TOC entry 4695 (class 2606 OID 91715)
 -- Name: cursos cursos_id_foto_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3982,7 +4079,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4688 (class 2606 OID 91725)
+-- TOC entry 4696 (class 2606 OID 91725)
 -- Name: cursos cursos_id_modalidad_fkey1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3991,7 +4088,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4689 (class 2606 OID 91730)
+-- TOC entry 4697 (class 2606 OID 91730)
 -- Name: cursos cursos_id_nombre_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4000,7 +4097,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4690 (class 2606 OID 91735)
+-- TOC entry 4698 (class 2606 OID 91735)
 -- Name: cursos cursos_id_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4009,7 +4106,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4691 (class 2606 OID 91740)
+-- TOC entry 4699 (class 2606 OID 91740)
 -- Name: cursos cursos_id_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4018,7 +4115,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4692 (class 2606 OID 91745)
+-- TOC entry 4700 (class 2606 OID 91745)
 -- Name: documentos documentos_id_tipo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4027,7 +4124,16 @@ ALTER TABLE ONLY public.documentos
 
 
 --
--- TOC entry 4693 (class 2606 OID 91750)
+-- TOC entry 4706 (class 2606 OID 91790)
+-- Name: horarios horarios_id_curso_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.horarios
+    ADD CONSTRAINT horarios_id_curso_fkey FOREIGN KEY (id_curso) REFERENCES public.cursos(id_curso) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 4701 (class 2606 OID 91750)
 -- Name: personas personas_id_foto_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4036,7 +4142,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4694 (class 2606 OID 91755)
+-- TOC entry 4702 (class 2606 OID 91755)
 -- Name: personas personas_id_genero_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4045,7 +4151,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4695 (class 2606 OID 91765)
+-- TOC entry 4703 (class 2606 OID 91765)
 -- Name: personas personas_id_pregunta_fkey1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4054,7 +4160,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4696 (class 2606 OID 91770)
+-- TOC entry 4704 (class 2606 OID 91770)
 -- Name: personas personas_id_rol_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4063,7 +4169,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4697 (class 2606 OID 91775)
+-- TOC entry 4705 (class 2606 OID 91775)
 -- Name: personas personas_id_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4071,7 +4177,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-05-14 10:41:46
+-- Completed on 2025-05-21 08:02:50
 
 --
 -- PostgreSQL database dump complete

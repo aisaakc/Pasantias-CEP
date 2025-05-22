@@ -32,7 +32,7 @@ class UserModel {
       const result = await pool.query(query, [id]);
       return result.rows;
     } catch (error) {
-      console.error("Error en getGeneros:", error.message);
+      console.error("Error en getSubclassificationsById:", error.message);
     
       throw error;
     }

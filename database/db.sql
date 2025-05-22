@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-05-21 08:02:49
+-- Started on 2025-05-22 13:05:08
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -161,19 +161,20 @@ ALTER SEQUENCE public.clasificacion_id_clasificacion_seq OWNED BY public.clasifi
 CREATE TABLE public.cursos (
     id_curso integer NOT NULL,
     id_nombre bigint NOT NULL,
-    id_type bigint NOT NULL,
+    id_type bigint,
     id_status bigint,
     duracion double precision,
     descripcion_corto character varying,
     descripcion_html character varying,
     costo double precision NOT NULL,
     codigo character varying NOT NULL,
-    id_facilitador bigint NOT NULL,
+    id_facilitador bigint,
     id_foto bigint,
     id_modalidad bigint NOT NULL,
-    id_forma_pago bigint NOT NULL,
+    id_forma_pago bigint,
     fecha_hora_inicio timestamp without time zone,
-    fecha_hora_fin timestamp without time zone
+    fecha_hora_fin timestamp without time zone,
+    color character varying
 );
 
 
@@ -2007,7 +2008,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 8064	faArrowDownZA		\N	\N	27	\N	8064
 8020	faAirbnb		\N	\N	27	\N	8020
 41138	23 de enero		\N	\N	124	30462	100004
-100028	Transferencia		\N	0	100026	\N	\N
+100028	Divisas en efectivo ( directamente en caja principal)		\N	\N	100026	100026	\N
 8083	faArrowUpAZ		\N	\N	27	\N	8083
 8084	faArrowUpFromBracket		\N	\N	27	\N	8084
 8085	faArrowUpFromGroundWater		\N	\N	27	\N	8085
@@ -3821,9 +3822,19 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 9893	faZ		\N	\N	27	\N	9893
 9894	faZhihu		\N	\N	27	\N	9894
 100026	Forma de pago	pagos de los cursos	\N	\N	\N	\N	8809
-100027	Pago movil		\N	\N	100026	100026	\N
 100050	Modalidad		\N	\N	\N	\N	8266
-100051	Ninguna		\N	\N	110	110	\N
+100052	Presencial / Sabatino		\N	\N	100050	\N	\N
+100053	On line		\N	\N	100050	\N	\N
+100051	Ninguna		\N	\N	110	\N	\N
+100027	Transferencia Bancaria		\N	\N	100026	100026	\N
+100055	Bolívares en efectivo ( directamente en caja principal)		\N	\N	100026	\N	\N
+100056	Débito / Punto de Venta (directamente en caja principal)		\N	\N	100026	\N	\N
+100057	Financiamiento		\N	\N	100026	\N	\N
+100058	Cancelar el día de Inicio del Curso		\N	\N	100026	\N	\N
+100059	Status		\N	\N	\N	\N	8330
+100060	Activo		\N	\N	100059	\N	\N
+100061	Inactivo		\N	\N	100059	\N	\N
+100062	Cancelado		\N	\N	100059	\N	\N
 \.
 
 
@@ -3833,8 +3844,9 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 -- Data for Name: cursos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, id_forma_pago, fecha_hora_inicio, fecha_hora_fin) FROM stdin;
-1	100009	100009	100009	7	nada	nada xd	3000000000	CEP-03	9	2	100009	100009	\N	\N
+COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, id_forma_pago, fecha_hora_inicio, fecha_hora_fin, color) FROM stdin;
+1	100009	100009	100060	7	nada	nada xd	300	CEP-03	9	2	100052	\N	\N	\N	\N
+3	108	\N	100060	\N	Curso de ejemplo	\N	100	CURS123	\N	\N	100052	\N	2025-06-01 10:00:00	2025-06-10 18:00:00	#ffcc00
 \.
 
 
@@ -3896,7 +3908,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100051, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100063, true);
 
 
 --
@@ -3905,7 +3917,7 @@ SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100051, tr
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 1, true);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 3, true);
 
 
 --
@@ -4177,7 +4189,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-05-21 08:02:50
+-- Completed on 2025-05-22 13:05:08
 
 --
 -- PostgreSQL database dump complete

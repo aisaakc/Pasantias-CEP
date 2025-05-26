@@ -196,6 +196,32 @@ class UserModel {
     }
   }
 
+  
 }
 
 export default new UserModel();
+
+//   SELECT
+//     p.id_persona,
+//     p.nombre AS persona_nombre,
+//     p.apellido,
+//     p.telefono,
+//     p.gmail,
+//     c.id_clasificacion id_rol,
+//     c.nombre rol_nombre,
+//     c.descripcion rol_desc,
+//     c.type_id rol_type
+// FROM
+//     personas p
+// CROSS JOIN LATERAL json_array_elements_text(p.id_rol->'id_rol') AS role_id_text
+// INNER JOIN
+//     clasificacion c ON c.id_clasificacion = role_id_text::integer
+// WHERE
+//     p.id_persona = 1
+// }
+
+// SELECT
+// json_array_elements_text(p.id_rol->'id_rol') AS role_id_text
+// FROM
+//     public.personas p
+// WHERE p.id_persona = 5

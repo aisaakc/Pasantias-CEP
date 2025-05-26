@@ -193,7 +193,6 @@ export default function Tipos() {
       if (currentSubclasificacionesStr !== lastSubclasificacionesRef.current) {
         console.log('=== SUBCLASIFICACIONES ACTUALES ===');
         console.log('ID Padre:', realId);
-        console.log('ID Subclasificación:', realParentId);
         console.log('Subclasificaciones:', subClasificaciones.map(sub => ({
           id: sub.id_clasificacion,
           nombre: sub.nombre,
@@ -204,7 +203,6 @@ export default function Tipos() {
           parent_nombre: sub.parent_nombre,
           parent_icono: sub.parent_icono
         })));
-        console.log('==================================');
         
         // Actualizar la referencia con las subclasificaciones actuales
         lastSubclasificacionesRef.current = currentSubclasificacionesStr;
@@ -232,7 +230,7 @@ export default function Tipos() {
       parent_icono: sub.parent_icono,
       datos_completos: sub
     });
-    console.log('==================================');
+
     navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeParentId(sub.id_clasificacion)}`);
   }, [navigate]);
 

@@ -274,7 +274,7 @@ export default function Registro() {
                           onBlur={(e) => handleBlurAndShowToast(e, field, form)}
                         >
                           <option value="">Seleccionar tipo</option>
-                          {roles.filter((r) => [12, 13, 14].includes(r.id)).map((r) => (
+                          {roles.filter((r) => [ 13, 14].includes(r.id)).map((r) => (
                             <option key={r.id} value={r.id}>{r.nombre}</option>
                           ))}
                         </select>

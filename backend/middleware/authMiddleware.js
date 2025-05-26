@@ -27,12 +27,15 @@ const authMiddleware = (req, res, next) => {
 
 const roleMiddleware = (allowedRoles) => {
   return (req, res, next) => {
-    if (!req.user || !req.user.id_rol) {
-    
+    if (!req.user || !req.user.id_rol || !req.user.id_rol.id_rol) {
       return res.status(401).json({ error: 'Autenticación requerida para verificar rol.' });
     }
 
-    if (!allowedRoles.includes(req.user.id_rol)) {
+    // Verificamos si alguno de los roles del usuario está en los roles permitidos
+    const userRoles = req.user.id_rol.id_rol;
+    const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
+
+    if (!hasAllowedRole) {
       return res.status(403).json({ error: 'Acceso denegado. Rol insuficiente.' });
     }
 

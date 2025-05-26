@@ -6,7 +6,7 @@ class CursoModel {
     const query = `
         SELECT id_clasificacion
         FROM clasificacion
-        WHERE nombre = $1;
+        WHERE nombre = $1
         LIMIT 1;
     `;
     try {
@@ -45,12 +45,15 @@ class CursoModel {
           SELECT 
             c.*, 
             cl.nombre  AS nombre_curso,
+            cl.id_icono,
+            cl_icono.nombre AS nombre_icono,
             CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo_facilitador,
             cm.nombre  AS modalidad,
             cfp.nombre AS forma_pago,
             cs.nombre  AS estado
           FROM cursos c
           LEFT JOIN clasificacion cl  ON c.id_nombre      = cl.id_clasificacion
+          LEFT JOIN clasificacion cl_icono ON cl.id_icono = cl_icono.id_clasificacion
           LEFT JOIN personas p        ON c.id_facilitador = p.id_persona
           LEFT JOIN clasificacion cm  ON c.id_modalidad   = cm.id_clasificacion
           LEFT JOIN clasificacion cfp ON c.id_forma_pago  = cfp.id_clasificacion
@@ -60,6 +63,7 @@ class CursoModel {
 
         try {
             const result = await pool.query(query);
+            // console.log('Resultado de getAllCursosCompletos:', JSON.stringify(result.rows, null, 2));
             return result.rows;
         } catch (error) {
             console.error("Error en getAllCursosCompletos:", error.message);
@@ -77,7 +81,8 @@ class CursoModel {
       costo,
       descripcion_corto,
       codigo,
-      color
+      color,
+      duracion
     } = cursoData;
 
     const query = `
@@ -90,24 +95,24 @@ class CursoModel {
         costo,
         descripcion_corto,
         codigo,
-        color
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        color,
+        duracion
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `;
 
     try {
       const values = [
         id_nombre,
-       
         id_modalidad,
-      
         id_status,
         fecha_hora_inicio,
         fecha_hora_fin,
         costo,
         descripcion_corto,
         codigo,
-        color
+        color,
+        duracion
       ];
 
       const result = await pool.query(query, values);
@@ -115,6 +120,63 @@ class CursoModel {
     } catch (error) {
       console.error("Error en createCurso:", error.message);
       throw new Error("Error interno del servidor al crear el curso.");
+    }
+  }
+
+  async updateCurso(id, cursoData) {
+    const {
+      id_nombre,
+      id_modalidad,
+      id_status,
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      costo,
+      descripcion_corto,
+      codigo,
+      color,
+      duracion
+    } = cursoData;
+
+    const query = `
+      UPDATE cursos 
+      SET 
+        id_nombre = $1,
+        id_modalidad = $2,
+        id_status = $3,
+        fecha_hora_inicio = $4,
+        fecha_hora_fin = $5,
+        costo = $6,
+        descripcion_corto = $7,
+        codigo = $8,
+        color = $9,
+        duracion = $10
+      WHERE id_curso = $11
+      RETURNING *;
+    `;
+
+    try {
+      const values = [
+        id_nombre,
+        id_modalidad,
+        id_status,
+        fecha_hora_inicio,
+        fecha_hora_fin,
+        costo,
+        descripcion_corto,
+        codigo,
+        color,
+        duracion,
+        id
+      ];
+
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        throw new Error("Curso no encontrado");
+      }
+      return result.rows[0];
+    } catch (error) {
+      console.error("Error en updateCurso:", error.message);
+      throw new Error("Error interno del servidor al actualizar el curso.");
     }
   }
 }

@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(cors()); 
 app.use('/api/auth', authRoutes); 
 app.use('/api', clasificacion);
-app.use('/api/date', cursoRoutes);
+app.use('/api', cursoRoutes);
 
 
 app.get('/', (req, res) => {

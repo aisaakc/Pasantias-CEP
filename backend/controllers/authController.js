@@ -1,4 +1,3 @@
-
 import UserModel from "../models/persona.js";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js"; 
@@ -14,7 +13,7 @@ class AuthController {
        cedula: req.body.cedula,
        gmail: req.body.gmail,
        id_genero: req.body.id_genero,
-       id_rol: req.body.id_rol, 
+       id_rol: { id_rol: [req.body.id_rol] },
        id_pregunta: req.body.id_pregunta, 
        respuesta: req.body.respuesta, 
        contraseña: req.body.contraseña,

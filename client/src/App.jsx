@@ -7,6 +7,7 @@ import Registro from "./pages/auth/Registro";
 import Clasificacion from "./pages/dashboard/Clasificacion";
 import Tipos from "./pages/dashboard/Tipos";
 import Curso from "./pages/dashboard/Curso";
+import Roles from "./pages/dashboard/Roles";
 import Layout from "./components/Layout";
 import useAuthStore from "./store/authStore";
 import Navbar from "./components/Navbar";
@@ -34,13 +35,8 @@ const ProtectedRoute = ({ children }) => {
 
 export default function App() {
   
-  // const ID_ICONO = 27
-  // const ID_GENERO = 1
-
   const location = useLocation();
  
-
-
   const hideLayout = ["/login", "/registro"].includes(location.pathname) || location.pathname.startsWith("/dashboard");
 
   const mainContent = (
@@ -61,6 +57,7 @@ export default function App() {
           <Route path="tipos/:id" element={<Tipos />} />
           <Route path="tipos/:id/:parentId" element={<Tipos />} />
           <Route path="cursos" element={<Curso />} />
+          <Route path="roles" element={<Roles />} />
         </Route>
       </Routes>
     </main>

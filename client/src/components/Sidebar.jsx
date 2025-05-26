@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaClipboardList, FaHome, FaCog, FaGraduationCap } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield } from 'react-icons/fa';
 import { useEffect } from 'react';
 import useClasificacionStore from '../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +22,16 @@ export default function Sidebar() {
     );
   };
 
+  // Función para obtener el icono dinámicamente
+  const getIcon = (iconName) => {
+    const Icon = iconos[iconName] || iconos.faFile;
+    return <FontAwesomeIcon icon={Icon} className="w-5 h-5" />;
+  };
+
+  // Encontrar las clasificaciones específicas para Cursos y Roles
+  const cursosClasificacion = parentClasifications.find(c => c.nombre === 'Cursos');
+  const rolesClasificacion = parentClasifications.find(c => c.nombre === 'Rol');
+
   return (
     <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm">
       <div className="mb-16">
@@ -41,7 +51,7 @@ export default function Sidebar() {
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}
           >
-            <FaCog className="w-5 h-5" />
+            {getIcon('faCog')}
             <span className="font-medium">Configuración</span>
           </Link>
 
@@ -108,8 +118,28 @@ export default function Sidebar() {
               : 'text-gray-300 hover:bg-gray-700 hover:text-white'
           }`}
         >
-          <FaGraduationCap className="w-5 h-5" />
+          {cursosClasificacion ? (
+            <FontAwesomeIcon icon={iconos[cursosClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
+          ) : (
+            <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
+          )}
           <span className="font-medium">Cursos</span>
+        </Link>
+
+        <Link
+          to="/dashboard/roles"
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
+            location.pathname === '/dashboard/roles'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+          }`}
+        >
+          {rolesClasificacion ? (
+            <FontAwesomeIcon icon={iconos[rolesClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
+          ) : (
+            <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
+          )}
+          <span className="font-medium">Roles</span>
         </Link>
       </nav>
     </aside>

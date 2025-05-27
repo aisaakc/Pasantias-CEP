@@ -6,7 +6,8 @@ import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faChalkboardTeacher, faUser, faMoneyBill } from '@fortawesome/free-solid-svg-icons';
+// import { faBook, faChalkboardTeacher, faUser, faMoneyBill } from '@fortawesome/free-solid-svg-icons';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { useCursoStore } from '../../store/cursoStore';
 import ModalFecha from '../../components/ModalCurso';
 
@@ -52,7 +53,7 @@ function Curso() {
         borderColor: curso.color || '#4F46E5',
         textColor: '#ffffff',
         display: 'block',
-        icon: faBook,
+        icon: iconos[curso.nombre_icono] || iconos.faFile,
         extendedProps: {
           id_curso: curso.id_curso,
           descripcion: curso.descripcion_corto || '',
@@ -61,7 +62,7 @@ function Curso() {
           estado: curso.estado || 'No especificado',
           costo: curso.costo || 0,
           codigo: curso.codigo || 'Sin código',
-          icon: faBook,
+          icon: iconos[curso.nombre_icono] || iconos.faFile,
           color: curso.color || '#4F46E5'
         },
       }));

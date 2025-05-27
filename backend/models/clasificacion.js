@@ -60,7 +60,7 @@ class Clasificacion {
               }
           
               query += ` ORDER BY sc.orden, sc.nombre;`;
-              console.log(query);
+                // console.log(query);
             const result = await pool.query(query, queryParams );
             // console.log('Resultado de la consulta:...', result.rows); 
 

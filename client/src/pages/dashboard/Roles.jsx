@@ -72,7 +72,7 @@ function Roles() {
           <button
             className="bg-blue-600 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-blue-900">
             <FontAwesomeIcon icon={iconos.faPlus} />
-            <span>Agregar Rol</span>
+            <span>Agregar Usuario</span>
           </button>
         </div>
 

@@ -120,6 +120,9 @@ class clasificacionController {
             });
         }
     }
+
+  
+    
 }
 
 export default new clasificacionController();

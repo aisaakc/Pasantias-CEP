@@ -8,7 +8,8 @@ import {
     // getClasificacionHijos,
     getAllClasificaciones,
     deleteClasificacion,
-    getAllSubclasificaciones
+    getAllSubclasificaciones,
+    getClasificacion 
     } from '../api/clasificacion.api';
 
 
@@ -20,6 +21,7 @@ export const useClasificacionStore = create((set, get) => ({
   allClasificaciones: [],      
   loading: false,              
   error: null,                 
+  currentClasificacion: null,  // Nuevo estado para almacenar la clasificación actual
 
   // Utilidades
   clearError: () => set({ error: null }),
@@ -33,8 +35,10 @@ export const useClasificacionStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await getParentClassifications();
+      // Filtrar solo las clasificaciones principales (type_id === null)
+      const parentClasifications = response.data.filter(c => c.type_id === null);
       set({
-        parentClasifications: response.data,
+        parentClasifications: parentClasifications,
         loading: false,
       });
     } catch (error) {
@@ -45,10 +49,6 @@ export const useClasificacionStore = create((set, get) => ({
       });
     }
   },
-
-  
-
- 
 
   // Obtener subclasificaciones
   fetchSubClasificaciones: async ( id, id_parent) => {
@@ -86,6 +86,48 @@ export const useClasificacionStore = create((set, get) => ({
         loading: false,
         error: 'Error al obtener todas las clasificaciones.',
       });
+    }
+  },
+
+  // Obtener una clasificación específica
+  fetchClasificacionById: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getClasificacion(id);
+      set({
+        currentClasificacion: response.data,
+        loading: false,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener la clasificación:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener la clasificación.',
+        currentClasificacion: null
+      });
+      throw error;
+    }
+  },
+
+  // Obtener clasificación en contexto
+  getClasificacion: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getClasificacionAPI(id);
+      set({
+        currentClasificacion: response.data,
+        loading: false,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener la clasificación:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener la clasificación.',
+        currentClasificacion: null
+      });
+      throw error;
     }
   },
 

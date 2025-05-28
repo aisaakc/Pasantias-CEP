@@ -23,10 +23,12 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     loading, 
     error, 
     clearError,
-    fetchParentClasifications 
+    fetchParentClasifications,
+    getClasificacion
   } = useClasificacionStore();
 
   const [clasificaciones, setClasificaciones] = useState([]);
+  const [parentClasificacion, setParentClasificacion] = useState(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
   const [nombreClasificacion, setNombreClasificacion] = useState('');
@@ -37,7 +39,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     descripcion: editData?.descripcion || '',
     id_icono: editData?.id_icono || '',
     type_id: editData?.type_id || parentInfo?.type_id || '',
-    parent_id: editData?.parent_id || parentId || ''
+    parent_id: editData?.parent_id || parentId || '',
+    orden: editData?.orden || ""
   };
 
   // Función de validación personalizada
@@ -47,6 +50,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       errors.nombre = 'El nombre es requerido';
     } else if (values.nombre.length < 3) {
       errors.nombre = 'El nombre debe tener al menos 3 caracteres';
+    }
+    if (values.orden !== '' && (isNaN(values.orden) || parseInt(values.orden) < 0)) {
+      errors.orden = 'El orden debe ser un número positivo';
     }
     return errors;
   };
@@ -81,9 +87,27 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   }, [clasificaciones, parentInfo?.type_id]);
 
+  useEffect(() => {
+    if (parentId) {
+      const fetchParent = async () => {
+        try {
+          const parentData = await getClasificacion(parentId);
+          // Filter the results to get the specific parent classification
+          const filteredParent = parentData.find(c => c.id_clasificacion === parseInt(parentId));
+          setParentClasificacion(filteredParent);
+        } catch (err) {
+          console.error('Error al cargar la clasificación padre:', err);
+          toast.error('Error al cargar la clasificación padre');
+        }
+      };
+      fetchParent();
+    }
+  }, [parentId, getClasificacion]);
+
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
+      console.log('Datos recibidos de getAllClasificaciones:', response.data);
       setClasificaciones(response.data);
     } catch (err) {
       console.error('Error al cargar clasificaciones:', err);
@@ -91,13 +115,18 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   };
 
+  useEffect(() => {
+    console.log('Estado actual de clasificaciones:', clasificaciones);
+  }, [clasificaciones]);
+
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       const dataToSend = {
         ...values,
         id_icono: values.id_icono !== '' ? parseInt(values.id_icono) : null,
         type_id: values.type_id ? parseInt(values.type_id) : null,
-        parent_id: editData ? (values.parent_id ? parseInt(values.parent_id) : null) : null // Solo usar parent_id al editar
+        parent_id: editData ? (values.parent_id ? parseInt(values.parent_id) : null) : null,
+        orden: values.orden !== '' ? parseInt(values.orden) : 0
       };
 
       if (editData) {
@@ -143,7 +172,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {editData ? `Editar ${editData.nombre}` : `Agregar ${parentInfo?.nombre || 'Subclasificación'}`}
+              {editData ? `Editar ${editData.nombre}` : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
               {editData?.nicono && (
                 <FontAwesomeIcon
                   icon={iconos[editData.nicono] || iconos.faFile}
@@ -174,7 +203,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                 {[
                   { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
                   { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
-                  { name: 'id_icono', icon: faImage, label: 'Icono', type: 'select' }
+                  { name: 'orden', icon: faLayerGroup, label: 'Orden', type: 'number', className: 'appearance-none' },
+                  { name: 'id_icono', icon: faImage, label: 'Icono', type: 'select' },
+               
                 ].map((field, index) => (
                   <div 
                     key={field.name}
@@ -184,6 +215,11 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
                       {field.label}
+                      {field.name === 'parent_id' && parentClasificacion && (
+                        <span className="ml-2 text-sm text-gray-500">
+                          (Actual: {parentClasificacion.nombre})
+                        </span>
+                      )}
                     </label>
                     {field.type === 'textarea' ? (
                       <Field
@@ -201,25 +237,35 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                         <Field
                           as="select"
                           name={field.name}
+                          disabled={field.disabled}
                           className={`w-full px-4 py-3 rounded-lg border ${
                             touched[field.name] && errors[field.name] 
                               ? 'border-red-300 focus:ring-red-500' 
                               : 'border-gray-200 focus:ring-blue-500'
-                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white`}
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white ${
+                            field.disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                          }`}
                         >
-                          <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                          {clasificaciones.map((c) => (
-                            <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                              {c.nombre}
-                            </option>
-                          ))}
+                          {field.name === 'id_icono' && (
+                            <>
+                              <option value="">Seleccionar ícono</option>
+                              {clasificaciones.map((c) => (
+                                <option key={c.id_clasificacion} value={c.id_clasificacion}>
+                                  {c.nombre}
+                                </option>
+                              ))}
+                            </>
+                          )}
+                            
                         </Field>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <FontAwesomeIcon 
-                            icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
-                            className="text-blue-600"
-                          />
-                        </div>
+                        {field.name === 'id_icono' && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                            <FontAwesomeIcon 
+                              icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
+                              className="text-blue-600"
+                            />
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <Field
@@ -230,7 +276,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                           touched[field.name] && errors[field.name] 
                             ? 'border-red-300 focus:ring-red-500' 
                             : 'border-gray-200 focus:ring-blue-500'
-                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 ${field.className || ''}`}
                       />
                     )}
                     <ErrorMessage
@@ -347,6 +393,16 @@ style.textContent = `
 
   .animate-fade-slide-up {
     animation: fadeSlideUp 0.5s ease-out forwards;
+  }
+
+  /* Ocultar flechas del input number */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
   }
 `;
 document.head.appendChild(style);

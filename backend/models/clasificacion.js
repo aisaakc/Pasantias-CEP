@@ -88,7 +88,7 @@ class Clasificacion {
           throw new Error("Error interno del servidor al obtener todas las clasificaciones.");
         }
     }
-      
+  
     async updateClasificacion(id, clasificacionActualizada) {
         const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = clasificacionActualizada;
         try {

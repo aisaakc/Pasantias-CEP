@@ -249,12 +249,18 @@ export default function Tipos() {
 
   // Memoizar las subclasificaciones filtradas
   const subClasificacionesFiltradas = useMemo(() => {
-    return subClasificaciones
-      .filter(sub => sub.nombre.toLowerCase().includes(busqueda.toLowerCase()))
-      .sort((a, b) => {
-        const comparacion = a.nombre.localeCompare(b.nombre);
-        return ordenAscendente ? comparacion : -comparacion;
-      });
+    // Primero filtramos por búsqueda
+    const filtradas = subClasificaciones.filter(sub => 
+      sub.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    );
+
+    // Si no hay ordenamiento por nombre, devolvemos el orden original de la BD
+    if (!ordenAscendente) {
+      return filtradas;
+    }
+
+    // Si hay ordenamiento por nombre, ordenamos alfabéticamente
+    return [...filtradas].sort((a, b) => a.nombre.localeCompare(b.nombre));
   }, [subClasificaciones, busqueda, ordenAscendente]);
 
   // Efecto para mostrar las subclasificaciones filtradas solo cuando cambie la búsqueda o el orden

@@ -87,22 +87,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   }, [clasificaciones, parentInfo?.type_id]);
 
-  useEffect(() => {
-    if (parentId) {
-      const fetchParent = async () => {
-        try {
-          const parentData = await getClasificacion(parentId);
-          // Filter the results to get the specific parent classification
-          const filteredParent = parentData.find(c => c.id_clasificacion === parseInt(parentId));
-          setParentClasificacion(filteredParent);
-        } catch (err) {
-          console.error('Error al cargar la clasificación padre:', err);
-          toast.error('Error al cargar la clasificación padre');
-        }
-      };
-      fetchParent();
-    }
-  }, [parentId, getClasificacion]);
+ 
 
   const fetchClasificaciones = async () => {
     try {

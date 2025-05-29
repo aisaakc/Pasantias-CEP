@@ -9,7 +9,7 @@ import {
     getAllClasificaciones,
     deleteClasificacion,
     getAllSubclasificaciones,
-    getClasificacion 
+
     } from '../api/clasificacion.api';
 
 
@@ -111,25 +111,7 @@ export const useClasificacionStore = create((set, get) => ({
   },
 
   // Obtener clasificación en contexto
-  getClasificacion: async (id) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await getClasificacionAPI(id);
-      set({
-        currentClasificacion: response.data,
-        loading: false,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error al obtener la clasificación:", error);
-      set({
-        loading: false,
-        error: 'Error al obtener la clasificación.',
-        currentClasificacion: null
-      });
-      throw error;
-    }
-  },
+  
 
   // Operaciones de escritura
   createClasificacion: async (data) => {

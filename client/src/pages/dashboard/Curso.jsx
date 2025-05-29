@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,11 +12,14 @@ import { useCursoStore } from '../../store/cursoStore';
 import ModalFecha from '../../components/ModalCurso';
 
 function Curso() {
-  const { fetchCursos, loading, error, modalidades } = useCursoStore();
+  const navigate = useNavigate();
+  const { fetchCursos, loading, error, modalidades, fetchOpcionesCurso, cursos } = useCursoStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedCurso, setSelectedCurso] = useState(null);
   const [cursosCalendario, setCursosCalendario] = useState([]);
+  const [currentView, setCurrentView] = useState('dayGridMonth');
+  const calendarRef = React.useRef(null);
 
   const loadCursos = async () => {
     try {
@@ -34,10 +37,18 @@ function Curso() {
 
   useEffect(() => {
     loadCursos();
-  }, [fetchCursos]);
+    fetchOpcionesCurso();
+  }, [fetchCursos, fetchOpcionesCurso]);
 
   const handleCursoSaved = async () => {
     await loadCursos();
+  };
+
+  const handleCursoSelect = (e) => {
+    const cursoId = e.target.value;
+    if (cursoId) {
+      navigate(`/dashboard/horario-curso/${cursoId}`);
+    }
   };
 
   const eventosCalendario = React.useMemo(() => {
@@ -47,6 +58,7 @@ function Curso() {
       .map(curso => ({
         id: String(curso.id_curso),
         title: curso.nombre_curso || 'Curso sin nombre',
+        nombre_parent: curso.nombre_parent || 'Sin categoria',
         start: curso.fecha_hora_inicio,
         end: curso.fecha_hora_fin,
         backgroundColor: curso.color || '#4F46E5',
@@ -131,12 +143,50 @@ function Curso() {
     setSelectedCurso(null);
   };
 
+  const handleViewChange = (view) => {
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.changeView(view);
+      setCurrentView(view);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-            <h1 className="text-xl font-semibold text-gray-900">Calendario Académico</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-xl font-semibold text-gray-900">Calendario Académico</h1>
+              <div className="w-200">
+                <select
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-700 shadow-sm"
+                  onChange={handleCursoSelect}
+                  value=""
+                >
+                  <option value="">__________ Ver Horarios del Curso __________</option>
+                  {cursosCalendario && Object.entries(
+                    cursosCalendario.reduce((groups, curso) => {
+                  
+                      const parentName = curso.nombre_parent || "Sin categoría";
+                      if (!groups[parentName]) {
+                        groups[parentName] = [];
+                      }
+                      groups[parentName].push(curso);
+                      return groups;
+                    }, {})
+                  ).map(([parentName, group]) => (
+                    <optgroup key={parentName} label={parentName}>
+                      {group.map((curso) => (
+                        <option key={curso.id_curso} value={curso.id_curso}>
+                          {curso.nombre_curso}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
           <div className="p-4 sm:p-6">
             {loading ? (
@@ -148,54 +198,85 @@ function Curso() {
                 <p>Error al cargar los cursos: {error}</p>
               </div>
             ) : (
-              <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-                initialView="dayGridMonth"
-                headerToolbar={{
-                  left: 'prev,next today',
-                  center: 'title',
-                  right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-                }}
-                locale={esLocale}
-                height="auto"
-                allDaySlot={true}
-                slotMinTime="06:00:00"
-                slotMaxTime="22:00:00"
-                dayMaxEvents={true}
-                weekends={true}
-                selectable={true}
-                selectMirror={true}
-                dayMaxEventRows={true}
-                editable={true}
-                droppable={true}
-                buttonText={{
-                  today: 'Hoy',
-                  month: 'Mes',
-                  week: 'Semana',
-                  day: 'Día',
-                  list: 'Lista'
-                }}
-                views={{
-                  timeGridDay: {
-                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
-                  },
-                  timeGridWeek: {
-                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
-                  },
-                  listWeek: {
-                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
-                    listDayFormat: { weekday: 'long', day: 'numeric', month: 'long' },
-                    listDaySideFormat: { year: 'numeric' },
-                    noEventsMessage: 'No hay cursos programados para esta semana'
-                  }
-                }}
-                dayHeaderFormat={{ weekday: 'long' }}
-                events={eventosCalendario}
-                eventContent={renderEventContent}
-                eventClassNames="fc-event-with-icon"
-                dateClick={handleDateClick}
-                eventClick={handleEventClick}
-              />
+              <>
+                <div className="flex justify-end mb-4 space-x-2">
+                  <button
+                    onClick={() => handleViewChange('dayGridMonth')}
+                    className={`px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 ${
+                      currentView === 'dayGridMonth'
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={iconos.faCalendarAlt} className="mr-2" />
+                    Mes
+                  </button>
+                  <button
+                    onClick={() => handleViewChange('timeGridWeek')}
+                    className={`px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 ${
+                      currentView === 'timeGridWeek'
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={iconos.faCalendarWeek} className="mr-2" />
+                    Semana
+                  </button>
+                  <button
+                    onClick={() => handleViewChange('timeGridDay')}
+                    className={`px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 ${
+                      currentView === 'timeGridDay'
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={iconos.faCalendarDay} className="mr-2" />
+                    Día
+                  </button>
+                </div>
+                <FullCalendar
+                  ref={calendarRef}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView={currentView}
+                  headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                  }}
+                  locale={esLocale}
+                  height="auto"
+                  allDaySlot={true}
+                  slotMinTime="06:00:00"
+                  slotMaxTime="22:00:00"
+                  dayMaxEvents={true}
+                  weekends={true}
+                  selectable={true}
+                  selectMirror={true}
+                  dayMaxEventRows={true}
+                  editable={true}
+                  droppable={true}
+                  buttonText={{
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día'
+                  }}
+                  views={{
+                    timeGridDay: {
+                      titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+                    },
+                    timeGridWeek: {
+                      titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+                    }
+                  }}
+                  dayHeaderFormat={{ weekday: 'long' }}
+                  events={eventosCalendario}
+                  eventContent={renderEventContent}
+                  eventClassNames="fc-event-with-icon"
+                  dateClick={handleDateClick}
+                  eventClick={handleEventClick}
+                />
+              </>
             )}
           </div>
         </div>
@@ -233,6 +314,7 @@ function Curso() {
             background: white;
             border-radius: 0.75rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
           }
 
           .fc-theme-standard td, .fc-theme-standard th {
@@ -240,26 +322,38 @@ function Curso() {
           }
 
           .fc .fc-daygrid-day {
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
           }
 
           .fc .fc-daygrid-day:hover {
             background-color: #f8fafc;
+            transform: scale(1.02);
           }
 
           .fc .fc-day-today {
-            background-color: var(--fc-today-bg-color) !important;
+            background-color: #f0f9ff !important;
           }
 
           .fc .fc-daygrid-day-number {
             padding: 8px;
             color: #64748b;
             font-weight: 500;
+            transition: all 0.2s ease;
+          }
+
+          .fc .fc-daygrid-day:hover .fc-daygrid-day-number {
+            color: #1e293b;
+            transform: scale(1.1);
           }
 
           .fc .fc-col-header-cell {
             padding: 12px 0;
             background-color: #f8fafc;
+            transition: all 0.2s ease;
+          }
+
+          .fc .fc-col-header-cell:hover {
+            background-color: #f1f5f9;
           }
 
           .fc .fc-col-header-cell-cushion {
@@ -267,17 +361,23 @@ function Curso() {
             color: #1e293b;
             font-weight: 600;
             text-decoration: none;
+            transition: all 0.2s ease;
+          }
+
+          .fc .fc-col-header-cell:hover .fc-col-header-cell-cushion {
+            color: #4f46e5;
           }
 
           .fc-event {
             border-radius: 0.5rem;
             border: none;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            cursor: pointer;
           }
 
           .fc-event:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           }
 
@@ -286,99 +386,97 @@ function Curso() {
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem;
-            cursor: pointer;
-          }
-
-          .fc-event-with-icon .fa {
-            font-size: 1rem;
           }
 
           .fc-list {
             border-radius: 0.75rem;
             overflow: hidden;
+            transition: all 0.3s ease;
           }
 
           .fc-list-event:hover td {
-            background-color: var(--fc-list-event-hover-bg-color);
+            background-color: #f8fafc;
+            transform: translateX(5px);
           }
 
           .fc-list-event-time {
             font-weight: 500;
             padding: 1rem;
             color: #64748b;
+            transition: all 0.2s ease;
+          }
+
+          .fc-list-event:hover .fc-list-event-time {
+            color: #4f46e5;
           }
 
           .fc-list-event-title a {
             font-weight: 600;
             padding: 1rem;
             color: #1e293b;
+            transition: all 0.2s ease;
+          }
+
+          .fc-list-event:hover .fc-list-event-title a {
+            color: #4f46e5;
           }
 
           .fc-list-day-cushion {
             background-color: #f8fafc !important;
             padding: 1rem !important;
+            transition: all 0.2s ease;
+          }
+
+          .fc-list-day-cushion:hover {
+            background-color: #f1f5f9 !important;
           }
 
           .fc-list-day-text, .fc-list-day-side-text {
             font-weight: 600;
             color: #1e293b;
             font-size: 1.1rem;
+            transition: all 0.2s ease;
           }
 
-          .fc-list-table {
-            border-spacing: 0 0.5rem;
-            border-collapse: separate;
-          }
-
-          .fc-list-event td {
-            padding: 0.75rem 1rem;
-            border-color: var(--fc-border-color);
-          }
-
-          .fc-list-event-graphic {
-            padding: 0 1rem;
-          }
-
-          .fc-list-event-time {
-            min-width: 150px;
-          }
-
-          .fc-list-event-title {
-            min-width: 300px;
-          }
-
-          .fc-list-empty {
-            padding: 2rem;
-            text-align: center;
-            color: #64748b;
-            font-size: 1.1rem;
+          .fc-list-day-cushion:hover .fc-list-day-text,
+          .fc-list-day-cushion:hover .fc-list-day-side-text {
+            color: #4f46e5;
           }
 
           .fc-timegrid-slot {
             height: 3em !important;
+            transition: all 0.2s ease;
+          }
+
+          .fc-timegrid-slot:hover {
+            background-color: #f8fafc;
           }
 
           .fc-timegrid-slot-label {
             font-size: 0.875rem;
             color: #64748b;
+            transition: all 0.2s ease;
           }
 
-          .fc-timegrid-axis {
-            padding: 1rem;
-            color: #64748b;
-            font-weight: 500;
-          }
-
-          .fc-timegrid-slot-minor {
-            border-top-style: dashed;
+          .fc-timegrid-slot:hover .fc-timegrid-slot-label {
+            color: #4f46e5;
           }
 
           .fc-timegrid-now-indicator-line {
             border-color: #ef4444;
+            animation: pulse 2s infinite;
           }
 
-          .fc-timegrid-now-indicator-arrow {
-            border-color: #ef4444;
+          @keyframes pulse {
+            0% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.5;
+            }
+            100% {
+              opacity: 1;
+            }
           }
 
           .fc .fc-button-primary {
@@ -388,31 +486,18 @@ function Curso() {
             font-weight: 500;
             padding: 0.5rem 1rem;
             border-radius: 0.375rem;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
           }
 
           .fc .fc-button-primary:hover {
             background-color: var(--fc-button-hover-bg-color);
             border-color: var(--fc-button-hover-border-color);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           }
 
           .fc .fc-button-primary:active {
-            background-color: var(--fc-button-active-bg-color);
-            border-color: var(--fc-button-active-border-color);
             transform: translateY(0);
-          }
-
-          .fc .fc-button-primary:not(:disabled):active,
-          .fc .fc-button-primary:not(:disabled).fc-button-active {
-            background-color: var(--fc-button-active-bg-color);
-            border-color: var(--fc-button-active-border-color);
-          }
-
-          .fc .fc-button-primary:disabled {
-            background-color: #93c5fd;
-            border-color: #93c5fd;
-            opacity: 0.7;
           }
         `}
       </style>

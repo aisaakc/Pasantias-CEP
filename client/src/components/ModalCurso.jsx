@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useCursoStore } from '../store/cursoStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faSave, faTimes, faBook, faChalkboardTeacher, faCheckCircle, faHashtag, faClock, faMoneyBill, faCalendarAlt, faAlignLeft, faPalette } from '@fortawesome/free-solid-svg-icons';
+import { faXmark,
+        faSave,
+        faTimes,
+        faBook,
+        faChalkboardTeacher, 
+        faCheckCircle, 
+        faHashtag, 
+        faClock, 
+        faMoneyBill, 
+        faCalendarAlt, 
+        faAlignLeft, 
+        faPalette } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 
-function ModalFecha({ fecha, curso, onClose, cursosCalendario = [], onCursoSaved }) {
+function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
   const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error } = useCursoStore();
   const [cursoSeleccionado, setCursoSeleccionado] = useState('');
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState('');

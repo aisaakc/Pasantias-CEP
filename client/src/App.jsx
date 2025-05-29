@@ -8,6 +8,7 @@ import Clasificacion from "./pages/dashboard/Clasificacion";
 import Tipos from "./pages/dashboard/Tipos";
 import Curso from "./pages/dashboard/Curso";
 import Roles from "./pages/dashboard/Roles";
+import HorarioCurso from "./pages/dashboard/HorarioCurso";
 import Layout from "./components/Layout";
 import useAuthStore from "./store/authStore";
 import Navbar from "./components/Navbar";
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="tipos/:id/:parentId" element={<Tipos />} />
           <Route path="cursos" element={<Curso />} />
           <Route path="roles" element={<Roles />} />
+          <Route path="horario-curso/:id" element={<HorarioCurso /> } />
         </Route>
       </Routes>
     </main>

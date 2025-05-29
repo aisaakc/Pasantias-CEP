@@ -50,7 +50,8 @@ class CursoModel {
             CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo_facilitador,
             cm.nombre  AS modalidad,
             cfp.nombre AS forma_pago,
-            cs.nombre  AS estado
+            cs.nombre  AS estado,
+            parent.nombre AS nombre_parent
           FROM cursos c
           LEFT JOIN clasificacion cl  ON c.id_nombre      = cl.id_clasificacion
           LEFT JOIN clasificacion cl_icono ON cl.id_icono = cl_icono.id_clasificacion
@@ -58,7 +59,8 @@ class CursoModel {
           LEFT JOIN clasificacion cm  ON c.id_modalidad   = cm.id_clasificacion
           LEFT JOIN clasificacion cfp ON c.id_forma_pago  = cfp.id_clasificacion
           LEFT JOIN clasificacion cs  ON c.id_status      = cs.id_clasificacion
-          ORDER BY c.fecha_hora_inicio DESC;
+          LEFT JOIN clasificacion parent ON cl.parent_id = parent.id_clasificacion
+          ORDER BY parent.nombre, cl.nombre;
         `;
 
         try {

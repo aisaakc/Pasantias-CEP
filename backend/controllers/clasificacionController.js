@@ -96,6 +96,9 @@ class clasificacionController {
             if (error.message === "Ya existe una clasificación con este nombre.") {
                 return res.status(409).json({ error: error.message });
             }
+            if (error.message.includes("PGT: Prohibido")) {
+                return res.status(403).json({ error: error.message });
+            }
             
             // Error general del servidor
             res.status(500).json({
@@ -106,6 +109,8 @@ class clasificacionController {
 
     async deleteClasificacion(req, res) {
         const id = parseInt(req.params.id);
+
+        // Validación del ID
         if (isNaN(id)) {
             return res.status(400).json({ error: "ID de clasificación inválido." });
         }
@@ -115,11 +120,29 @@ class clasificacionController {
             res.status(200).json(resultado);
         } catch (error) {
             console.error("Error en clasificacionController.deleteClasificacion:", error.message);
+            
+            // Manejar errores específicos
+            if (error.name === "NotFoundError") {
+                return res.status(404).json({ error: error.message });
+            }
+            if (error.name === "ProtectedError") {
+                return res.status(403).json({ error: error.message });
+            }
+            if (error.name === "SubclasificacionesError") {
+                return res.status(409).json({ error: error.message });
+            }
+            if (error.name === "ConstraintError") {
+                return res.status(409).json({ error: error.message });
+            }
+            
+            // Error general del servidor
             res.status(500).json({
                 error: "Error interno del servidor al eliminar la clasificación."
             });
         }
     }
+    
+    
 
   
     

@@ -133,24 +133,77 @@ class Clasificacion {
 
     async delete(id){
         try {
-            const query = `
+            // Primero verificamos si la clasificación existe y si está protegida
+            const checkQuery = `
+                SELECT protected, type_id, parent_id 
+                FROM clasificacion 
+                WHERE id_clasificacion = $1;
+            `;
+            const checkResult = await pool.query(checkQuery, [id]);
+            
+            if (checkResult.rows.length === 0) {
+                const notFoundError = new Error("No se encontró la clasificación especificada");
+                notFoundError.name = "NotFoundError";
+                throw notFoundError;
+            }
+
+            const clasificacion = checkResult.rows[0];
+            
+            // Si es una clasificación protegida, no permitimos eliminarla
+            if (clasificacion.protected === 1) {
+                const protectedError = new Error("No se puede eliminar esta clasificación porque está protegida");
+                protectedError.name = "ProtectedError";
+                throw protectedError;
+            }
+
+            // Si es una clasificación padre (type_id es NULL), verificamos si tiene subclasificaciones
+            if (!clasificacion.type_id) {
+                const subclasificacionesQuery = `
+                    SELECT COUNT(*) 
+                    FROM clasificacion 
+                    WHERE parent_id = $1;
+                `;
+                const subclasificacionesResult = await pool.query(subclasificacionesQuery, [id]);
+                const tieneSubclasificaciones = parseInt(subclasificacionesResult.rows[0].count) > 0;
+
+                if (tieneSubclasificaciones) {
+                    const subclasificacionesError = new Error("No se puede eliminar esta clasificación porque tiene subclasificaciones asociadas");
+                    subclasificacionesError.name = "SubclasificacionesError";
+                    throw subclasificacionesError;
+                }
+            }
+
+            // Procedemos con la eliminación
+            const deleteQuery = `
                 DELETE FROM clasificacion 
                 WHERE id_clasificacion = $1
                 RETURNING id_clasificacion AS id;
             `;
-            const result = await pool.query(query, [id]);
+            const result = await pool.query(deleteQuery, [id]);
 
-            if (result.rows.length === 0){
-                throw new Error("No se encontró la clasificación especificada");
-            }
-
-            return { mensaje: "Clasificación eliminada correctamente"};
+            return { 
+                mensaje: "Clasificación eliminada correctamente",
+                id: result.rows[0].id
+            };
         } catch (error) {
-            console.error("Error en clasificacionModel.delete:" , error.message);
-            if (error.code === '23503'){
-                throw new Error("No se puede eliminar esta clasificación porque está utilizada por otros registros en el sistema");
+            console.error("Error en clasificacionModel.delete:", error.message);
+        
+            if (error.name === "NotFoundError") {
+                throw error;
             }
-            throw new Error("Error interno del servidor al intentar eliminar la clasificación.");
+            if (error.name === "ProtectedError") {
+                throw error;
+            }
+            if (error.name === "SubclasificacionesError") {
+                throw error;
+            }
+            if (error.code === '23503') {
+                const constraintError = new Error("No se puede eliminar esta clasificación porque está utilizada por otros registros en el sistema");
+                constraintError.name = "ConstraintError";
+                throw constraintError;
+            }
+        
+            throw new Error("Error interno del servidor al eliminar la clasificación");
         }
     }
 }

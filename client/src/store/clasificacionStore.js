@@ -51,22 +51,23 @@ export const useClasificacionStore = create((set, get) => ({
   },
 
   // Obtener subclasificaciones
-  fetchSubClasificaciones: async ( id, id_parent) => {
+  fetchSubClasificaciones: async (id, id_parent) => {
     set({ loading: true, error: null });
-    // id_parent = 11;
     
     try {
-      const response = await getAllSubclasificaciones(id , id_parent);
+      const response = await getAllSubclasificaciones(id, id_parent);
       set({
         subClasificaciones: response.data,
         loading: false,
       });
+      return response; // Return the response
     } catch (error) {
       console.error("Error en fetchSubClasificaciones:", error);
       set({
         loading: false,
         error: 'Error al obtener las subclasificaciones.',
       });
+      throw error; // Re-throw the error
     }
   },
 

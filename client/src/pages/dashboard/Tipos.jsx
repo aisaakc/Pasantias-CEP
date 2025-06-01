@@ -24,6 +24,7 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate }) =
           className="text-blue-600 transform hover:scale-125 transition-all duration-300" 
         />
       </td>
+      <td className="py-4 px-6 text-center text-gray-600">{sub.orden || 0}</td>
       <td className="py-4 px-6">
         <div className="flex justify-center space-x-4">
           <button 
@@ -54,7 +55,7 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate }) =
 });
 
 // Componente memoizado para el encabezado de la tabla
-const TableHeader = React.memo(({ ordenAscendente, onSort }) => (
+const TableHeader = React.memo(({ ordenAscendente, onSort, onSortOrden, onSortDescripcion }) => (
   <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
     <th 
       className="py-4 px-6 text-left text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
@@ -68,8 +69,31 @@ const TableHeader = React.memo(({ ordenAscendente, onSort }) => (
         />
       </div>
     </th>
-    <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white">Descripción</th>
+    <th 
+      className="py-4 px-6 text-left text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
+      onClick={onSortDescripcion}
+    >
+      <div className="flex items-center space-x-2 text-white">
+        <span>Descripción</span>
+        <FontAwesomeIcon 
+          icon={ordenAscendente ? iconos.faSortAlphaDown : iconos.faSortAlphaUp}
+          className="transform group-hover:scale-110 transition-all duration-300"
+        />
+      </div>
+    </th>
     <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white">Ícono</th>
+    <th 
+      className="py-4 px-6 text-center text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
+      onClick={onSortOrden}
+    >
+      <div className="flex items-center justify-center space-x-2 text-white">
+        <span>Orden</span>
+        <FontAwesomeIcon 
+          icon={ordenAscendente ? iconos.faSortNumericDown : iconos.faSortNumericUp}
+          className="transform group-hover:scale-110 transition-all duration-300"
+        />
+      </div>
+    </th>
     <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white">Acciones</th>
   </tr>
 ));
@@ -124,6 +148,9 @@ export default function Tipos() {
   
   const [busqueda, setBusqueda] = useState('');
   const [ordenAscendente, setOrdenAscendente] = useState(true);
+  const [ordenarPorOrden, setOrdenarPorOrden] = useState(true);
+  const [ordenarPorNombre, setOrdenarPorNombre] = useState(false);
+  const [ordenarPorDescripcion, setOrdenarPorDescripcion] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
@@ -210,43 +237,6 @@ export default function Tipos() {
     }
   }, [subClasificaciones, realId, realParentId]);
 
-  // Memoizar las funciones de callback
-  const handleDelete = useCallback((clasificacion) => {
-    setSelectedClasificacion(clasificacion);
-    setIsDeleteModalOpen(true);
-  }, []);
-
-  const handleNavigate = useCallback((sub) => {
-    // Asegurarnos de que los datos se muestren en la consola
-    console.log('=== DATOS DE LA SUBCLASIFICACIÓN ===');
-    console.log('Navegando a subclasificación:', {
-      id: sub.id_clasificacion,
-      nombre: sub.nombre,
-      descripcion: sub.descripcion,
-      tipo: sub.type_id,
-      icono: sub.nicono,
-      parent_id: sub.parent_id,
-      parent_nombre: sub.parent_nombre,
-      parent_icono: sub.parent_icono,
-      datos_completos: sub
-    });
-
-    navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeParentId(sub.id_clasificacion)}`);
-  }, [navigate]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    try {
-      await deleteClasificacion(selectedClasificacion.id_clasificacion);
-      toast.success(`Subclasificación "${selectedClasificacion.nombre}" eliminada correctamente`);
-      setIsDeleteModalOpen(false);
-      setSelectedClasificacion(null);
-      fetchSubClasificaciones(realId);
-    } catch (error) {
-      console.error('Error al eliminar la clasificación:', error);
-      toast.error('Error al eliminar la subclasificación');
-    }
-  }, [selectedClasificacion, deleteClasificacion, fetchSubClasificaciones, realId]);
-
   // Memoizar las subclasificaciones filtradas
   const subClasificacionesFiltradas = useMemo(() => {
     // Primero filtramos por búsqueda
@@ -254,24 +244,56 @@ export default function Tipos() {
       sub.nombre.toLowerCase().includes(busqueda.toLowerCase())
     );
 
-    // Si no hay ordenamiento por nombre, devolvemos el orden original de la BD
-    if (!ordenAscendente) {
-      return filtradas;
+    // Ordenamos según el campo seleccionado
+    if (ordenarPorNombre) {
+      return [...filtradas].sort((a, b) => {
+        const nombreA = a.nombre.toLowerCase();
+        const nombreB = b.nombre.toLowerCase();
+        return ordenAscendente ? 
+          nombreA.localeCompare(nombreB) : 
+          nombreB.localeCompare(nombreA);
+      });
     }
 
-    // Si hay ordenamiento por nombre, ordenamos alfabéticamente
-    return [...filtradas].sort((a, b) => a.nombre.localeCompare(b.nombre));
-  }, [subClasificaciones, busqueda, ordenAscendente]);
-
-  // Efecto para mostrar las subclasificaciones filtradas solo cuando cambie la búsqueda o el orden
-  useEffect(() => {
-    if (busqueda !== '' || ordenAscendente !== true) {
-      console.log('Subclasificaciones filtradas:', subClasificacionesFiltradas);
+    if (ordenarPorDescripcion) {
+      return [...filtradas].sort((a, b) => {
+        const descA = (a.descripcion || '').toLowerCase();
+        const descB = (b.descripcion || '').toLowerCase();
+        return ordenAscendente ? 
+          descA.localeCompare(descB) : 
+          descB.localeCompare(descA);
+      });
     }
-  }, [busqueda, ordenAscendente, subClasificacionesFiltradas]);
 
-  // Función para cambiar el orden
+    // Por defecto ordenamos por el campo orden
+    return [...filtradas].sort((a, b) => {
+      const ordenA = a.orden || 0;
+      const ordenB = b.orden || 0;
+      return ordenAscendente ? ordenA - ordenB : ordenB - ordenA;
+    });
+  }, [subClasificaciones, busqueda, ordenAscendente, ordenarPorNombre, ordenarPorDescripcion]);
+
+  // Función para cambiar el orden por nombre
   const cambiarOrden = () => {
+    setOrdenarPorOrden(false);
+    setOrdenarPorDescripcion(false);
+    setOrdenarPorNombre(true);
+    setOrdenAscendente(!ordenAscendente);
+  };
+
+  // Función para cambiar el orden por descripción
+  const cambiarOrdenPorDescripcion = () => {
+    setOrdenarPorOrden(false);
+    setOrdenarPorNombre(false);
+    setOrdenarPorDescripcion(true);
+    setOrdenAscendente(!ordenAscendente);
+  };
+
+  // Función para cambiar el orden por el campo orden
+  const cambiarOrdenPorOrden = () => {
+    setOrdenarPorNombre(false);
+    setOrdenarPorDescripcion(false);
+    setOrdenarPorOrden(true);
     setOrdenAscendente(!ordenAscendente);
   };
 
@@ -321,6 +343,50 @@ export default function Tipos() {
     fetchSubClasificaciones(realId);
   }, [fetchSubClasificaciones, realId]);
 
+  // Memoizar las funciones de callback
+  const handleDelete = useCallback((clasificacion) => {
+    setSelectedClasificacion(clasificacion);
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const handleNavigate = useCallback((sub) => {
+    // Asegurarnos de que los datos se muestren en la consola
+    console.log('=== DATOS DE LA SUBCLASIFICACIÓN ===');
+    console.log('Navegando a subclasificación:', {
+      id: sub.id_clasificacion,
+      nombre: sub.nombre,
+      descripcion: sub.descripcion,
+      tipo: sub.type_id,
+      icono: sub.nicono,
+      parent_id: sub.parent_id,
+      parent_nombre: sub.parent_nombre,
+      parent_icono: sub.parent_icono,
+      datos_completos: sub
+    });
+
+    navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeParentId(sub.id_clasificacion)}`);
+  }, [navigate]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    try {
+      await deleteClasificacion(selectedClasificacion.id_clasificacion);
+      toast.success(`Subclasificación "${selectedClasificacion.nombre}" eliminada correctamente`);
+      setIsDeleteModalOpen(false);
+      setSelectedClasificacion(null);
+      fetchSubClasificaciones(realId);
+    } catch (error) {
+      console.error('Error al eliminar la clasificación:', error);
+      toast.error('Error al eliminar la subclasificación');
+    }
+  }, [selectedClasificacion, deleteClasificacion, fetchSubClasificaciones, realId]);
+
+  // Efecto para mostrar las subclasificaciones filtradas solo cuando cambie la búsqueda o el orden
+  useEffect(() => {
+    if (busqueda !== '' || ordenAscendente !== true) {
+      console.log('Subclasificaciones filtradas:', subClasificacionesFiltradas);
+    }
+  }, [busqueda, ordenAscendente, subClasificacionesFiltradas]);
+
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <div className="max-w-7xl mx-auto">
@@ -361,15 +427,15 @@ export default function Tipos() {
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
           </div>
         ) : error ? (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md animate-fade-in">
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md">
             <div className="flex items-center">
               <FontAwesomeIcon icon={iconos.faExclamationCircle} className="mr-2" />
               <p>{error}</p>
             </div>
           </div>
         ) : (
-          <div className="space-y-6 animate-fade-in">
-            <div className="bg-white p-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="space-y-6">
+            <div className="bg-white p-4 rounded-xl shadow-lg">
               <div className="flex items-center">
                 <div className="relative flex-1 max-w-md">
                   <FontAwesomeIcon 
@@ -381,7 +447,7 @@ export default function Tipos() {
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
                     placeholder="Buscar por nombre..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:shadow-md"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div className="ml-4">
@@ -395,7 +461,12 @@ export default function Tipos() {
             <div className="overflow-hidden bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
               <table className="min-w-full">
                 <thead>
-                  <TableHeader ordenAscendente={ordenAscendente} onSort={cambiarOrden} />
+                  <TableHeader 
+                    ordenAscendente={ordenAscendente} 
+                    onSort={cambiarOrden} 
+                    onSortOrden={cambiarOrdenPorOrden}
+                    onSortDescripcion={cambiarOrdenPorDescripcion}
+                  />
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {subClasificacionesFiltradas.length > 0 ? (

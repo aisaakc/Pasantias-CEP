@@ -1,37 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCursoStore } from '../../store/cursoStore';
+import { useClasificacionStore } from '../../store/clasificacionStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faCalendarAlt, faClock, faUser, faChalkboardTeacher, faMoneyBill, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCalendarAlt, faClock, faUser, faChalkboardTeacher, faMoneyBill, faPlus, faTrash, faCalendar } from '@fortawesome/free-solid-svg-icons';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import esLocale from '@fullcalendar/core/locales/es';
 import { toast } from 'sonner';
+import { decodeId, encodeId } from '../../utils/hashUtils';
 
 function HorarioCurso() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { fetchCursos } = useCursoStore();
+  const { fetchSubClasificaciones } = useClasificacionStore();
   const [curso, setCurso] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [eventosCalendario, setEventosCalendario] = useState([]);
+  const [feriados, setFeriados] = useState([]);
   const [horarios, setHorarios] = useState([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '' }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const calendarRef = useRef(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Decodificar el ID de manera segura
+  const decodedId = React.useMemo(() => {
+    try {
+      return decodeId(id);
+    } catch (error) {
+      console.error('Error al decodificar ID:', error);
+      return null;
+    }
+  }, [id]);
+
+  const loadFeriados = async () => {
+    try {
+      console.log('Intentando cargar feriados...');
+      const response = await fetchSubClasificaciones(100121, null);
+      console.log('Respuesta de feriados:', response);
+      
+      if (response?.data) {
+        console.log('Feriados cargados:', response.data);
+        setFeriados(response.data);
+      } else {
+        console.error('No se recibieron datos de feriados. Respuesta:', response);
+        setFeriados([]);
+      }
+    } catch (error) {
+      console.error('Error al cargar feriados:', error);
+      setFeriados([]);
+    }
+  };
 
   useEffect(() => {
     const loadCurso = async () => {
       try {
         setLoading(true);
         const response = await fetchCursos();
-        if (response?.data?.data) {
-          const cursoEncontrado = response.data.data.find(c => c.id_curso === parseInt(id));
+        if (response?.data?.data && decodedId) {
+          const cursoEncontrado = response.data.data.find(c => c.id_curso === parseInt(decodedId));
           if (cursoEncontrado) {
             setCurso(cursoEncontrado);
             // Crear evento para el calendario
-            setEventosCalendario([{
+            const eventoCurso = {
               id: String(cursoEncontrado.id_curso),
               title: cursoEncontrado.nombre_curso,
               start: cursoEncontrado.fecha_hora_inicio,
@@ -46,7 +82,8 @@ function HorarioCurso() {
                 costo: cursoEncontrado.costo,
                 codigo: cursoEncontrado.codigo
               }
-            }]);
+            };
+            setEventosCalendario([eventoCurso]);
           } else {
             setError('Curso no encontrado');
           }
@@ -59,8 +96,75 @@ function HorarioCurso() {
       }
     };
 
-    loadCurso();
-  }, [id, fetchCursos]);
+    const loadData = async () => {
+      await Promise.all([
+        loadCurso(),
+        loadFeriados()
+      ]);
+    };
+    loadData();
+  }, [decodedId, fetchCursos, fetchSubClasificaciones]);
+
+  useEffect(() => {
+    if (!feriados.length) return;
+
+    const eventosFeriados = feriados
+      .filter(feriado => feriado && feriado.descripcion)
+      .flatMap(feriado => {
+        try {
+          const fechas = feriado.descripcion.split(',').map(fecha => fecha.trim());
+          
+          return fechas.map(fecha => {
+            const partes = fecha.split('/');
+            let dia, mes, anio;
+            
+            if (partes.length === 3) {
+              [dia, mes, anio] = partes.map(num => parseInt(num));
+              anio = 2000 + anio;
+            } else if (partes.length === 2) {
+              [dia, mes] = partes.map(num => parseInt(num));
+              anio = selectedYear;
+            } else {
+              console.error('Formato de fecha inválido:', fecha);
+              return null;
+            }
+
+            if (isNaN(dia) || isNaN(mes) || isNaN(anio)) {
+              console.error('Valores de fecha inválidos:', { dia, mes, anio });
+              return null;
+            }
+
+            const fechaCompleta = new Date(anio, mes - 1, dia);
+            
+            return {
+              id: `feriado-${feriado.id_clasificacion}-${fecha}`,
+              title: feriado.nombre,
+              start: fechaCompleta,
+              end: fechaCompleta,
+              allDay: true,
+              backgroundColor: '#EF4444',
+              borderColor: '#EF4444',
+              textColor: '#ffffff',
+              display: 'block',
+              extendedProps: {
+                esFeriado: true,
+                nombre: feriado.nombre,
+                orden: feriado.orden,
+                fechaOriginal: fecha
+              }
+            };
+          }).filter(Boolean);
+        } catch (error) {
+          console.error('Error al procesar feriado:', feriado, error);
+          return [];
+        }
+      });
+
+    setEventosCalendario(prev => {
+      const eventosCurso = prev.filter(evento => !evento.id.startsWith('feriado-'));
+      return [...eventosCurso, ...eventosFeriados];
+    });
+  }, [feriados, selectedYear]);
 
   const handleAddRow = () => {
     setHorarios([...horarios, { fechaHoraInicio: '', fechaHoraFin: '', descripcion: '' }]);
@@ -74,6 +178,12 @@ function HorarioCurso() {
   const handleHorarioChange = (index, field, value) => {
     const newHorarios = [...horarios];
     newHorarios[index][field] = value;
+    
+    // Si se cambia la fecha de inicio, actualizar automáticamente la fecha de fin
+    if (field === 'fechaHoraInicio') {
+      newHorarios[index].fechaHoraFin = value;
+    }
+    
     setHorarios(newHorarios);
   };
 
@@ -231,8 +341,29 @@ function HorarioCurso() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Horario del Curso</h2>
+              <div className="flex justify-end mb-4">
+                <select
+                  onChange={(e) => {
+                    const year = parseInt(e.target.value);
+                    setSelectedYear(year);
+                    if (calendarRef.current) {
+                      const calendarApi = calendarRef.current.getApi();
+                      calendarApi.gotoDate(new Date(year, 0, 1));
+                    }
+                  }}
+                  className="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-700 shadow-sm"
+                  value={selectedYear}
+                >
+                  {Array.from({ length: 81 }, (_, i) => 2020 + i).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                ref={calendarRef}
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
                 initialView="timeGridWeek"
                 headerToolbar={{
                   left: 'prev,next today',
@@ -241,27 +372,61 @@ function HorarioCurso() {
                 }}
                 locale={esLocale}
                 height="auto"
-                allDaySlot={false}
+                allDaySlot={true}
                 slotMinTime="06:00:00"
                 slotMaxTime="22:00:00"
                 weekends={true}
                 events={eventosCalendario}
-                eventContent={(eventInfo) => (
-                  <div className="p-2">
-                    <div className="font-semibold">{eventInfo.event.title}</div>
-                    <div className="text-sm">
-                      {eventInfo.event.extendedProps.instructor && (
-                        <div>Instructor: {eventInfo.event.extendedProps.instructor}</div>
-                      )}
-                      {eventInfo.event.extendedProps.modalidad && (
-                        <div>Modalidad: {eventInfo.event.extendedProps.modalidad}</div>
-                      )}
-                      {eventInfo.event.extendedProps.descripcion && (
-                        <div>Descripción: {eventInfo.event.extendedProps.descripcion}</div>
-                      )}
+                views={{
+                  dayGridMonth: {
+                    titleFormat: { year: 'numeric', month: 'long' },
+                    dayMaxEventRows: true,
+                    displayEventTime: false
+                  },
+                  timeGridWeek: {
+                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+                    dayMaxEventRows: true
+                  },
+                  timeGridDay: {
+                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+                    dayMaxEventRows: true
+                  }
+                }}
+                buttonText={{
+                  today: 'Hoy',
+                  month: 'Mes',
+                  week: 'Semana',
+                  day: 'Día'
+                }}
+                eventContent={(eventInfo) => {
+                  const esFeriado = eventInfo.event.extendedProps.esFeriado;
+
+                  if (esFeriado) {
+                    return (
+                      <div className="flex items-center gap-2 p-1">
+                        <FontAwesomeIcon icon={faCalendar} className="text-white" />
+                        <span className="truncate font-medium">{eventInfo.event.title}</span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-2">
+                      <div className="font-semibold">{eventInfo.event.title}</div>
+                      <div className="text-sm">
+                        {eventInfo.event.extendedProps.instructor && (
+                          <div>Instructor: {eventInfo.event.extendedProps.instructor}</div>
+                        )}
+                        {eventInfo.event.extendedProps.modalidad && (
+                          <div>Modalidad: {eventInfo.event.extendedProps.modalidad}</div>
+                        )}
+                        {eventInfo.event.extendedProps.descripcion && (
+                          <div>Descripción: {eventInfo.event.extendedProps.descripcion}</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                }}
               />
             </div>
           </div>

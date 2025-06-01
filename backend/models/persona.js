@@ -199,21 +199,110 @@ class UserModel {
   async getUsuarios() {
     try {
       const query = `
-        SELECT 
-          p.id_persona,
-          p.nombre,
-          p.apellido,
-          p.gmail,
-          p.id_rol,
-          c.nombre as rol_nombre
-        FROM personas p
-        LEFT JOIN clasificacion c ON p.id_rol = c.id_clasificacion
-        ORDER BY p.nombre, p.apellido;
+         SELECT
+     p.id_persona,
+     p.nombre AS persona_nombre,
+     p.apellido,
+     p.telefono,
+     p.gmail,
+     c.id_clasificacion id_rol,
+     c.nombre rol_nombre,
+     c.descripcion rol_desc
+    FROM personas p
+    CROSS JOIN LATERAL json_array_elements_text(p.id_rol->'id_rol') AS role_id_text
+    INNER JOIN clasificacion c ON c.id_clasificacion = role_id_text::integer
       `;
       const result = await pool.query(query);
       return result.rows;
     } catch (error) {
       console.error("Error en getUsuarios:", error.message);
+      throw error;
+    }
+  }
+
+  async createPersonaWithRoles(data) {
+    const {
+      nombre,
+      apellido,
+      telefono,
+      cedula,
+      gmail,
+      id_genero,
+      id_roles, // Array de IDs de roles
+      id_pregunta,
+      respuesta,
+      contraseña,
+    } = data;
+
+    if (!nombre || !apellido || !telefono || !cedula || !gmail || 
+        id_genero === undefined || !id_roles || id_pregunta === undefined || 
+        !respuesta || !contraseña) {
+      throw new Error("Faltan campos obligatorios para crear la persona.");
+    }
+
+    try {
+      // Verificar si la cédula o gmail ya existen
+      const checkQuery = `
+        SELECT cedula, gmail 
+        FROM personas 
+        WHERE cedula = $1 OR gmail = $2;
+      `;
+      const checkResult = await pool.query(checkQuery, [cedula, gmail]);
+
+      if (checkResult.rows.length > 0) {
+        const existing = checkResult.rows[0];
+        if (existing.cedula === cedula) {
+          throw new Error("La cédula ya está registrada.");
+        }
+        if (existing.gmail && existing.gmail.toLowerCase() === gmail.toLowerCase()) {
+          throw new Error("El correo electrónico ya está registrado.");
+        }
+      }
+
+      // Cifrar contraseña y respuesta
+      const [hashedPassword, hashedRespuesta] = await Promise.all([
+        this.#hashDato(contraseña),
+        this.#hashDato(respuesta),
+      ]);
+
+      // Crear el objeto JSON para los roles
+      const rolesJson = JSON.stringify({ id_rol: id_roles });
+
+      const query = `
+        INSERT INTO personas (
+          nombre,
+          apellido,
+          telefono,
+          cedula,
+          id_genero,
+          id_rol,
+          id_pregunta,     
+          respuesta,       
+          "contraseña",    
+          gmail
+        ) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id_persona; 
+      `;
+
+      const values = [
+        nombre,
+        apellido,
+        telefono,
+        cedula,
+        id_genero,
+        rolesJson,
+        id_pregunta,
+        hashedRespuesta,
+        hashedPassword,
+        gmail,
+      ];
+
+      const result = await pool.query(query, values);
+      return result.rows[0].id_persona;
+
+    } catch (error) {
+      console.error("Error al crear persona con roles:", error.message);
       throw error;
     }
   }

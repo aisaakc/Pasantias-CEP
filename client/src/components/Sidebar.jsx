@@ -1,6 +1,6 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield } from 'react-icons/fa';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useClasificacionStore from '../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,7 +8,9 @@ import { encodeId } from '../utils/hashUtils';
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { parentClasifications, fetchParentClasifications } = useClasificacionStore();
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   useEffect(() => {
     fetchParentClasifications();
@@ -42,20 +44,33 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-2">
-        <div className="relative group">
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
-              location.pathname.startsWith('/dashboard/tipos')
+        <div className="relative">
+          <button
+            onClick={() => {
+              setIsConfigOpen(!isConfigOpen);
+              if (!isConfigOpen) {
+                navigate('/dashboard');
+              }
+            }}
+            className={`flex items-center justify-between w-full px-4 py-3 rounded-lg transition-all duration-200 ${
+              location.pathname === '/dashboard'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}
           >
-            {getIcon('faCog')}
-            <span className="font-medium">Configuración</span>
-          </Link>
+            <div className="flex items-center gap-3">
+              {getIcon('faCog')}
+              <span className="font-medium">Configuración</span>
+            </div>
+            <FontAwesomeIcon 
+              icon={iconos.faChevronDown} 
+              className={`w-4 h-4 transition-transform duration-200 ${isConfigOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
 
-          <div className="absolute left-0 right-0 mt-1 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <div className={`mt-1 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden transition-all duration-200 ${
+            isConfigOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+          }`}>
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
               <div className="divide-y divide-gray-700/30">
                 {parentClasifications.map((clasificacion) => {

@@ -4,22 +4,28 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import esLocale from '@fullcalendar/core/locales/es';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { faBook, faChalkboardTeacher, faUser, faMoneyBill } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { useCursoStore } from '../../store/cursoStore';
+import { useClasificacionStore } from '../../store/clasificacionStore';
 import ModalFecha from '../../components/ModalCurso';
+import { encodeId } from '../../utils/hashUtils';
 
 function Curso() {
   const navigate = useNavigate();
   const { fetchCursos, loading, error, modalidades, fetchOpcionesCurso, cursos } = useCursoStore();
+  const { fetchSubClasificaciones } = useClasificacionStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedCurso, setSelectedCurso] = useState(null);
   const [cursosCalendario, setCursosCalendario] = useState([]);
+  const [feriados, setFeriados] = useState([]);
   const [currentView, setCurrentView] = useState('dayGridMonth');
   const calendarRef = React.useRef(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const loadCursos = async () => {
     try {
@@ -35,10 +41,35 @@ function Curso() {
     }
   };
 
+  const loadFeriados = async () => {
+    try {
+      console.log('Intentando cargar feriados...');
+      const response = await fetchSubClasificaciones(100121, null);
+      console.log('Respuesta de feriados:', response);
+      
+      if (response?.data) {
+        console.log('Feriados cargados:', response.data);
+        setFeriados(response.data);
+      } else {
+        console.error('No se recibieron datos de feriados. Respuesta:', response);
+        setFeriados([]);
+      }
+    } catch (error) {
+      console.error('Error al cargar feriados:', error);
+      setFeriados([]);
+    }
+  };
+
   useEffect(() => {
-    loadCursos();
-    fetchOpcionesCurso();
-  }, [fetchCursos, fetchOpcionesCurso]);
+    const loadData = async () => {
+      await Promise.all([
+        loadCursos(),
+        loadFeriados(),
+        fetchOpcionesCurso()
+      ]);
+    };
+    loadData();
+  }, [fetchCursos, fetchOpcionesCurso, fetchSubClasificaciones]);
 
   const handleCursoSaved = async () => {
     await loadCursos();
@@ -47,13 +78,17 @@ function Curso() {
   const handleCursoSelect = (e) => {
     const cursoId = e.target.value;
     if (cursoId) {
-      navigate(`/dashboard/horario-curso/${cursoId}`);
+      const encodedId = encodeId(cursoId);
+      if (encodedId) {
+        navigate(`/dashboard/horario-curso/${encodedId}`);
+      } else {
+        console.error('Error al codificar el ID del curso');
+      }
     }
   };
 
   const eventosCalendario = React.useMemo(() => {
-    if (!Array.isArray(cursosCalendario)) return [];
-    return cursosCalendario
+    const eventosCursos = cursosCalendario
       .filter(curso => curso && curso.id_curso && curso.fecha_hora_inicio && curso.fecha_hora_fin)
       .map(curso => ({
         id: String(curso.id_curso),
@@ -78,7 +113,76 @@ function Curso() {
           color: curso.color || '#4F46E5'
         },
       }));
-  }, [cursosCalendario]);
+
+    const eventosFeriados = feriados
+      .filter(feriado => feriado && feriado.descripcion)
+      .flatMap(feriado => {
+        try {
+          // Dividir las fechas por coma y procesar cada una
+          const fechas = feriado.descripcion.split(',').map(fecha => fecha.trim());
+          
+          return fechas.map(fecha => {
+            // Verificar si la fecha incluye el año (DD/MM/AA)
+            const partes = fecha.split('/');
+            let dia, mes, anio;
+            
+            if (partes.length === 3) {
+              // Formato DD/MM/AA
+              [dia, mes, anio] = partes.map(num => parseInt(num));
+              anio = 2000 + anio; // Convertir AA a 20AA
+            } else if (partes.length === 2) {
+              // Formato DD/MM (usar el año seleccionado)
+              [dia, mes] = partes.map(num => parseInt(num));
+              anio = selectedYear;
+            } else {
+              console.error('Formato de fecha inválido:', fecha);
+              return null;
+            }
+
+            if (isNaN(dia) || isNaN(mes) || isNaN(anio)) {
+              console.error('Valores de fecha inválidos:', { dia, mes, anio });
+              return null;
+            }
+
+            const fechaCompleta = new Date(anio, mes - 1, dia);
+            
+            return {
+              id: `feriado-${feriado.id_clasificacion}-${fecha}`,
+              title: feriado.nombre,
+              start: fechaCompleta,
+              end: fechaCompleta,
+              allDay: true,
+              backgroundColor: '#EF4444',
+              borderColor: '#EF4444',
+              textColor: '#ffffff',
+              display: 'block',
+              icon: iconos[feriado.parent_icono] || iconos.faCalendar,
+              extendedProps: {
+                esFeriado: true,
+                nombre: feriado.nombre,
+                orden: feriado.orden,
+                fechaOriginal: fecha
+              }
+            };
+          }).filter(Boolean);
+        } catch (error) {
+          console.error('Error al procesar feriado:', feriado, error);
+          return [];
+        }
+      })
+      .sort((a, b) => {
+        // Primero ordenar por fecha
+        const fechaA = new Date(a.start);
+        const fechaB = new Date(b.start);
+        if (fechaA.getTime() !== fechaB.getTime()) {
+          return fechaA.getTime() - fechaB.getTime();
+        }
+        // Si las fechas son iguales, ordenar por el campo orden
+        return a.extendedProps.orden - b.extendedProps.orden;
+      });
+
+    return [...eventosCursos, ...eventosFeriados];
+  }, [cursosCalendario, feriados, selectedYear]);
 
   const renderEventContent = (eventInfo) => {
     const icon = eventInfo.event.extendedProps.icon;
@@ -86,6 +190,17 @@ function Curso() {
     const modalidad = eventInfo.event.extendedProps.modalidad;
     const instructor = eventInfo.event.extendedProps.instructor;
     const costo = eventInfo.event.extendedProps.costo;
+    const esFeriado = eventInfo.event.extendedProps.esFeriado;
+
+    // Si es un feriado, mostrar un diseño específico
+    if (esFeriado) {
+      return (
+        <div className="flex items-center gap-2">
+          <FontAwesomeIcon icon={iconos.faCalendar} className="text-white" />
+          <span className="truncate">{eventInfo.event.title}</span>
+        </div>
+      );
+    }
 
     // Si estamos en vista de lista, mostrar un diseño más detallado
     if (eventInfo.view.type === 'listWeek' || eventInfo.view.type === 'listMonth') {
@@ -98,15 +213,15 @@ function Curso() {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-              <FontAwesomeIcon icon={faChalkboardTeacher} className="text-white/80" />
+              <FontAwesomeIcon icon={iconos.faChalkboardTeacher} className="text-white/80" />
               <span>{modalidad}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-              <FontAwesomeIcon icon={faUser} className="text-white/80" />
+              <FontAwesomeIcon icon={iconos.faUser} className="text-white/80" />
               <span>{instructor}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-              <FontAwesomeIcon icon={faMoneyBill} className="text-white/80" />
+              <FontAwesomeIcon icon={iconos.faMoneyBill} className="text-white/80" />
               <span>${costo}</span>
             </div>
           </div>
@@ -125,7 +240,17 @@ function Curso() {
   };
 
   const handleDateClick = (arg) => {
-    setSelectedDate(arg.dateStr);
+    // Crear una nueva fecha y establecer la hora a las 13:00
+    const fechaSeleccionada = new Date(arg.date);
+    fechaSeleccionada.setHours(13, 0, 0, 0);
+    
+    // Convertir a string en formato ISO y ajustar para la zona horaria local
+    const year = fechaSeleccionada.getFullYear();
+    const month = String(fechaSeleccionada.getMonth() + 1).padStart(2, '0');
+    const day = String(fechaSeleccionada.getDate()).padStart(2, '0');
+    const fechaFormateada = `${year}-${month}-${day}T13:00`;
+    
+    setSelectedDate(fechaFormateada);
     setSelectedCurso(null);
     setModalOpen(true);
   };
@@ -133,8 +258,14 @@ function Curso() {
   const handleEventClick = (info) => {
     const cursoId = info.event.id;
     const curso = cursosCalendario.find(c => c.id_curso === parseInt(cursoId));
-    setSelectedCurso(curso);
-    setModalOpen(true);
+    if (curso) {
+      const encodedId = encodeId(cursoId);
+      if (encodedId) {
+        navigate(`/dashboard/horario-curso/${encodedId}`);
+      } else {
+        console.error('Error al codificar el ID del curso');
+      }
+    }
   };
 
   const closeModal = () => {
@@ -233,10 +364,28 @@ function Curso() {
                     <FontAwesomeIcon icon={iconos.faCalendarDay} className="mr-2" />
                     Día
                   </button>
+                  <select
+                    onChange={(e) => {
+                      const year = parseInt(e.target.value);
+                      setSelectedYear(year);
+                      if (calendarRef.current) {
+                        const calendarApi = calendarRef.current.getApi();
+                        calendarApi.gotoDate(new Date(year, 0, 1));
+                      }
+                    }}
+                    className="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-700 shadow-sm"
+                    value={selectedYear}
+                  >
+                    {Array.from({ length: 81 }, (_, i) => 2020 + i).map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <FullCalendar
                   ref={calendarRef}
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
                   initialView={currentView}
                   headerToolbar={{
                     left: 'prev,next today',
@@ -255,19 +404,24 @@ function Curso() {
                   dayMaxEventRows={true}
                   editable={true}
                   droppable={true}
-                  buttonText={{
-                    today: 'Hoy',
-                    month: 'Mes',
-                    week: 'Semana',
-                    day: 'Día'
-                  }}
                   views={{
                     timeGridDay: {
                       titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
                     },
                     timeGridWeek: {
                       titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+                    },
+                    listYear: {
+                      titleFormat: { year: 'numeric' },
+                      listDayFormat: { weekday: 'long', month: 'long', day: 'numeric' },
+                      listDaySideFormat: { year: 'numeric' }
                     }
+                  }}
+                  buttonText={{
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día'
                   }}
                   dayHeaderFormat={{ weekday: 'long' }}
                   events={eventosCalendario}

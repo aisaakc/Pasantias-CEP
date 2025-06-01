@@ -67,10 +67,22 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       
       setColor(curso.color || '#4F46E5');
     } else if (fecha) {
-      // Si es una nueva fecha, establecer la hora por defecto a las 9:00
-      const fechaHoraInicio = new Date(fecha);
-      fechaHoraInicio.setHours(9, 0, 0);
-      setFechaInicio(fechaHoraInicio.toISOString().slice(0, 16));
+      // Asegurarnos de que fecha sea un objeto Date válido
+      const fechaObj = new Date(fecha);
+      
+      if (isNaN(fechaObj.getTime())) {
+        console.error('Fecha inválida:', fecha);
+        return;
+      }
+      
+      // Extraer los componentes de la fecha
+      const year = fechaObj.getFullYear();
+      const month = String(fechaObj.getMonth() + 1).padStart(2, '0');
+      const day = String(fechaObj.getDate()).padStart(2, '0');
+      
+      // Crear la fecha formateada con hora 13:00
+      const fechaFormateada = `${year}-${month}-${day}T13:00`;
+      setFechaInicio(fechaFormateada);
       setFechaFin('');
     }
   }, [curso, fecha]);
@@ -277,7 +289,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                     { 
                       name: 'status', 
                       icon: faCheckCircle, 
-                      label: 'Estado', 
+                      label: 'Status', 
                       value: statusSeleccionado,
                       onChange: (e) => setStatusSeleccionado(e.target.value),
                       options: status || [],
@@ -308,9 +320,9 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                         }}
                       >
                         <option key={`${field.name}-default`} value="">-- Selecciona {field.label.toLowerCase()} --</option>
-                        {field.options.map(option => (
+                        {field.options.map((option, index) => (
                           <option 
-                            key={`${field.name}-option-${option.id}`} 
+                            key={`${field.name}-option-${option.id || option.nombre || index}`} 
                             value={option.id}
                           >
                             {option.nombre}

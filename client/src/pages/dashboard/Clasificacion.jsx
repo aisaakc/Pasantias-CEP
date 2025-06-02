@@ -108,9 +108,9 @@ export default function Clasificacion() {
                 size="lg"
               />
             </div>
-            <span className="relative bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <span className="relative bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent pb-1">
               Configuraciones
-              <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></div>
+              <div className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></div>
             </span>
           </h1>
           <button

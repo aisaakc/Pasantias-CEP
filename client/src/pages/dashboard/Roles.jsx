@@ -1,54 +1,59 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import useAuthStore from '../../store/authStore';
+import usePersonaStore from '../../store/personaStore';
 
 function Roles() {
-  const { roles, loading, error, fetchOpcionesRegistro } = useAuthStore();
+  const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios } = usePersonaStore();
+  const [selectedRole, setSelectedRole] = useState(null);
 
   useEffect(() => {
-    fetchOpcionesRegistro();
-  }, [fetchOpcionesRegistro]);
+    fetchRoles();
+    fetchUsuarios();
+  }, []);
 
-  const usuarios = [
-    {
-      id: 1,
-      nombreCompleto: 'Juan Pérez',
-      email: 'juan.perez@gmail.com',
-      rol: 'Administrador'
-    },
-    {
-      id: 2,
-      nombreCompleto: 'María García',
-      email: 'maria.garcia@gmail.com',
-      rol: 'Usuario'
+  const handleRoleClick = (role) => {
+    setSelectedRole(selectedRole?.id === role.id ? null : role);
+  };
+
+  // Agrupar usuarios por id_persona
+  const groupedUsers = usuarios.reduce((acc, user) => {
+    if (!acc[user.id_persona]) {
+      acc[user.id_persona] = {
+        ...user,
+        roles: [{
+          id: user.id_rol,
+          nombre: user.rol_nombre,
+          descripcion: user.rol_desc
+        }]
+      };
+    } else {
+      acc[user.id_persona].roles.push({
+        id: user.id_rol,
+        nombre: user.rol_nombre,
+        descripcion: user.rol_desc
+      });
     }
-  ];
+    return acc;
+  }, {});
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-800 font-medium">Cargando roles...</p>
-        </div>
-      </div>
-    );
-  }
+  const filteredUsers = selectedRole 
+    ? Object.values(groupedUsers).filter(user => 
+        user.roles.some(role => role.id === selectedRole.id)
+      )
+    : Object.values(groupedUsers);
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full mx-4">
-          <div className="flex items-center justify-center text-gray-800 mb-4">
-            <FontAwesomeIcon icon={iconos.faExclamationTriangle} className="text-4xl animate-bounce" />
-          </div>
-          <h3 className="text-xl font-semibold text-center text-gray-800 mb-2">¡Ups! Algo salió mal</h3>
-          <p className="text-gray-600 text-center">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
+      <div className="text-red-600">Error: {error}</div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 py-12 px-4 sm:px-6">
@@ -77,72 +82,156 @@ function Roles() {
         </div>
 
         {/* Cards de Roles */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-12">
+          {/* Card de Resumen */}
+          <div 
+            onClick={() => setSelectedRole(null)}
+            className={`bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 animate-fade-in-up overflow-hidden cursor-pointer
+              ${!selectedRole ? 'ring-2 ring-white ring-offset-2' : ''}`}
+          >
+            <div className="p-5">
+              <div className="flex flex-col items-center text-center text-white">
+                <div className="p-3 rounded-xl bg-white/20 mb-3">
+                  <FontAwesomeIcon 
+                    icon={iconos.faUsers}
+                    size="2x" 
+                    className="text-white" 
+                  />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold mb-1">
+                    Total de Roles
+                  </h2>
+                  <p className="text-2xl font-bold">{roles.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cards de Roles Individuales */}
           {roles.map((rol, index) => (
             <div
-              key={rol.id_clasificacion}
-              className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 animate-fade-in-up overflow-hidden border border-gray-100"
+              key={rol.id}
+              onClick={() => handleRoleClick(rol)}
+              className={`bg-white/80 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 animate-fade-in-up overflow-hidden border cursor-pointer
+                ${selectedRole?.id === rol.id ? 'ring-2 ring-blue-500 ring-offset-2' : 'border-gray-100'}`}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="p-3">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-blue-100">
+              <div className="p-5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="p-3 rounded-xl bg-blue-100 mb-3">
                     <FontAwesomeIcon 
-                      icon={iconos[rol.nicono] || iconos.faUser} 
-                      size="lg" 
+                      icon={iconos[rol.nombre_icono] || iconos.faUser}
+                      size="2x" 
                       className="text-blue-600" 
                       title={rol.nombre}
                     />
                   </div>
-                  <h2 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    {rol.nombre}
-                  </h2>
+                  <div>
+                    <h2 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-1">
+                      {rol.nombre}
+                    </h2>
+                    <p className="text-gray-600 text-sm">{rol.descripcion || 'Sin descripción'}</p>
+                  </div>
                 </div>
-                <p className="text-gray-600 text-sm line-clamp-2 pl-11">
-                  {rol.descripcion || 'Sin descripción'}
-                </p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Tabla */}
+        {/* Tabla de Usuarios */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
-                <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white">Nombre Completo</th>
-                <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white">Email</th>
-                <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white">Rol</th>
-                <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {usuarios.map((usuario) => (
-                <tr key={usuario.id} className="transform hover:scale-[1.01] hover:bg-blue-50 transition-all duration-300">
-                  <td className="py-4 px-6 font-medium text-gray-800">{usuario.nombreCompleto}</td>
-                  <td className="py-4 px-6 text-gray-600">{usuario.email}</td>
-                  <td className="py-4 px-6 text-gray-600">{usuario.rol}</td>
-                  <td className="py-4 px-6">
-                    <div className="flex justify-center space-x-4">
-                      <button 
-                        title="Editar usuario"
-                        className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300"
-                      >
-                        <FontAwesomeIcon icon={iconos.faPen} size="lg" />
-                      </button>
-                      <button 
-                        title="Eliminar usuario"
-                        className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
-                      >
-                        <FontAwesomeIcon icon={iconos.faTrash} size="lg" />
-                      </button>
-                    </div>
-                  </td>
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-800">
+              {selectedRole 
+                ? `Usuarios con rol: ${selectedRole.nombre}`
+                : 'Todos los Usuarios'}
+            </h2>
+            {selectedRole && (
+              <button
+                onClick={() => setSelectedRole(null)}
+                className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+              >
+                <FontAwesomeIcon icon={iconos.faTimes} />
+                <span>Limpiar filtro</span>
+              </button>
+            )}
+          </div>
+          <div className="w-full">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
+                  <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/4">Nombre Completo</th>
+                  <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/4">Email</th>
+                  <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/6">Género</th>
+                  <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/4">Roles</th>
+                  <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white w-1/6">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredUsers.map((usuario) => (
+                  <tr key={usuario.id_persona} className="transform hover:scale-[1.01] hover:bg-blue-50 transition-all duration-300">
+                    <td className="py-4 px-6 font-medium text-gray-800 truncate">
+                      {`${usuario.persona_nombre} ${usuario.apellido}`}
+                    </td>
+                    <td className="py-4 px-6 text-gray-600 truncate">{usuario.gmail}</td>
+                    <td className="py-4 px-6">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        usuario.genero_nombre === 'Masculino' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : usuario.genero_nombre === 'Femenino'
+                          ? 'bg-pink-100 text-pink-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                      title={usuario.genero_desc || ''}>
+                        {usuario.genero_nombre || 'No especificado'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-wrap gap-2">
+                        {selectedRole ? (
+                          usuario.roles.find(role => role.id === selectedRole.id) && (
+                            <span 
+                              className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                              title={selectedRole.descripcion}
+                            >
+                              {selectedRole.nombre}
+                            </span>
+                          )
+                        ) : (
+                          usuario.roles.map((rol, index) => (
+                            <span 
+                              key={index}
+                              className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                              title={rol.descripcion}
+                            >
+                              {rol.nombre}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex justify-center space-x-4">
+                        <button 
+                          title="Editar usuario"
+                          className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300"
+                        >
+                          <FontAwesomeIcon icon={iconos.faPen} size="lg" />
+                        </button>
+                        <button 
+                          title="Eliminar usuario"
+                          className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
+                        >
+                          <FontAwesomeIcon icon={iconos.faTrash} size="lg" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

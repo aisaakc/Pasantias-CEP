@@ -13,6 +13,7 @@ import { faXmark,
         faCalendarAlt, 
         faAlignLeft, 
         faPalette } from '@fortawesome/free-solid-svg-icons';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 
 function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
@@ -31,10 +32,17 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
   const [animationClass, setAnimationClass] = useState('animate-modal-in');
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchOpcionesCurso();
+      try {
+        await fetchOpcionesCurso();
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error('Error al cargar las opciones:', error);
+        toast.error('Error al cargar las opciones del curso');
+      }
     }; 
     loadData();
     document.body.style.overflow = 'hidden';
@@ -45,7 +53,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
 
   // Efecto para cargar datos del curso cuando se está editando
   useEffect(() => {
-    if (curso) {
+    if (curso && isDataLoaded) {
       setCursoSeleccionado(curso.id_nombre?.toString() || '');
       setModalidadSeleccionada(curso.id_modalidad?.toString() || '');
       setStatusSeleccionado(curso.id_status?.toString() || '');
@@ -66,7 +74,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       }
       
       setColor(curso.color || '#4F46E5');
-    } else if (fecha) {
+    } else if (fecha && isDataLoaded) {
       // Asegurarnos de que fecha sea un objeto Date válido
       const fechaObj = new Date(fecha);
       
@@ -85,7 +93,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       setFechaInicio(fechaFormateada);
       setFechaFin('');
     }
-  }, [curso, fecha]);
+  }, [curso, fecha, isDataLoaded]);
 
   const handleClose = () => {
     setAnimationClass('animate-modal-out');
@@ -240,8 +248,18 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
         {/* Header */}
         <div className="relative p-6 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {curso ? `Editar Curso: ${curso.nombre_curso}` : 'Asignar Curso'}
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-3">
+              {curso ? (
+                <>
+                  <FontAwesomeIcon 
+                    icon={curso.nombre_icono ? iconos[curso.nombre_icono] : faBook} 
+                    className="text-blue-600" 
+                  />
+                  {`Editar Curso: ${curso.nombre_curso}`}
+                </>
+              ) : (
+                'Asignar Curso'
+              )}
             </h2>
             <button 
               onClick={handleClose}
@@ -275,7 +293,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                       value: cursoSeleccionado,
                       onChange: (e) => setCursoSeleccionado(e.target.value),
                       options: cursos || [],
-                      disabled: loading || !cursos?.length
+                      disabled: loading || !isDataLoaded || !cursos?.length
                     },
                     { 
                       name: 'modalidad', 
@@ -284,7 +302,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                       value: modalidadSeleccionada,
                       onChange: (e) => setModalidadSeleccionada(e.target.value),
                       options: modalidades || [],
-                      disabled: loading || !modalidades?.length
+                      disabled: loading || !isDataLoaded || !modalidades?.length
                     },
                     { 
                       name: 'status', 
@@ -293,7 +311,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                       value: statusSeleccionado,
                       onChange: (e) => setStatusSeleccionado(e.target.value),
                       options: status || [],
-                      disabled: loading || !status?.length
+                      disabled: loading || !isDataLoaded || !status?.length
                     }
                   ].map((field, index) => (
                     <div 
@@ -320,18 +338,22 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                         }}
                       >
                         <option key={`${field.name}-default`} value="">-- Selecciona {field.label.toLowerCase()} --</option>
-                        {field.options.map((option, index) => (
-                          <option 
-                            key={`${field.name}-option-${option.id || option.nombre || index}`} 
-                            value={option.id}
-                          >
-                            {option.nombre}
-                          </option>
-                        ))}
+                        {field.options && field.options.length > 0 ? (
+                          field.options.map((option, index) => (
+                            <option 
+                              key={`${field.name}-option-${option.id || option.nombre || index}`} 
+                              value={option.id}
+                            >
+                              {option.nombre}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>No hay opciones disponibles</option>
+                        )}
                       </select>
                       {field.disabled && field.options.length === 0 && (
                         <p className="mt-1 text-sm text-gray-500">
-                          No hay {field.label.toLowerCase()}s disponibles
+                          {loading ? 'Cargando opciones...' : 'No hay opciones disponibles'}
                         </p>
                       )}
                     </div>

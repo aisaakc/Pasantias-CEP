@@ -11,8 +11,6 @@ export const loginSchema = z.object({
     }, {
         message: "Debe ser un correo electrónico válido o una cédula de al menos 8 dígitos numéricos"
     }),
-    password: z.string().min(6, {
-        message: "La contraseña debe tener al menos 6 caracteres"
-    }),
+    
 });
 

@@ -259,12 +259,8 @@ function Curso() {
     const cursoId = info.event.id;
     const curso = cursosCalendario.find(c => c.id_curso === parseInt(cursoId));
     if (curso) {
-      const encodedId = encodeId(cursoId);
-      if (encodedId) {
-        navigate(`/dashboard/horario-curso/${encodedId}`);
-      } else {
-        console.error('Error al codificar el ID del curso');
-      }
+      setSelectedCurso(curso);
+      setModalOpen(true);
     }
   };
 
@@ -450,15 +446,15 @@ function Curso() {
         {`
           :root {
             --fc-border-color: #e2e8f0;
-            --fc-button-bg-color: #2563eb;
-            --fc-button-border-color: #2563eb;
-            --fc-button-hover-bg-color: #1d4ed8;
-            --fc-button-hover-border-color: #1e40af;
-            --fc-button-active-bg-color: #1e40af;
-            --fc-button-active-border-color: #1e3a8a;
-            --fc-today-bg-color: #f8fafc;
+            --fc-button-bg-color: #4F46E5;
+            --fc-button-border-color: #4F46E5;
+            --fc-button-hover-bg-color: #4338CA;
+            --fc-button-hover-border-color: #3730A3;
+            --fc-button-active-bg-color: #3730A3;
+            --fc-button-active-border-color: #312E81;
+            --fc-today-bg-color: #EEF2FF;
             --fc-neutral-bg-color: #ffffff;
-            --fc-list-event-hover-bg-color: #f8fafc;
+            --fc-list-event-hover-bg-color: #F5F3FF;
             --fc-event-border-color: transparent;
             --fc-event-bg-color: #4F46E5;
             --fc-event-text-color: #ffffff;
@@ -466,9 +462,10 @@ function Curso() {
 
           .fc {
             background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transition: all 0.3s ease;
+            overflow: hidden;
           }
 
           .fc-theme-standard td, .fc-theme-standard th {
@@ -477,147 +474,174 @@ function Curso() {
 
           .fc .fc-daygrid-day {
             transition: all 0.2s ease;
+            position: relative;
           }
 
           .fc .fc-daygrid-day:hover {
-            background-color: #f8fafc;
+            background-color: #F5F3FF;
             transform: scale(1.02);
+            z-index: 1;
           }
 
           .fc .fc-day-today {
-            background-color: #f0f9ff !important;
+            background-color: var(--fc-today-bg-color) !important;
+            position: relative;
+          }
+
+          .fc .fc-day-today::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #4F46E5;
+            border-radius: 3px 3px 0 0;
           }
 
           .fc .fc-daygrid-day-number {
-            padding: 8px;
-            color: #64748b;
+            padding: 12px;
+            color: #4B5563;
             font-weight: 500;
             transition: all 0.2s ease;
+            font-size: 0.95rem;
           }
 
           .fc .fc-daygrid-day:hover .fc-daygrid-day-number {
-            color: #1e293b;
+            color: #4F46E5;
             transform: scale(1.1);
           }
 
           .fc .fc-col-header-cell {
-            padding: 12px 0;
-            background-color: #f8fafc;
+            padding: 16px 0;
+            background-color: #F9FAFB;
             transition: all 0.2s ease;
+            border-bottom: 2px solid #E5E7EB;
           }
 
           .fc .fc-col-header-cell:hover {
-            background-color: #f1f5f9;
+            background-color: #F3F4F6;
           }
 
           .fc .fc-col-header-cell-cushion {
-            padding: 8px;
-            color: #1e293b;
+            padding: 12px;
+            color: #1F2937;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.2s ease;
+            font-size: 1rem;
+            text-transform: capitalize;
           }
 
           .fc .fc-col-header-cell:hover .fc-col-header-cell-cushion {
-            color: #4f46e5;
+            color: #4F46E5;
           }
 
           .fc-event {
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             border: none;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             cursor: pointer;
+            margin: 2px 4px;
+            padding: 4px;
           }
 
           .fc-event:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
           }
 
           .fc-event-with-icon {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            font-size: 0.95rem;
           }
 
           .fc-list {
-            border-radius: 0.75rem;
+            border-radius: 1rem;
             overflow: hidden;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
           }
 
           .fc-list-event:hover td {
-            background-color: #f8fafc;
-            transform: translateX(5px);
+            background-color: #F5F3FF;
+            transform: translateX(8px);
           }
 
           .fc-list-event-time {
             font-weight: 500;
-            padding: 1rem;
-            color: #64748b;
+            padding: 1.25rem;
+            color: #4B5563;
             transition: all 0.2s ease;
+            font-size: 0.95rem;
           }
 
           .fc-list-event:hover .fc-list-event-time {
-            color: #4f46e5;
+            color: #4F46E5;
           }
 
           .fc-list-event-title a {
             font-weight: 600;
-            padding: 1rem;
-            color: #1e293b;
+            padding: 1.25rem;
+            color: #1F2937;
             transition: all 0.2s ease;
+            font-size: 1rem;
           }
 
           .fc-list-event:hover .fc-list-event-title a {
-            color: #4f46e5;
+            color: #4F46E5;
           }
 
           .fc-list-day-cushion {
-            background-color: #f8fafc !important;
-            padding: 1rem !important;
+            background-color: #F9FAFB !important;
+            padding: 1.25rem !important;
             transition: all 0.2s ease;
+            border-bottom: 2px solid #E5E7EB;
           }
 
           .fc-list-day-cushion:hover {
-            background-color: #f1f5f9 !important;
+            background-color: #F3F4F6 !important;
           }
 
           .fc-list-day-text, .fc-list-day-side-text {
             font-weight: 600;
-            color: #1e293b;
+            color: #1F2937;
             font-size: 1.1rem;
             transition: all 0.2s ease;
           }
 
           .fc-list-day-cushion:hover .fc-list-day-text,
           .fc-list-day-cushion:hover .fc-list-day-side-text {
-            color: #4f46e5;
+            color: #4F46E5;
           }
 
           .fc-timegrid-slot {
-            height: 3em !important;
+            height: 3.5em !important;
             transition: all 0.2s ease;
           }
 
           .fc-timegrid-slot:hover {
-            background-color: #f8fafc;
+            background-color: #F5F3FF;
           }
 
           .fc-timegrid-slot-label {
-            font-size: 0.875rem;
-            color: #64748b;
+            font-size: 0.9rem;
+            color: #4B5563;
             transition: all 0.2s ease;
+            font-weight: 500;
           }
 
           .fc-timegrid-slot:hover .fc-timegrid-slot-label {
-            color: #4f46e5;
+            color: #4F46E5;
           }
 
           .fc-timegrid-now-indicator-line {
-            border-color: #ef4444;
+            border-color: #EF4444;
+            border-width: 2px;
             animation: pulse 2s infinite;
           }
 
@@ -637,21 +661,84 @@ function Curso() {
             background-color: var(--fc-button-bg-color);
             border-color: var(--fc-button-border-color);
             color: white;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
             transition: all 0.3s ease;
+            text-transform: capitalize;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
           }
 
           .fc .fc-button-primary:hover {
             background-color: var(--fc-button-hover-bg-color);
             border-color: var(--fc-button-hover-border-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
           }
 
           .fc .fc-button-primary:active {
             transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+          }
+
+          .fc .fc-toolbar {
+            padding: 1.5rem;
+            background: #F9FAFB;
+            border-bottom: 2px solid #E5E7EB;
+            margin-bottom: 0 !important;
+          }
+
+          .fc .fc-toolbar-title {
+            font-size: 1.5rem !important;
+            font-weight: 700;
+            color: #1F2937;
+          }
+
+          .fc .fc-prev-button, .fc .fc-next-button {
+            padding: 0.75rem !important;
+            border-radius: 0.75rem !important;
+          }
+
+          .fc .fc-today-button {
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 0.75rem !important;
+            font-weight: 600 !important;
+          }
+
+          .fc .fc-daygrid-more-link {
+            background: rgba(79, 70, 229, 0.1);
+            color: #4F46E5;
+            border-radius: 0.5rem;
+            padding: 2px 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+          }
+
+          .fc .fc-daygrid-more-link:hover {
+            background: rgba(79, 70, 229, 0.2);
+            transform: translateY(-1px);
+          }
+
+          .fc .fc-scrollgrid {
+            border: none !important;
+          }
+
+          .fc .fc-scrollgrid-section > * {
+            border: none !important;
+          }
+
+          .fc .fc-scrollgrid-section-header {
+            background: #F9FAFB;
+          }
+
+          .fc .fc-scrollgrid-section-body {
+            background: white;
+          }
+
+          .fc .fc-scrollgrid-section-footer {
+            background: #F9FAFB;
           }
         `}
       </style>

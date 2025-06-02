@@ -1,7 +1,9 @@
 import Persona from "../models/persona.js"
 
 class PersonaController {
-    async getUsuarios(req, res) {
+  
+
+  async getUsuarios(req, res) {
         try {
             const usuarios = await Persona.getUsuarios();
             res.status(200).json({
@@ -37,23 +39,21 @@ class PersonaController {
         }
     }
 
-    async createPersonaWithRoles(req, res) {
+    async getRoles(req, res) {
         try {
-            const personaData = req.body;
-            const idPersona = await Persona.createPersonaWithRoles(personaData);
-            res.status(201).json({
+            const roles = await Persona.getRoles();
+            res.status(200).json({
                 success: true,
-                data: { id_persona: idPersona },
-                message: "Persona creada exitosamente con roles"
+                data: roles
             });
         } catch (error) {
-            console.error("Error en createPersonaWithRoles controller:", error.message);
-            res.status(400).json({
+            console.error('Error al obtener roles:', error);
+            res.status(500).json({
                 success: false,
-                message: error.message
+                message: 'Error al obtener los roles',
+                error: error.message
             });
         }
     }
-}
-
+};
 export default new PersonaController();

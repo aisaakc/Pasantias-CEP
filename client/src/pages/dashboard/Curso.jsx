@@ -130,41 +130,60 @@ function Curso() {
               // Formato DD/MM/AA
               [dia, mes, anio] = partes.map(num => parseInt(num));
               anio = 2000 + anio; // Convertir AA a 20AA
+              const fechaCompleta = new Date(anio, mes - 1, dia);
+              
+              return {
+                id: `feriado-${feriado.id_clasificacion}-${fecha}`,
+                title: feriado.nombre,
+                start: fechaCompleta,
+                end: fechaCompleta,
+                allDay: true,
+                backgroundColor: '#EF4444',
+                borderColor: '#EF4444',
+                textColor: '#ffffff',
+                display: 'block',
+                icon: iconos[feriado.parent_icono] || iconos.faCalendar,
+                extendedProps: {
+                  esFeriado: true,
+                  nombre: feriado.nombre,
+                  orden: feriado.orden,
+                  fechaOriginal: fecha
+                }
+              };
             } else if (partes.length === 2) {
-              // Formato DD/MM (usar el año seleccionado)
+              // Formato DD/MM - Crear eventos para todos los años
               [dia, mes] = partes.map(num => parseInt(num));
-              anio = selectedYear;
+              const eventos = [];
+              
+              // Crear eventos para los años 2020-2100
+              for (let year = 2020; year <= 2100; year++) {
+                const fechaCompleta = new Date(year, mes - 1, dia);
+                eventos.push({
+                  id: `feriado-${feriado.id_clasificacion}-${fecha}-${year}`,
+                  title: feriado.nombre,
+                  start: fechaCompleta,
+                  end: fechaCompleta,
+                  allDay: true,
+                  backgroundColor: '#EF4444',
+                  borderColor: '#EF4444',
+                  textColor: '#ffffff',
+                  display: 'block',
+                  icon: iconos[feriado.parent_icono] || iconos.faCalendar,
+                  extendedProps: {
+                    esFeriado: true,
+                    nombre: feriado.nombre,
+                    orden: feriado.orden,
+                    fechaOriginal: fecha
+                  }
+                });
+              }
+              
+              return eventos;
             } else {
               console.error('Formato de fecha inválido:', fecha);
               return null;
             }
-
-            if (isNaN(dia) || isNaN(mes) || isNaN(anio)) {
-              console.error('Valores de fecha inválidos:', { dia, mes, anio });
-              return null;
-            }
-
-            const fechaCompleta = new Date(anio, mes - 1, dia);
-            
-            return {
-              id: `feriado-${feriado.id_clasificacion}-${fecha}`,
-              title: feriado.nombre,
-              start: fechaCompleta,
-              end: fechaCompleta,
-              allDay: true,
-              backgroundColor: '#EF4444',
-              borderColor: '#EF4444',
-              textColor: '#ffffff',
-              display: 'block',
-              icon: iconos[feriado.parent_icono] || iconos.faCalendar,
-              extendedProps: {
-                esFeriado: true,
-                nombre: feriado.nombre,
-                orden: feriado.orden,
-                fechaOriginal: fecha
-              }
-            };
-          }).filter(Boolean);
+          }).filter(Boolean).flat();
         } catch (error) {
           console.error('Error al procesar feriado:', feriado, error);
           return [];
@@ -195,9 +214,16 @@ function Curso() {
     // Si es un feriado, mostrar un diseño específico
     if (esFeriado) {
       return (
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 p-1 group relative"
+          title={eventInfo.event.title}
+        >
           <FontAwesomeIcon icon={iconos.faCalendar} className="text-white" />
-          <span className="truncate">{eventInfo.event.title}</span>
+          <span className="truncate font-medium">{eventInfo.event.title}</span>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
+            {eventInfo.event.title}
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+          </div>
         </div>
       );
     }

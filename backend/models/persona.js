@@ -203,6 +203,7 @@ class UserModel {
         c_roles.id_clasificacion as id,
         c_roles.nombre,
         c_roles.id_icono,
+        c_roles.descripcion,
         i.nombre as nombre_icono
       FROM clasificacion as c_roles
       INNER JOIN clasificacion as c_tipos ON c_roles.type_id = c_tipos.id_clasificacion
@@ -227,6 +228,7 @@ class UserModel {
      p.nombre AS persona_nombre,
      p.apellido,
      p.telefono,
+     p.cedula,
      p.gmail,
      p.id_genero,
      g.nombre as genero_nombre,

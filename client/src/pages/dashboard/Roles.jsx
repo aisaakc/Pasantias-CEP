@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import usePersonaStore from '../../store/personaStore';
+import ModalUser from '../../components/ModalUser';
 
 function Roles() {
   const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios } = usePersonaStore();
   const [selectedRole, setSelectedRole] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
 
   useEffect(() => {
     fetchRoles();
@@ -14,6 +17,30 @@ function Roles() {
 
   const handleRoleClick = (role) => {
     setSelectedRole(selectedRole?.id === role.id ? null : role);
+  };
+
+  const handleEditClick = (usuario) => {
+    // Transformar los datos del usuario al formato esperado por el modal
+    const userData = {
+      nombre: usuario.persona_nombre || '',
+      apellido: usuario.apellido || '',
+      cedula: usuario.cedula || '',
+      telefono: usuario.telefono || '',
+      gmail: usuario.gmail || '',
+      password: '', // No enviamos la contraseña por seguridad
+      genero: usuario.genero_nombre?.toLowerCase() || '',
+      pregunta_seguridad: usuario.pregunta_seguridad || '',
+      respuesta_seguridad: usuario.respuesta_seguridad || '',
+      roles: usuario.roles?.map(rol => rol.nombre.toLowerCase()) || []
+    };
+    
+    setEditData(userData);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditData(null);
   };
 
   // Agrupar usuarios por id_persona
@@ -75,6 +102,7 @@ function Roles() {
             </span>
           </h1>
           <button
+            onClick={() => setIsModalOpen(true)}
             className="bg-blue-600 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-blue-900">
             <FontAwesomeIcon icon={iconos.faPlus} />
             <span>Agregar Usuario</span>
@@ -214,7 +242,14 @@ function Roles() {
                     <td className="py-4 px-6">
                       <div className="flex justify-center space-x-4">
                         <button 
+                          title="Ver detalles"
+                          className="text-green-600 hover:text-green-800 transform hover:scale-110 transition-all duration-300"
+                        >
+                          <FontAwesomeIcon icon={iconos.faEye} size="lg" />
+                        </button>
+                        <button 
                           title="Editar usuario"
+                          onClick={() => handleEditClick(usuario)}
                           className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300"
                         >
                           <FontAwesomeIcon icon={iconos.faPen} size="lg" />
@@ -234,6 +269,12 @@ function Roles() {
           </div>
         </div>
       </div>
+
+      <ModalUser 
+        isOpen={isModalOpen} 
+        onClose={handleModalClose}
+        editData={editData}
+      />
 
       <style>{`
         @keyframes fadeIn {

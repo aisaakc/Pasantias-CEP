@@ -24,7 +24,7 @@ class PersonaController {
     async createPersona(req, res) {
         try {
             const personaData = req.body;
-            const idPersona = await Persona.createPersona(personaData);
+            const idPersona = await Persona.createPersonaWithRoles(personaData);
             res.status(201).json({
                 success: true,
                 data: { id_persona: idPersona },

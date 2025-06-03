@@ -40,7 +40,7 @@ export default function Login({ redirectTo }) {
       const credentialsToSend = {
         gmail: formData.email.includes('@') ? formData.email : undefined,
         cedula: !formData.email.includes('@') ? formData.email : undefined,
-        contraseña: formData.password,
+        contrasena: formData.password,
       };
 
       await loginUser(credentialsToSend);

@@ -62,11 +62,11 @@ class UserModel {
       id_rol,
       id_pregunta,
       respuesta,
-      contraseña,
+      contrasena,
     } = data;
 
     if (!nombre || !apellido || !telefono || !cedula || !gmail || 
-      id_genero === undefined || id_rol === undefined || id_pregunta === undefined || !respuesta || !contraseña) {
+      id_genero === undefined || id_rol === undefined || id_pregunta === undefined || !respuesta || !contrasena) {
       throw new Error("Faltan campos obligatorios para crear el usuario.");
     }
 
@@ -90,7 +90,7 @@ class UserModel {
       }
 
       const [hashedPassword, hashedRespuesta] = await Promise.all([
-        this.#hashDato(contraseña),
+        this.#hashDato(contrasena),
         this.#hashDato(respuesta),
       ]);
 
@@ -104,7 +104,7 @@ class UserModel {
           id_rol,
           id_pregunta,     
           respuesta,       
-          "contraseña",    
+          "contrasena",    
           gmail
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -144,10 +144,10 @@ class UserModel {
     }
   }
 
-  async loginUser({ cedula, gmail, contraseña }) {
+  async loginUser({ cedula, gmail, contrasena }) {
     
-    if ((!cedula && !gmail) || !contraseña) {
-      throw new Error("Debe proporcionar cédula o correo electrónico, y la contraseña.");
+    if ((!cedula && !gmail) || !contrasena) {
+      throw new Error("Debe proporcionar cédula o correo electrónico, y la contrasena.");
     }
 
     let query = `SELECT * FROM personas WHERE `;
@@ -178,8 +178,8 @@ class UserModel {
         throw new Error("Credenciales incorrectas.");
       }
 
-      // Comparar la contraseña proporcionada con la hasheada en la DB
-      const passwordMatch = await bcrypt.compare(contraseña, user["contraseña"]);
+      // Comparar la contrasena proporcionada con la hasheada en la DB
+      const passwordMatch = await bcrypt.compare(contrasena, user["contrasena"]);
 
       if (!passwordMatch) {
         throw new Error("Credenciales incorrectas.");
@@ -189,7 +189,7 @@ class UserModel {
 
     } catch (error) {
       console.error("Error detallado al iniciar sesión:", error.message);
-      if (error.message === "Credenciales incorrectas." || error.message === "Debe proporcionar cédula o correo electrónico, y la contraseña.") {
+      if (error.message === "Credenciales incorrectas." || error.message === "Debe proporcionar cédula o correo electrónico, y la contrasena.") {
         throw error;
       }
       throw new Error("Error al iniciar sesión.");
@@ -260,12 +260,12 @@ class UserModel {
       id_roles, // Array de IDs de roles
       id_pregunta,
       respuesta,
-      contraseña,
+      contrasena,
     } = data;
 
     if (!nombre || !apellido || !telefono || !cedula || !gmail || 
         id_genero === undefined || !id_roles || id_pregunta === undefined || 
-        !respuesta || !contraseña) {
+        !respuesta || !contrasena) {
       throw new Error("Faltan campos obligatorios para crear la persona.");
     }
 
@@ -288,9 +288,9 @@ class UserModel {
         }
       }
 
-      // Cifrar contraseña y respuesta
+      // Cifrar contrasena y respuesta
       const [hashedPassword, hashedRespuesta] = await Promise.all([
-        this.#hashDato(contraseña),
+        this.#hashDato(contrasena),
         this.#hashDato(respuesta),
       ]);
 
@@ -307,7 +307,7 @@ class UserModel {
           id_rol,
           id_pregunta,     
           respuesta,       
-          "contraseña",    
+          "contrasena",    
           gmail
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)

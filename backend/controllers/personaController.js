@@ -1,11 +1,12 @@
-import Persona from "../models/persona.js"
+import UsuarioModel from "../models/usuarios.js"
+
 
 class PersonaController {
   
 
   async getUsuarios(req, res) {
         try {
-            const usuarios = await Persona.getUsuarios();
+            const usuarios = await UsuarioModel.getUsuarios();
             res.status(200).json({
                 success: true,
                 data: usuarios,
@@ -23,7 +24,7 @@ class PersonaController {
 
     async getRoles(req, res) {
         try {
-            const roles = await Persona.getRoles();
+            const roles = await UsuarioModel.getRoles();
             res.status(200).json({
                 success: true,
                 data: roles
@@ -38,24 +39,6 @@ class PersonaController {
         }
     }
 
-    // async createPersona(req, res) {
-    //     try {
-    //         const personaData = req.body;
-    //         const idPersona = await Persona.createPersonaWithRoles(personaData);
-    //         res.status(201).json({
-    //             success: true,
-    //             data: { id_persona: idPersona },
-    //             message: "Persona creada exitosamente"
-    //         });
-    //     } catch (error) {
-    //         console.error("Error en createPersona controller:", error.message);
-    //         res.status(400).json({
-    //             success: false,
-    //             message: error.message
-    //         });
-    //     }
-    // }
 
-   
 };
 export default new PersonaController();

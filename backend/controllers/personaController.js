@@ -21,24 +21,6 @@ class PersonaController {
         }
     }
 
-    async createPersona(req, res) {
-        try {
-            const personaData = req.body;
-            const idPersona = await Persona.createPersonaWithRoles(personaData);
-            res.status(201).json({
-                success: true,
-                data: { id_persona: idPersona },
-                message: "Persona creada exitosamente"
-            });
-        } catch (error) {
-            console.error("Error en createPersona controller:", error.message);
-            res.status(400).json({
-                success: false,
-                message: error.message
-            });
-        }
-    }
-
     async getRoles(req, res) {
         try {
             const roles = await Persona.getRoles();
@@ -55,5 +37,25 @@ class PersonaController {
             });
         }
     }
+
+    // async createPersona(req, res) {
+    //     try {
+    //         const personaData = req.body;
+    //         const idPersona = await Persona.createPersonaWithRoles(personaData);
+    //         res.status(201).json({
+    //             success: true,
+    //             data: { id_persona: idPersona },
+    //             message: "Persona creada exitosamente"
+    //         });
+    //     } catch (error) {
+    //         console.error("Error en createPersona controller:", error.message);
+    //         res.status(400).json({
+    //             success: false,
+    //             message: error.message
+    //         });
+    //     }
+    // }
+
+   
 };
 export default new PersonaController();

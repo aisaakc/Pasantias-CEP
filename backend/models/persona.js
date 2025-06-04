@@ -249,92 +249,92 @@ class UserModel {
     }
   }
 
-  async createPersonaWithRoles(data) {
-    const {
-      nombre,
-      apellido,
-      telefono,
-      cedula,
-      gmail,
-      id_genero,
-      id_roles, // Array de IDs de roles
-      id_pregunta,
-      respuesta,
-      contrasena,
-    } = data;
+  // async createPersonaWithRoles(data) {
+  //   const {
+  //     nombre,
+  //     apellido,
+  //     telefono,
+  //     cedula,
+  //     gmail,
+  //     id_genero,
+  //     id_roles, // Array de IDs de roles
+  //     id_pregunta,
+  //     respuesta,
+  //     contrasena,
+  //   } = data;
 
-    if (!nombre || !apellido || !telefono || !cedula || !gmail || 
-        id_genero === undefined || !id_roles || id_pregunta === undefined || 
-        !respuesta || !contrasena) {
-      throw new Error("Faltan campos obligatorios para crear la persona.");
-    }
+  //   if (!nombre || !apellido || !telefono || !cedula || !gmail || 
+  //       id_genero === undefined || !id_roles || id_pregunta === undefined || 
+  //       !respuesta || !contrasena) {
+  //     throw new Error("Faltan campos obligatorios para crear la persona.");
+  //   }
 
-    try {
-      // Verificar si la cédula o gmail ya existen
-      const checkQuery = `
-        SELECT cedula, gmail 
-        FROM personas 
-        WHERE cedula = $1 OR gmail = $2;
-      `;
-      const checkResult = await pool.query(checkQuery, [cedula, gmail]);
+  //   try {
+  //     // Verificar si la cédula o gmail ya existen
+  //     const checkQuery = `
+  //       SELECT cedula, gmail 
+  //       FROM personas 
+  //       WHERE cedula = $1 OR gmail = $2;
+  //     `;
+  //     const checkResult = await pool.query(checkQuery, [cedula, gmail]);
 
-      if (checkResult.rows.length > 0) {
-        const existing = checkResult.rows[0];
-        if (existing.cedula === cedula) {
-          throw new Error("La cédula ya está registrada.");
-        }
-        if (existing.gmail && existing.gmail.toLowerCase() === gmail.toLowerCase()) {
-          throw new Error("El correo electrónico ya está registrado.");
-        }
-      }
+  //     if (checkResult.rows.length > 0) {
+  //       const existing = checkResult.rows[0];
+  //       if (existing.cedula === cedula) {
+  //         throw new Error("La cédula ya está registrada.");
+  //       }
+  //       if (existing.gmail && existing.gmail.toLowerCase() === gmail.toLowerCase()) {
+  //         throw new Error("El correo electrónico ya está registrado.");
+  //       }
+  //     }
 
-      // Cifrar contrasena y respuesta
-      const [hashedPassword, hashedRespuesta] = await Promise.all([
-        this.#hashDato(contrasena),
-        this.#hashDato(respuesta),
-      ]);
+  //     // Cifrar contrasena y respuesta
+  //     const [hashedPassword, hashedRespuesta] = await Promise.all([
+  //       this.#hashDato(contrasena),
+  //       this.#hashDato(respuesta),
+  //     ]);
 
-      // Crear el objeto JSON para los roles
-      const rolesJson = JSON.stringify({ id_rol: id_roles });
+  //     // Crear el objeto JSON para los roles
+  //     const rolesJson = JSON.stringify({ id_rol: id_roles });
 
-      const query = `
-        INSERT INTO personas (
-          nombre,
-          apellido,
-          telefono,
-          cedula,
-          id_genero,
-          id_rol,
-          id_pregunta,     
-          respuesta,       
-          "contrasena",    
-          gmail
-        ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id_persona; 
-      `;
+  //     const query = `
+  //       INSERT INTO personas (
+  //         nombre,
+  //         apellido,
+  //         telefono,
+  //         cedula,
+  //         id_genero,
+  //         id_rol,
+  //         id_pregunta,     
+  //         respuesta,       
+  //         "contrasena",    
+  //         gmail
+  //       ) 
+  //       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  //       RETURNING id_persona; 
+  //     `;
 
-      const values = [
-        nombre,
-        apellido,
-        telefono,
-        cedula,
-        id_genero,
-        rolesJson,
-        id_pregunta,
-        hashedRespuesta,
-        hashedPassword,
-        gmail,
-      ];
+  //     const values = [
+  //       nombre,
+  //       apellido,
+  //       telefono,
+  //       cedula,
+  //       id_genero,
+  //       rolesJson,
+  //       id_pregunta,
+  //       hashedRespuesta,
+  //       hashedPassword,
+  //       gmail,
+  //     ];
 
-      const result = await pool.query(query, values);
-      return result.rows[0].id_persona;
+  //     const result = await pool.query(query, values);
+  //     return result.rows[0].id_persona;
 
-    } catch (error) {
-      console.error("Error al crear persona con roles:", error.message);
-      throw error;
-    }
-  }
+  //   } catch (error) {
+  //     console.error("Error al crear persona con roles:", error.message);
+  //     throw error;
+  //   }
+  // }
 }
 
 export default new UserModel();

@@ -7,8 +7,4 @@ router.post('/login', AuthController.loginUsuario);
 router.post('/register', AuthController.registrarUsuario);
 router.get('/SubC/:id', AuthController.getSubclassificationsById);
 
-
-
-
-
 export default router;

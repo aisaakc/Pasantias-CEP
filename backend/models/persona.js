@@ -65,8 +65,23 @@ class UserModel {
       contrasena,
     } = data;
 
+    console.log('Datos recibidos en createUser:', data);
+
     if (!nombre || !apellido || !telefono || !cedula || !gmail || 
-      id_genero === undefined || id_rol === undefined || id_pregunta === undefined || !respuesta || !contrasena) {
+      id_genero === undefined || !Array.isArray(id_rol) || id_rol.length === 0 || 
+      id_pregunta === undefined || !respuesta || !contrasena) {
+      console.log('Validación fallida:', {
+        nombre: !!nombre,
+        apellido: !!apellido,
+        telefono: !!telefono,
+        cedula: !!cedula,
+        gmail: !!gmail,
+        id_genero: id_genero !== undefined,
+        id_rol: Array.isArray(id_rol) && id_rol.length > 0,
+        id_pregunta: id_pregunta !== undefined,
+        respuesta: !!respuesta,
+        contrasena: !!contrasena
+      });
       throw new Error("Faltan campos obligatorios para crear el usuario.");
     }
 
@@ -94,6 +109,9 @@ class UserModel {
         this.#hashDato(respuesta),
       ]);
 
+      // Convertir el array de roles a un objeto JSON con el formato exacto requerido
+      const rolesJson = JSON.stringify({ id_rol: id_rol.map(role => role.toString()) });
+
       const query = `
         INSERT INTO personas (
           nombre,
@@ -116,7 +134,7 @@ class UserModel {
         telefono,
         cedula,
         id_genero,
-        id_rol,
+        rolesJson,
         id_pregunta,
         hashedRespuesta,
         hashedPassword,

@@ -1,16 +1,16 @@
 import { create } from 'zustand';
+import { CLASSIFICATION_IDS } from '../config/classificationIds';
 
 import {
    register, 
-   login ,
+   login,
    getSubclassificationsById } from '../api/auth.api';
 
-// Constantes para los IDs de subclasificación
-const SUBCLASSIFICATION_IDS = {
-  PREGUNTAS: 8,
-  GENEROS: 1,
-  ROLES: 3
-};
+console.log('Environment Variables:', {
+  PREGUNTAS: CLASSIFICATION_IDS.PREGUNTAS,
+  GENEROS: CLASSIFICATION_IDS.GENEROS,
+  ROLES: CLASSIFICATION_IDS.ROLES
+});
 
 export const useAuthStore = create((set) => ({ 
   generos: [],
@@ -26,18 +26,20 @@ export const useAuthStore = create((set) => ({
     try {
       set({ loading: true });
      
-       const [ preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
-              
-        getSubclassificationsById(SUBCLASSIFICATION_IDS.PREGUNTAS),
-        getSubclassificationsById(SUBCLASSIFICATION_IDS.GENEROS),
-        getSubclassificationsById(SUBCLASSIFICATION_IDS.ROLES),
- 
+      const [preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
+        getSubclassificationsById(CLASSIFICATION_IDS.PREGUNTAS),
+        getSubclassificationsById(CLASSIFICATION_IDS.GENEROS),
+        getSubclassificationsById(CLASSIFICATION_IDS.ROLES)
       ]);
+
+      console.log('Respuesta de Preguntas:', preguntasResponse);
+      console.log('Respuesta de Géneros:', generosResponse);
+      console.log('Respuesta de Roles:', rolesResponse);
+
       set({
-        // generos: generosResponse.data,
-        roles: rolesResponse.data,
-        preguntas: preguntasResponse.data,
-        generos : generosResponse.data,
+        preguntas: preguntasResponse.data.data,
+        generos: generosResponse.data.data,
+        roles: rolesResponse.data.data,
         loading: false,
       });
     } catch (error) {

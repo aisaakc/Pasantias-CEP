@@ -6,8 +6,7 @@ import clasificacion from './routes/clasificacion.js';
 import cursoRoutes from './routes/curso.js';
 import emailRoutes from './routes/email.js';
 import personaRoutes from './routes/persona.js';
-
-
+import pdfRoutes from './routes/pdf.js';
 
 const app = express();
 
@@ -18,7 +17,7 @@ app.use('/api', clasificacion);
 app.use('/api', cursoRoutes);
 app.use('/api', personaRoutes);
 app.use('/api/email', emailRoutes);
-
+app.use('/api/pdf', pdfRoutes);
 
 app.get('/', (req, res) => {
     res.send('API está funcionando.');

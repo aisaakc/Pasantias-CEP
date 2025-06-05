@@ -9,14 +9,34 @@ import Modal from '../../components/Modal';
 import { toast } from 'sonner';
 
 // Componente memoizado para la fila de la tabla
-const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate }) => {
+const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, searchText }) => {
   const iconName = sub.nicono || 'faFile';
   const Icon = iconos[iconName] || iconos.faFile;
 
+  // Función para resaltar el texto coincidente
+  const highlightText = (text, searchText) => {
+
+    // descomentar el true
+    if (true || !searchText || !text) return text;
+    
+    const regex = new RegExp(`(${searchText})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => 
+      regex.test(part) ? (
+        <span key={i} className="bg-red-200 font-bold">{part}</span>
+      ) : part
+    );
+  };
+
   return (
     <tr className="transform hover:scale-[1.01] hover:bg-blue-50 transition-all duration-300">
-      <td className="py-4 px-6 font-medium text-gray-800">{sub.nombre}</td>
-      <td className="py-4 px-6 text-gray-600">{sub.descripcion}</td>
+      <td className="py-4 px-6 font-medium text-gray-800">
+        {highlightText(sub.nombre, searchText)}
+      </td>
+      <td className="py-4 px-6 text-gray-600">
+        {highlightText(sub.descripcion, searchText)}
+      </td>
       <td className="py-4 px-6 text-center">
         <FontAwesomeIcon 
           icon={Icon} 
@@ -401,7 +421,7 @@ export default function Tipos() {
                   icon={iconos[parentInfo.icono] || iconos.faFile}
                   size="lg"
                   className="text-blue-600 transform hover:scale-125 transition-all duration-300 mr-2" 
-                />
+    />
               )}
               {parentInfo.nombre}
             </h1>
@@ -477,11 +497,12 @@ export default function Tipos() {
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onNavigate={handleNavigate}
+                        searchText={busqueda}
                       />
                     ))
                   ) : (
                     <tr key="no-results-row">
-                      <td colSpan="4" className="py-8 text-center text-gray-500 ">
+                      <td colSpan="5" className="py-8 text-center text-gray-500">
                         <FontAwesomeIcon icon={iconos.faInbox} className="text-4xl mb-2" />
                         <p>No hay subclasificaciones que coincidan con tu búsqueda.</p>
                       </td>

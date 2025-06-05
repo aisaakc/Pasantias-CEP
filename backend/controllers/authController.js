@@ -8,9 +8,6 @@ class AuthController {
     console.log('=== INICIO DE REGISTRO DE USUARIO ===');
     console.log('Datos recibidos:', JSON.stringify(req.body, null, 2));
 
-    // Asegurarnos de que la contraseña se lea correctamente
-    const password = req.body.contrasena || req.body.contrasena || req.body['contrasena'];
-
     const userData = {
       nombre: req.body.nombre,
       apellido: req.body.apellido,
@@ -18,10 +15,10 @@ class AuthController {
       cedula: req.body.cedula,
       gmail: req.body.gmail,
       id_genero: req.body.id_genero,
-      id_roles: req.body.id_roles,
+      id_rol: req.body.id_roles,
       id_pregunta: req.body.id_pregunta,
       respuesta: req.body.respuesta,
-      contrasena: password
+      contrasena: req.body.contrasena
     };
 
     console.log('Datos procesados:', JSON.stringify(userData, null, 2));
@@ -34,8 +31,8 @@ class AuthController {
       cedula: !userData.cedula ? 'Falta la cédula' : null,
       gmail: !userData.gmail ? 'Falta el gmail' : null,
       id_genero: userData.id_genero === undefined ? 'Falta el id_genero' : null,
-      id_roles: !Array.isArray(userData.id_roles) ? 'id_roles no es un array' : 
-                userData.id_roles.length === 0 ? 'id_roles está vacío' : null,
+      id_rol: !Array.isArray(userData.id_rol) ? 'id_roles debe ser un array' : 
+              userData.id_rol.length === 0 ? 'id_roles está vacío' : null,
       id_pregunta: userData.id_pregunta === undefined ? 'Falta el id_pregunta' : null,
       respuesta: !userData.respuesta ? 'Falta la respuesta' : null,
       contrasena: !userData.contrasena ? 'Falta la contrasena' : null
@@ -58,7 +55,7 @@ class AuthController {
       console.log('Intentando crear usuario con datos:', JSON.stringify(userData, null, 2));
       
       // Registrar el usuario
-      const userId = await UserModel.createPersonaWithRoles(userData);
+      const userId = await UserModel.createUser(userData);
       console.log('Usuario creado exitosamente con ID:', userId);
 
       // Enviar correo de bienvenida

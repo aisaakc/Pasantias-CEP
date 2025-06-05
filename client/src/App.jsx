@@ -13,6 +13,7 @@ import Layout from "./components/Layout";
 import useAuthStore from "./store/authStore";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Prueba from "./pages/dashboard/prueba";
 import { Toaster } from 'sonner';
 import React from 'react';
 
@@ -60,6 +61,8 @@ export default function App() {
           <Route path="cursos" element={<Curso />} />
           <Route path="roles" element={<Roles />} />
           <Route path="horario-curso/:id" element={<HorarioCurso /> } />
+          <Route path="prueba" element={<Prueba/>} />  
+
         </Route>
       </Routes>
     </main>

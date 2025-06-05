@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield, FaFilePdf } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import useClasificacionStore from '../store/clasificacionStore';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
@@ -155,6 +155,18 @@ export default function Sidebar() {
             <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
           )}
           <span className="font-medium">Roles</span>
+        </Link>
+
+        <Link
+          to="/dashboard/prueba"
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
+            location.pathname === '/dashboard/prueba'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+          }`}
+        >
+          <FontAwesomeIcon icon={iconos.faFilePdf} className="w-5 h-5" />
+          <span className="font-medium">Generar PDF</span>
         </Link>
       </nav>
     </aside>

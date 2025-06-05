@@ -1,16 +1,11 @@
 import { create } from 'zustand';
+import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import { 
   getAllCursos,
   getAllCursosById,
   createCurso,
   updateCurso as updateCursoAPI
 } from '../api/curso.api';
-
-const CLASSIFICATION_IDS = {
-  CURSOS : 5,
-  MODALIDAD: 100050,
-  STATUS: 100059
-};
 
 export const useCursoStore = create((set, get) => ({
   // Estado inicial

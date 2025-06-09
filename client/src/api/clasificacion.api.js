@@ -18,5 +18,8 @@ export const getAllClasificaciones = async () =>
 export const deleteClasificacion = async (id) =>
     axios.delete(`http://localhost:3001/api/clasificaciones/delete/${id}`);
 
+export const getParentHierarchy = async (id_clasificacion) => 
+    axios.get(`http://localhost:3001/api/clasificaciones/parents/${id_clasificacion}`);
+
 
 

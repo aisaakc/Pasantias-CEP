@@ -77,6 +77,7 @@ class PDFService {
                 browser = await puppeteer.launch({
                     headless: 'new',
                     args: ['--no-sandbox', '--disable-setuid-sandbox']
+                     // executablePath: 'C:\\Users\\servi\\.cache\\puppeteer\\chrome\\win64-137.0.7151.55\\chrome-win64\\chrome.exe'
                 });
                 console.log('Navegador iniciado');
             } catch (error) {

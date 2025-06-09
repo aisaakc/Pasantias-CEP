@@ -41,25 +41,35 @@ class EmailService {
     }
 
     // Método específico para correo de bienvenida
-    static async sendWelcomeEmail(to, name) {
+    static async sendWelcomeEmail(to, nombre, apellido) {
         const subject = '¡Bienvenido a CEP!';
-        const text = `Hola ${name},\n\nBienvenido a nuestra plataforma. Esperamos que disfrutes de nuestros servicios.`;
+        const text = `Hola ${nombre} ${apellido},\n\nBienvenido a nuestra plataforma. Esperamos que disfrutes de nuestros servicios.`;
         const html = `
             <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: #2c3e50;">¡Bienvenido a CEP!</h1>
-                <p style="color: #34495e; line-height: 1.6;">
-                    Hola ${name},
-                </p>
-                <p style="color: #34495e; line-height: 1.6;">
-                    Nos complace darte la bienvenida a nuestra plataforma. Esperamos que disfrutes de nuestros servicios.
-                </p>
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p style="margin: 0; color: #666;">
-                        <strong>Tu cuenta ha sido activada exitosamente.</strong>
+                <h1 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">¡Bienvenido a CEP!</h1>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3498db;">
+                    <h2 style="color: #2c3e50; margin-top: 0;">Detalles de tu cuenta:</h2>
+                    <p style="color: #34495e; line-height: 1.6; margin: 10px 0;">
+                        <strong>Nombre completo:</strong> ${nombre} ${apellido}
+                    </p>
+                    <p style="color: #34495e; line-height: 1.6; margin: 10px 0;">
+                        <strong>Correo electrónico:</strong> ${to}
                     </p>
                 </div>
-                <p style="color: #7f8c8d; font-size: 0.9em;">
-                    Si tienes alguna pregunta, no dudes en contactarnos.
+
+                <p style="color: #34495e; line-height: 1.6;">
+                    Nos complace darte la bienvenida a nuestra plataforma. Tu cuenta ha sido activada exitosamente y ya puedes comenzar a utilizar todos nuestros servicios.
+                </p>
+
+                <div style="background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;">
+                    <p style="margin: 0; color: #2980b9;">
+                        <strong>¡Estamos emocionados de tenerte como parte de nuestra comunidad!</strong>
+                    </p>
+                </div>
+
+                <p style="color: #7f8c8d; font-size: 0.9em; margin-top: 30px;">
+                    Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.
                 </p>
             </div>
         `;

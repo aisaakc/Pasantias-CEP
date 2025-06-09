@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-02 10:20:29
+-- Started on 2025-06-08 12:38:38
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -37,11 +37,11 @@ END;$$;
 ALTER FUNCTION public.check_fechas_horarios() OWNER TO postgres;
 
 --
--- TOC entry 243 (class 1255 OID 91815)
+-- TOC entry 243 (class 1255 OID 100007)
 -- Name: obtener_parents(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.obtener_parents(p_id_clasificacion integer) RETURNS TABLE(id_clasificacion integer, nombre character varying, descripcion character varying)
+CREATE FUNCTION public.obtener_parents(p_id_clasificacion integer) RETURNS TABLE(id_clasificacion integer, nombre character varying, descripcion character varying, type_id bigint, id_icono bigint)
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -49,7 +49,12 @@ DECLARE
 BEGIN
     WHILE v_current_id IS NOT NULL LOOP
         RETURN QUERY
-        SELECT c.id_clasificacion, c.nombre, c.descripcion --, c.parent_id
+        SELECT 
+            c.id_clasificacion::integer, 
+            c.nombre::character varying, 
+            c.descripcion::character varying,
+            c.type_id::bigint,
+            c.id_icono::bigint
         FROM public.clasificacion c
         WHERE c.id_clasificacion = v_current_id;
 
@@ -351,7 +356,7 @@ CREATE TABLE public.personas (
     nombre character varying NOT NULL,
     apellido character varying NOT NULL,
     telefono character varying NOT NULL,
-    "contraseña" character varying NOT NULL,
+    contrasena character varying NOT NULL,
     id_genero bigint NOT NULL,
     id_pregunta bigint NOT NULL,
     cedula character varying NOT NULL,
@@ -455,12 +460,9 @@ COPY public.auditorias (id_auditoria, fecha_hora, ip, descripcion, id_persona, i
 --
 
 COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional, protected) FROM stdin;
-13	Participante Externo	\N	\N	\N	3	15	\N	\N	0
 53	aaafaWifi		\N	\N	27	\N	53	\N	1
 14	Personal IUJO	\N	\N	\N	3	11	\N	\N	0
 108	Desarrollo web creativo: HTML, CSS y JAVASCRIPT		\N	\N	5	61	8991	\N	0
-120	Ventana Principal		\N	\N	73	73	\N	\N	0
-114	Electronica		\N	0	110	201	102	\N	0
 84	Cual es tu comida favorita?		\N	\N	8	\N	\N	\N	0
 57	Cual es tu pelicula favorita?		\N	\N	8	\N	\N	\N	0
 61	Oficio Tecnológico emergente	estos son progrmas	\N	\N	4	111	8414	\N	0
@@ -468,18 +470,14 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 73	Objetos		\N	90	\N	\N	9768	\N	0
 28	aaafaVenusMars	\N	\N	\N	27	\N	28	\N	1
 115	Electrotecnia		\N	0	110	201	102	\N	0
-111	Informatica		\N	0	110	201	102	\N	0
 112	 Administración 		\N	\N	110	201	102	\N	0
 109	Mantenimiento y Reparación de PC		\N	\N	5	61	9873	\N	0
 100004	faMapLocationDot	xx	\N	\N	27	\N	100004	\N	1
 29	aaafaUser	\N	\N	\N	27	\N	29	\N	1
 30	aaafaUncharted	\N	\N	\N	27	\N	30	\N	1
-96	Facilitador	Tiene acceso a ver los cursos que da	\N	\N	3	\N	95	{"id_objeto":[100067,100068] }	0
-11	Participante 	Tiene acceso solo a participar a los cursos \n	\N	\N	3	\N	9503	{"id_objeto":[100] }	0
 98	Administrador	Tiene acceso a los programas y cursos	\N	\N	3	\N	\N	\N	0
 8065	faArrowLeft		\N	\N	27	\N	8065	\N	1
 9	Cual es tu Animal favorito?		\N	\N	8	\N	\N	\N	0
-113	Contaduria		\N	0	110	201	102	\N	0
 8066	faArrowLeftLong		\N	\N	27	\N	8066	\N	1
 8067	faArrowPointer		\N	\N	27	\N	8067	\N	1
 8068	faArrowRight		\N	\N	27	\N	8068	\N	1
@@ -491,6 +489,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 8073	faArrowRightToCity		\N	\N	27	\N	8073	\N	1
 8074	faArrowRotateLeft		\N	\N	27	\N	8074	\N	1
 8075	faArrowRotateRight		\N	\N	27	\N	8075	\N	1
+114	Electrónica		\N	0	110	201	102	\N	0
+111	Informática		\N	0	110	201	102	\N	0
 8076	faArrowTrendDown		\N	\N	27	\N	8076	\N	1
 34	aaafaMapLocation	\N	\N	\N	27	\N	34	\N	1
 35	aaafaIcons	\N	\N	\N	27	\N	35	\N	1
@@ -505,11 +505,10 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100128	Navidad	25/12	\N	7	100121	100121	\N	\N	0
 110	Carreras		\N	20	\N	\N	8782	\N	1
 4	Programas		\N	30	\N	\N	9072	\N	1
+13	Participante Externo	\N	\N	\N	3	11	\N	\N	0
 54	Cisco Academy 		\N	\N	4	111	8657	\N	0
 100107	CCNA 1		\N	0	5	\N	8438	\N	0
-100	Menú de Configuracion		\N	\N	73	\N	\N	\N	0
 1	Géneros		\N	100	\N	\N	9792	\N	1
-3	Rol		\N	110	\N	\N	9766	\N	1
 10001	Amazonas		\N	\N	122	122	\N	\N	1
 123	Municipios	Lista de Municipios de Venezuela	\N	60	\N	\N	9048	\N	1
 124	Parroquias	Lista de Parroquias de Venezuela	\N	70	\N	\N	100005	\N	1
@@ -522,6 +521,10 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 10007	Carabobo		\N	\N	122	\N	\N	\N	1
 10008	Cojedes		\N	\N	122	\N	\N	\N	1
 10009	Delta Amacuro		\N	\N	122	\N	\N	\N	1
+96	Facilitador	Tiene acceso a ver los cursos que da	\N	0	3	3	8319	{"id_objeto":[100067,100068] }	0
+3	Rol	Roles del Sistema	\N	110	\N	\N	9751	\N	1
+11	Participante 	Tiene acceso solo a participar a los cursos \n	\N	\N	3	\N	9503	{"id_objeto":[100,-100066] }	0
+113	Contaduría		\N	0	110	201	102	\N	0
 42	aaafaQuestion	\N	\N	\N	27	\N	42	\N	1
 43	aaafaFemale		\N	\N	27	\N	43	\N	1
 95	aaafaChalkboardUser		\N	\N	27	\N	95	\N	1
@@ -1838,21 +1841,26 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100130	Halloween	31/10	\N	0	100121	\N	\N	\N	0
 100131	Carnaval  2025	03/03/25 , 04/03/25	\N	0	100121	100121	\N	\N	0
 100132	Elecciones 2025	25/05/25	\N	0	100121	100121	\N	\N	0
-100133	Cisco Academy		\N	0	4	100134	\N	\N	0
-100134	Informatica		\N	0	110	202	\N	\N	0
-100138	Dia del culo	10/12	\N	0	100121	\N	\N	\N	0
+100133	Cisco Academy (Petare)		\N	0	4	100134	\N	\N	0
+100134	Informática		\N	0	110	202	\N	\N	0
+100140	Cual es tu deporte favorito?		\N	0	8	\N	\N	\N	0
 100121	Días Feriados		\N	126	\N	\N	8269	\N	0
+100141	Menú de Cursos		\N	0	73	\N	\N	\N	0
 100122	Año Nuevo	01/01	\N	1	100121	100121	\N	\N	0
+100142	Menú de Configuración		\N	0	73	\N	\N	\N	0
 100123	Batalla de Carabobo	24/06	\N	3	100121	100121	\N	\N	0
 100124	Día Del Trabajador	01/05	\N	2	100121	100121	\N	\N	0
 100125	Día de la Independencia	05/07	\N	4	100121	100121	\N	\N	0
-100070	Buenas Prácticas de Excel para Administradores y Contadores. Nivel Básico		\N	2	5	\N	8075	\N	0
-202	IUJO (Petare)		\N	20	200	200	8240	\N	0
-100126	Víspera de Navidad	24/12	\N	6	100121	100121	\N	\N	0
+100066	Menú de Roles		\N	0	73	73	\N	\N	0
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	\N	10	200	200	8245	\N	0
-204	IUSF	Instituto Universitario San Francisco	\N	40	200	200	8249	\N	0
+100126	Víspera de Navidad	24/12	\N	6	100121	100121	\N	\N	0
+202	IUJO (Petare)		\N	20	200	200	8240	\N	0
+100070	Buenas Prácticas de Excel para Administradores y Contadores.		\N	2	5	5	8075	\N	0
 203	IUJO (Barquisimeto)		\N	30	200	200	8241	\N	0
-6	Masculino	sexo masculino	\N	1	1	1	9053	\N	1
+204	IUSF	Instituto Universitario San Francisco	\N	40	200	200	8249	\N	0
+5	Cursos		\N	40	\N	4	9019	\N	1
+10024	Distrito Capital		\N	0	122	122	8072	\N	1
+6	Masculino	sexo masculino	\N	1	1	\N	9053	\N	1
 100052	Presencial / Sabatino		\N	\N	100050	\N	\N	\N	0
 100053	On line		\N	\N	100050	\N	\N	\N	0
 100027	Transferencia Bancaria		\N	\N	100026	100026	\N	\N	0
@@ -1861,7 +1869,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100057	Financiamiento		\N	\N	100026	\N	\N	\N	0
 100058	Cancelar el día de Inicio del Curso		\N	\N	100026	\N	\N	\N	0
 100060	Activo		\N	\N	100059	\N	\N	\N	0
-100066	Menú de Cursos		\N	\N	73	\N	\N	\N	0
 100067	Configuración Géneros		\N	\N	73	\N	\N	\N	0
 100068	Configuración Íconos		\N	\N	73	73	\N	\N	0
 100071	Primeros pasos con Office		\N	\N	5	\N	\N	\N	0
@@ -1886,7 +1893,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 9324	faQuoteRight		\N	\N	27	\N	9324	\N	1
 9325	faR		\N	\N	27	\N	9325	\N	1
 107	Aprende a programar en Python desde cero, con VSCode		\N	1	5	61	8438	\N	0
-5	Cursos		\N	40	\N	4	9018	\N	1
 7	Femenino	sexo femenino	\N	\N	1	\N	9790	\N	1
 8	Preguntas		\N	140	\N	\N	9320	\N	1
 12	Estudiante IUJO	\N	\N	\N	3	11	9772	\N	1
@@ -1912,7 +1918,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 10021	Vargas		\N	\N	122	\N	\N	\N	1
 10022	Yaracuy		\N	\N	122	\N	\N	\N	1
 10023	Zulia		\N	\N	122	\N	\N	\N	1
-10024	Distrito Capital		\N	\N	122	\N	\N	\N	1
 10025	Dependencias Federales		\N	\N	122	\N	\N	\N	1
 30001	Alto Orinoco		\N	\N	123	10001	\N	\N	1
 30002	Atabapo		\N	\N	123	10001	\N	\N	1
@@ -4011,10 +4016,11 @@ COPY public.horarios (id_curso, fecha_hora_inicio, fecha_hora_fin, "observación
 -- Data for Name: personas; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.personas (id_persona, nombre, apellido, telefono, "contraseña", id_genero, id_pregunta, cedula, gmail, id_foto, id_status, respuesta, id_rol) FROM stdin;
-30	xdd	xdd	04143173920	$2b$10$0aJbWzFjt0x9bJDE.oTLa.biOpLqPTRg8QvNOm7cecTL1lACo0rU6	6	57	30551896	isaac1@gmail.com	\N	\N	$2b$10$qz9EEH2n1pwhE8dLBA6sYOkDqT.8pdK5iKhGOp5lN8ULihP4Aiw3i	{"id_rol":["13"]}
+COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_genero, id_pregunta, cedula, gmail, id_foto, id_status, respuesta, id_rol) FROM stdin;
+65	Yohamir	Pérez	30232876	$2b$10$.ht3EcUObiEbtKJuvxlMTuSfpIxDWQ.B5gzpnFHfMIyvwQbc1Inaa	7	1	30111010	isaacattonibarca10@gmail.com	\N	\N	$2b$10$iveUfmmdNjvPw5QYz4I87eTZvphzReuOOJr6FPA9XNNV7nF0.73aO	{"id_rol":["96","12"]}
+66	Isaac	Cattoni	04143173920	$2b$10$KhljVOoYSHqt1QcbfC5IpurXXHahrZOJzPXbBP9L5SVX.s/5TLMsy	6	57	12354321	iujo32423423@gmail.com	\N	\N	$2b$10$RMCmYw8JYK3FhCKuzvCcm.xzAyl951dawLmaLmcKUH7uwmOgopmWK	{"id_rol":["13"]}
 1	Victor	Gainza	1234567890	$2b$10$/Z0dUmPJqTKSZa1uctJSAeH2g/KH2xSIiiRDyT1HQ/ZP6xnYz5r0W	6	9	1234567890	superadmin@empresa.com	\N	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	{"id_rol": [15,96,11]}
-21	Isaac	Rodriguez	04143173920	$2b$10$50g82Vz7YgG.fSZ./CInUONLzUMWGtfUmmHnjpvgHzSEDWI7ZNoRa	6	84	30551892	isaacattonibarca10@gmail.com	\N	\N	$2b$10$0mV99YLr63MQmcqQHm4mw.5HFVTuSSHsdrYLf0osMuEl3lX5EKKfa	{"id_rol":["13"]}
+21	Isaac	Rodriguez	04143173920	$2b$10$50g82Vz7YgG.fSZ./CInUONLzUMWGtfUmmHnjpvgHzSEDWI7ZNoRa	6	84	30551892	isaacattonibar@gmail.com	\N	\N	$2b$10$0mV99YLr63MQmcqQHm4mw.5HFVTuSSHsdrYLf0osMuEl3lX5EKKfa	{"id_rol":["13"]}
 \.
 
 
@@ -4033,7 +4039,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100138, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100144, true);
 
 
 --
@@ -4069,7 +4075,7 @@ SELECT pg_catalog.setval('public.documentos_id_documento_seq', 2, true);
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 30, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 66, true);
 
 
 --
@@ -4342,7 +4348,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-02 10:20:29
+-- Completed on 2025-06-08 12:38:39
 
 --
 -- PostgreSQL database dump complete

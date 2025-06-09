@@ -77,20 +77,28 @@ export default function Registro() {
     };
     
     // Eliminar campos que no necesita el backend
-    delete userData.confirmarContraseña;
-    delete userData.contraseña;
-    delete userData.id_rol;
+    // delete userData.confirmarContraseña;
+    // delete userData.contraseña;
+    // delete userData.id_rol;
 
-    await registerUser(userData);
-  
-    if (successMessage) {
-      toast.success(successMessage);
-      navigate('/login');
-    } else if (error) {
-      toast.error(error);
+    try {
+      await registerUser(userData);
+      
+      if (successMessage) {
+        toast.success(successMessage);
+        navigate('/login');
+      } else if (error) {
+        toast.error(error);
+      } else {
+        // Si no hay mensaje de éxito pero tampoco error, asumimos que fue exitoso
+        toast.success("Usuario registrado exitosamente");
+        navigate('/login');
+      }
+    } catch (err) {
+      toast.error("Error al registrar el usuario");
+    } finally {
+      setSubmitting(false);
     }
-  
-    setSubmitting(false);
   };
   
 
@@ -311,7 +319,7 @@ export default function Registro() {
                             onBlur={(e) => handleBlurAndShowToast(e, field, form)}
                           >
                             <option value="">Seleccionar tipo</option>
-                            {Array.isArray(roles) && roles.filter((r) => [13, 14].includes(r.id)).map((r) => (
+                            {Array.isArray(roles) && roles.filter((r) => [12, 13].includes(r.id)).map((r) => (
                               <option key={r.id} value={r.id}>{r.nombre}</option>
                             ))}
                           </select>

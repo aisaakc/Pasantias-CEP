@@ -40,7 +40,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     id_icono: editData?.id_icono || '',
     type_id: editData?.type_id || parentInfo?.type_id || '',
     parent_id: editData?.parent_id || parentId || '',
-    orden: editData?.orden || ""
+    orden: editData?.orden || "",
+    permisos: editData?.permisos || ''
   };
 
   // Función de validación personalizada
@@ -190,7 +191,15 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
                   { name: 'orden', icon: faLayerGroup, label: 'Orden', type: 'number', className: 'appearance-none' },
                   { name: 'id_icono', icon: faImage, label: 'Icono', type: 'select' },
-               
+                  ...(values.type_id === '3' ? [
+                    { 
+                      name: 'permisos', 
+                      icon: faLayerGroup, 
+                      label: 'Permisos', 
+                      type: 'textarea',
+                      placeholder: 'Ingrese los permisos separados por comas...'
+                    }
+                  ] : [])
                 ].map((field, index) => (
                   <div 
                     key={field.name}

@@ -141,11 +141,45 @@ class clasificacionController {
             });
         }
     }
-    
+
+    async getParentHierarchy(req, res) {
+        try {
+            const { id_clasificacion } = req.params;
+            console.log('ID recibido en el controlador:', id_clasificacion);
+            
+            // Decodificar el ID de base64
+            const decodedId = JSON.parse(Buffer.from(id_clasificacion, 'base64').toString()).id;
+            console.log('ID decodificado:', decodedId);
+            
+            if (!decodedId) {
+                console.error('ID decodificado es nulo o inválido');
+                return res.status(400).json({ error: 'ID inválido' });
+            }
+
+            const parents = await Clasificacion.getParentHierarchy(decodedId);
+            console.log('Jerarquía de padres obtenida:', parents);
+            
+            res.json(parents);
+        } catch (error) {
+            console.error("Error detallado en getParentHierarchy controller:", {
+                message: error.message,
+                code: error.code,
+                detail: error.detail,
+                hint: error.hint,
+                stack: error.stack
+            });
+            
+            if (error.message.includes('Invalid ID format')) {
+                return res.status(400).json({ error: 'Formato de ID inválido' });
+            }
+            res.status(500).json({ 
+                error: error.message,
+                details: error.detail || 'Error interno del servidor'
+            });
+        }
+    } 
     
 
-  
-    
 }
 
 export default new clasificacionController();

@@ -7,6 +7,7 @@ import { decodeId, decodeParentId, encodeId, encodeParentId } from '../../utils/
 import DeleteModal from '../../components/DeleteModal';
 import Modal from '../../components/Modal';
 import { toast } from 'sonner';
+import { getParentHierarchy } from '../../api/clasificacion.api';
 
 // Componente memoizado para la fila de la tabla
 const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, searchText }) => {
@@ -175,6 +176,7 @@ export default function Tipos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
   const [nombreClasificacion, setNombreClasificacion] = useState('');
+  const [parentHierarchy, setParentHierarchy] = useState([]);
 
   const { 
     subClasificaciones, 
@@ -197,24 +199,57 @@ export default function Tipos() {
 
   // Memoize parent name and icon
   const parentInfo = useMemo(() => {
+    console.log('=== DEBUG parentInfo ===');
+    console.log('subClasificaciones:', subClasificaciones);
+    console.log('realParentId:', realParentId);
+    console.log('realId:', realId);
+
     if (subClasificaciones.length > 0) {
-      return {
+      console.log('Primera subclasificación:', {
+        type_nombre: subClasificaciones[0].type_nombre,
+        type_icono: subClasificaciones[0].type_icono,
+        parent_nombre: subClasificaciones[0].parent_nombre,
+        parent_icono: subClasificaciones[0].parent_icono
+      });
+
+      // Si no hay parent_id, usar la información del tipo
+      if (!realParentId) {
+        console.log('No hay parent_id, usando información del tipo');
+        const info = {
+          nombre: subClasificaciones[0].type_nombre || 'Cargando...',
+          icono: subClasificaciones[0].type_icono
+        };
+        console.log('Info del tipo:', info);
+        return info;
+      }
+      // Si hay parent_id, usar la información del padre
+      console.log('Hay parent_id, usando información del padre');
+      const info = {
         nombre: subClasificaciones[0].parent_nombre,
         icono: subClasificaciones[0].parent_icono
       };
+      console.log('Info del padre:', info);
+      return info;
     }
+    console.log('No hay subclasificaciones, retornando estado de carga');
     return {
       nombre: 'Cargando Subclasificaciones...',
       icono: null
     };
-  }, [subClasificaciones]);
+  }, [subClasificaciones, realParentId, realId]);
 
   // Single effect for initial data loading
   useEffect(() => {
     const loadInitialData = async () => {
+      console.log('=== DEBUG loadInitialData ===');
+      console.log('Cargando datos con:', { realId, realParentId });
+      
       if (realId) {
-        await fetchSubClasificaciones(realId, realParentId);
+        console.log('Llamando a fetchSubClasificaciones');
+        const response = await fetchSubClasificaciones(realId, realParentId);
+        console.log('Respuesta de fetchSubClasificaciones:', response);
       }
+      console.log('Llamando a fetchAllClasificaciones');
       await fetchAllClasificaciones();
     };
     
@@ -222,13 +257,16 @@ export default function Tipos() {
   }, [realId, realParentId, fetchSubClasificaciones, fetchAllClasificaciones]);
 
   useEffect(() => {
-    if (realParentId) {
-      const clasificacion = getClasificacionById(realParentId);
+    console.log('=== DEBUG useEffect nombreClasificacion ===');
+    console.log('realId:', realId);
+    if (realId) {
+      const clasificacion = getClasificacionById(realId);
+      console.log('Clasificación encontrada:', clasificacion);
       if (clasificacion) {
         setNombreClasificacion(clasificacion.nombre);
       }
     }
-  }, [realParentId, getClasificacionById]);
+  }, [realId, getClasificacionById]);
 
   // Efecto para mostrar las subclasificaciones en consola cuando cambien
   useEffect(() => {
@@ -319,6 +357,12 @@ export default function Tipos() {
 
   // Memoize breadcrumb items
   const breadcrumbItems = useMemo(() => {
+    console.log('=== DEBUG breadcrumbItems ===');
+    console.log('parentInfo:', parentInfo);
+    console.log('nombreClasificacion:', nombreClasificacion);
+    console.log('realId:', realId);
+    console.log('realParentId:', realParentId);
+
     const items = [
       {
         label: 'Inicio',
@@ -343,6 +387,7 @@ export default function Tipos() {
       });
     }
 
+    console.log('Items finales del breadcrumb:', items);
     return items;
   }, [parentInfo, nombreClasificacion, realId, realParentId, selectedClasificacion]);
 
@@ -407,6 +452,47 @@ export default function Tipos() {
     }
   }, [busqueda, ordenAscendente, subClasificacionesFiltradas]);
 
+  // Add this new useEffect to fetch parent hierarchy
+  useEffect(() => {
+    const fetchParentHierarchy = async () => {
+      try {
+        // Si tenemos parent_id, usamos ese, si no, usamos el type_id
+        const idToUse = realParentId || realId;
+        if (!idToUse) {
+          console.log('No hay ID para obtener la jerarquía');
+          return;
+        }
+
+        console.log('=== DEBUG fetchParentHierarchy ===');
+        console.log('ID a usar:', idToUse);
+        console.log('realParentId:', realParentId);
+        console.log('realId:', realId);
+
+        const encodedId = encodeId(idToUse);
+        console.log('ID codificado:', encodedId);
+        
+        const response = await getParentHierarchy(encodedId);
+        console.log('Respuesta de getParentHierarchy:', response);
+        
+        if (response.data && Array.isArray(response.data)) {
+          // Invertir el orden del array para mostrar desde el más jerárquico
+          const reversedData = [...response.data].reverse();
+          console.log('Datos invertidos:', reversedData);
+          setParentHierarchy(reversedData);
+        } else {
+          console.error('Respuesta inválida del servidor:', response.data);
+          toast.error('Error en el formato de la respuesta del servidor');
+        }
+      } catch (error) {
+        console.error('Error fetching parent hierarchy:', error);
+        const errorMessage = error.response?.data?.error || 'Error al cargar la jerarquía de padres';
+        toast.error(errorMessage);
+      }
+    };
+
+    fetchParentHierarchy();
+  }, [realId, realParentId]);
+
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <div className="max-w-7xl mx-auto">
@@ -415,25 +501,65 @@ export default function Tipos() {
 
         <div className="flex justify-between items-center mb-10">
           <div className="flex items-center space-x-4">
-            <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600 transform hover:scale-105 transition-transform duration-300">
-              {parentInfo.icono && (
-                <FontAwesomeIcon
-                  icon={iconos[parentInfo.icono] || iconos.faFile}
-                  size="lg"
-                  className="text-blue-600 transform hover:scale-125 transition-all duration-300 mr-2" 
-    />
-              )}
-              {parentInfo.nombre}
-            </h1>
-            {nombreClasificacion && (
-              <div className="flex items-center text-gray-600">
-                <FontAwesomeIcon icon={iconos.faChevronRight} className="mx-2" />
-                <span className="font-medium">{nombreClasificacion}</span>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              {parentHierarchy.map((parent, index) => (
+                <React.Fragment key={parent.id_clasificacion}>
+                  {index > 0 && (
+                    <FontAwesomeIcon 
+                      icon={iconos.faChevronRight} 
+                      className="text-gray-400 mx-2"
+                    />
+                  )}
+                  <div className="flex items-center">
+                    {/* Icono del elemento o tipo */}
+                    {(() => {
+                      // Si es el primer elemento (raíz) y no tiene type_id, mostrar su propio icono
+                      if (index === 0 && !parent.type_id && parent.icono) {
+                        return (
+                          <FontAwesomeIcon
+                            icon={iconos[parent.icono] || iconos.faFile}
+                            size="lg"
+                            className="text-blue-600 transform hover:scale-125 transition-all duration-300 mr-2"
+                            title={parent.nombre}
+                          />
+                        );
+                      }
+                      // Para los demás elementos, primero intentar mostrar su propio icono
+                      if (parent.icono) {
+                        return (
+                          <FontAwesomeIcon
+                            icon={iconos[parent.icono] || iconos.faFile}
+                            size="lg"
+                            className="text-blue-600 transform hover:scale-125 transition-all duration-300 mr-2"
+                            title={parent.nombre}
+                          />
+                        );
+                      }
+                      // Si no tiene icono propio, mostrar el icono del tipo
+                      if (parent.type_id && parent.type_icono) {
+                        return (
+                          <FontAwesomeIcon
+                            icon={iconos[parent.type_icono] || iconos.faFile}
+                            size="lg"
+                            className="text-blue-600 transform hover:scale-125 transition-all duration-300 mr-2"
+                            title={parent.type_nombre || 'Tipo'}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                    <Link
+                      to={`/dashboard/tipos/${encodeId(parent.type_id || parent.id_clasificacion)}/${encodeParentId(parent.id_clasificacion)}`}
+                      className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors duration-300"
+                    >
+                      {parent.nombre}
+                    </Link>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
           <button
-          
             onClick={handleCreate}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
           >

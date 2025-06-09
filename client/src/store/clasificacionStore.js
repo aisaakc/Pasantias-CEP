@@ -2,10 +2,9 @@ import { create } from 'zustand';
 import { 
    getParentClassifications,
  
-  //  getSubclasificaciones, 
+  
    create as createClasificacionAPI,
    update as updateClasificacionAPI,
-    // getClasificacionHijos,
     getAllClasificaciones,
     deleteClasificacion,
     getAllSubclasificaciones,

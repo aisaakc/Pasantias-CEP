@@ -22,18 +22,20 @@ function Roles() {
   const handleEditClick = (usuario) => {
     // Transformar los datos del usuario al formato esperado por el modal
     const userData = {
+      id_persona: usuario.id_persona,
       nombre: usuario.persona_nombre || '',
       apellido: usuario.apellido || '',
       cedula: usuario.cedula || '',
       telefono: usuario.telefono || '',
       gmail: usuario.gmail || '',
-      password: '', // No enviamos la contraseña por seguridad
-      genero: usuario.genero_nombre?.toLowerCase() || '',
-      pregunta_seguridad: usuario.pregunta_seguridad || '',
-      respuesta_seguridad: usuario.respuesta_seguridad || '',
-      roles: usuario.roles?.map(rol => rol.nombre.toLowerCase()) || []
+      contrasena: usuario.contrasena || '', // Incluimos la contraseña
+      id_genero: usuario.id_genero || '',
+      id_pregunta: usuario.id_pregunta || '',
+      respuesta: usuario.respuesta_seguridad || '',
+      id_rol: usuario.roles?.map(rol => rol.id) || []
     };
     
+    console.log('Datos del usuario a editar:', userData); // Para debugging
     setEditData(userData);
     setIsModalOpen(true);
   };
@@ -248,7 +250,7 @@ function Roles() {
                           <FontAwesomeIcon icon={iconos.faEye} size="lg" />
                         </button>
                         <button 
-                          title="Editar usuario"
+                          title={`Editar usuario: ${usuario.persona_nombre} ${usuario.apellido}`}
                           onClick={() => handleEditClick(usuario)}
                           className="text-blue-600 hover:text-blue-800 transform hover:scale-110 transition-all duration-300"
                         >

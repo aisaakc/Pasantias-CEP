@@ -60,7 +60,7 @@ class AuthController {
 
       // Enviar correo de bienvenida
       try {
-        await EmailService.sendWelcomeEmail(userData.gmail, userData.nombre);
+        await EmailService.sendWelcomeEmail(userData.gmail, userData.nombre, userData.apellido);
         console.log('Correo de bienvenida enviado exitosamente');
       } catch (emailError) {
         console.error("Error al enviar correo de bienvenida:", emailError);

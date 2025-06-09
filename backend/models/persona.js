@@ -1,5 +1,6 @@
 import pool from "../db.js";
 import bcrypt from 'bcryptjs';
+import EmailService from '../services/emailService.js';
 
 class UserModel {
   // NUEVA FUNCIÓN HELPER: Obtiene el ID de un tipo de clasificación por su nombre
@@ -142,7 +143,17 @@ class UserModel {
       ];
 
       const result = await pool.query(query, values);
-      return result.rows[0].id_persona;
+      const userId = result.rows[0].id_persona;
+
+      // Enviar correo de bienvenida
+      try {
+        await EmailService.sendWelcomeEmail(gmail, nombre, apellido);
+        console.log('Correo de bienvenida enviado exitosamente');
+      } catch (emailError) {
+        console.error('Error al enviar correo de bienvenida:', emailError.message);
+      }
+
+      return userId;
 
     } catch (error) {
       if (error.message.includes("La cédula ya está registrada.") || error.message.includes("El correo electrónico ya está registrado.")) {

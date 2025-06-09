@@ -4,13 +4,9 @@ import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import {
    register, 
    login,
-   getSubclassificationsById } from '../api/auth.api';
+   getSubclassificationsById
+   } from '../api/auth.api';
 
-console.log('Environment Variables:', {
-  PREGUNTAS: CLASSIFICATION_IDS.PREGUNTAS,
-  GENEROS: CLASSIFICATION_IDS.GENEROS,
-  ROLES: CLASSIFICATION_IDS.ROLES
-});
 
 export const useAuthStore = create((set) => ({ 
   generos: [],
@@ -32,9 +28,7 @@ export const useAuthStore = create((set) => ({
         getSubclassificationsById(CLASSIFICATION_IDS.ROLES)
       ]);
 
-      console.log('Respuesta de Preguntas:', preguntasResponse);
-      console.log('Respuesta de Géneros:', generosResponse);
-      console.log('Respuesta de Roles:', rolesResponse);
+
 
       set({
         preguntas: preguntasResponse.data.data,

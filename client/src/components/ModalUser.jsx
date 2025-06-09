@@ -17,10 +17,45 @@ import {
   faQuestionCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
+import usePersonaStore from '../store/personaStore';
 
 const ModalUser = ({ isOpen, onClose, editData = null }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const { 
+    createUser, 
+    updateUser, 
+    loading, 
+    error,
+    fetchSubclasificaciones,
+    preguntas,
+    generos,
+    rolesClasificacion,
+    dataLoaded
+  } = usePersonaStore();
+
+  // Valores iniciales del formulario
+  const initialValues = {
+    nombre: editData?.nombre || '',
+    apellido: editData?.apellido || '',
+    cedula: editData?.cedula || '',
+    telefono: editData?.telefono || '',
+    gmail: editData?.gmail || '',
+    contrasena: editData?.contrasena || '',
+    id_genero: editData?.id_genero || '',
+    id_pregunta: editData?.id_pregunta || '',
+    respuesta: editData?.respuesta || '',
+    id_rol: editData?.id_rol || []
+  };
+
+  console.log('Valores iniciales del formulario:', initialValues); // Para debugging
+
+  useEffect(() => {
+    if (isOpen && !dataLoaded) {
+      fetchSubclasificaciones();
+    }
+  }, [isOpen, dataLoaded]);
 
   // Función para validar que solo se ingresen letras y espacios
   const handleOnlyLetters = (e) => {
@@ -38,20 +73,6 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     }
   };
 
-  // Valores iniciales del formulario
-  const initialValues = {
-    nombre: editData?.nombre || '',
-    apellido: editData?.apellido || '',
-    cedula: editData?.cedula || '',
-    telefono: editData?.telefono || '',
-    gmail: editData?.gmail || '',
-    password: editData?.password || '',
-    genero: editData?.genero || '',
-    pregunta_seguridad: editData?.pregunta_seguridad || '',
-    respuesta_seguridad: editData?.respuesta_seguridad || '',
-    roles: editData?.roles || []
-  };
-
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
@@ -67,17 +88,28 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      // Aquí iría la lógica para guardar o actualizar el usuario
-      console.log('Datos del formulario:', values);
+      setErrorMessage(''); // Limpiar mensaje de error al iniciar
       if (editData) {
+        await updateUser(editData.id_persona, values);
         toast.success('Usuario actualizado correctamente');
+        onClose();
       } else {
+        await createUser(values);
         toast.success('Usuario creado correctamente');
+        onClose();
       }
-      onClose();
     } catch (err) {
       console.error("Error al guardar:", err);
-      toast.error(editData ? 'Error al actualizar el usuario' : 'Error al crear el usuario');
+      const errorMessage = err.response?.data?.message || '';
+      
+      // Mensajes específicos para errores de duplicación
+      if (errorMessage.includes('personas_cedula_key')) {
+        setErrorMessage('Esta cédula ya está registrada en el sistema');
+      } else if (errorMessage.includes('personas_gmail_key')) {
+        setErrorMessage('Este correo electrónico ya está registrado en el sistema');
+      } else {
+        setErrorMessage('No se pudo completar la operación. Por favor, verifica los datos e intenta nuevamente');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -127,18 +159,32 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ isSubmitting }) => (
+            {({ isSubmitting, values, setFieldValue }) => (
               <Form className="p-6 space-y-5">
+                {/* Mensaje de error */}
+                {errorMessage && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <FontAwesomeIcon icon={faTimes} className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-700">{errorMessage}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {[
                   { name: 'nombre', icon: faUser, label: 'Nombre', type: 'text', onInput: handleOnlyLetters },
                   { name: 'apellido', icon: faUser, label: 'Apellido', type: 'text', onInput: handleOnlyLetters },
                   { name: 'cedula', icon: faIdCard, label: 'Cédula', type: 'text', onInput: handleOnlyNumbers },
                   { name: 'telefono', icon: faPhone, label: 'Teléfono', type: 'tel', onInput: handleOnlyNumbers },
                   { name: 'gmail', icon: faEnvelope, label: 'Gmail', type: 'email' },
-                  { name: 'password', icon: faLock, label: 'Contraseña', type: 'password' },
-                  { name: 'genero', icon: faVenusMars, label: 'Género', type: 'select' },
-                  { name: 'pregunta_seguridad', icon: faQuestionCircle, label: 'Pregunta de Seguridad', type: 'select' },
-                  { name: 'respuesta_seguridad', icon: faShieldAlt, label: 'Respuesta de Seguridad', type: 'text' },
+                  { name: 'contrasena', icon: faLock, label: 'Contraseña', type: 'password' },
+                  { name: 'id_genero', icon: faVenusMars, label: 'Género', type: 'select' },
+                  { name: 'id_pregunta', icon: faQuestionCircle, label: 'Pregunta de Seguridad', type: 'select' },
+                  { name: 'respuesta', icon: faShieldAlt, label: 'Respuesta de Seguridad', type: 'text' },
                 ].map((field, index) => (
                   <div 
                     key={field.name}
@@ -155,20 +201,23 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                         name={field.name}
                         className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
                       >
-                        {field.name === 'genero' ? (
+                        {field.name === 'id_genero' ? (
                           <>
                             <option value="">Seleccione un género</option>
-                            <option value="masculino">Masculino</option>
-                            <option value="femenino">Femenino</option>
-                            <option value="otro">Otro</option>
+                            {generos.map((genero) => (
+                              <option key={genero.id} value={genero.id}>
+                                {genero.nombre}
+                              </option>
+                            ))}
                           </>
                         ) : (
                           <>
                             <option value="">Seleccione una pregunta</option>
-                            <option value="mascota">¿Cuál es el nombre de tu primera mascota?</option>
-                            <option value="ciudad">¿En qué ciudad naciste?</option>
-                            <option value="escuela">¿Cuál es el nombre de tu primera escuela?</option>
-                            <option value="color">¿Cuál es tu color favorito?</option>
+                            {preguntas.map((pregunta) => (
+                              <option key={pregunta.id} value={pregunta.id}>
+                                {pregunta.nombre}
+                              </option>
+                            ))}
                           </>
                         )}
                       </Field>
@@ -194,18 +243,25 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                     Roles
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {['Administrador', 'Usuario', 'Editor'].map((rol) => (
+                    {rolesClasificacion.map((rol) => (
                       <label 
-                        key={rol}
+                        key={rol.id}
                         className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200"
                       >
-                        <Field
+                        <input
                           type="checkbox"
-                          name="roles"
-                          value={rol.toLowerCase()}
+                          checked={values.id_rol.includes(rol.id)}
+                          onChange={(e) => {
+                            const newRoles = e.target.checked
+                              ? [...values.id_rol, rol.id]
+                              : values.id_rol.filter(id => id !== rol.id);
+                            setFieldValue('id_rol', newRoles);
+                          }}
                           className="form-checkbox h-5 w-5 text-blue-600"
                         />
-                        <span className="text-gray-700">{rol}</span>
+                        <span className="text-gray-700">
+                          {rol.nombre}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -219,7 +275,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                       type="button"
                       onClick={onClose}
                       className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105"
-                      disabled={isSubmitting}
+                      disabled={loading}
                     >
                       <FontAwesomeIcon icon={faTimes} className="mr-2" />
                       <span>Cancelar</span>
@@ -227,13 +283,13 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                     <button
                       type="submit"
                       className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105 disabled:opacity-50"
-                      disabled={isSubmitting}
+                      disabled={loading}
                     >
                       <FontAwesomeIcon 
                         icon={faSave} 
-                        className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
+                        className={`mr-2 ${loading ? 'animate-spin' : ''}`} 
                       />
-                      <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
+                      <span>{loading ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
                     </button>
                   </div>
                 </div>

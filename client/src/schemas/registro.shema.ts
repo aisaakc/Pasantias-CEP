@@ -25,7 +25,7 @@ export const registroSchema = z.object({
   cedula: z
     .string()
     .min(1, "La cédula es obligatoria")
-    .min(8, "La cédula debe tener al menos  dígitos")
+    .min(8, "La cédula debe tener al menos 8 dígitos")
     .refine(val => /^\d+$/.test(val), {
       message: "La cédula solo debe contener números",
     }),

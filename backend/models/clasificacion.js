@@ -39,39 +39,38 @@ class Clasificacion {
     }
     
     async getAllSubclasificaciones(type_id, parent_id) {
-            
         try {          
-
             let query = `
-           SELECT sc.*, i.nombre AS nicono , sc.parent_id as parentID, c.nombre AS parent_nombre, c2.nombre as parent_icono 
+           SELECT sc.*, i.nombre AS nicono, 
+                  sc.parent_id as parentID, 
+                  c.nombre AS parent_nombre, 
+                  c2.nombre as parent_icono,
+                  t.nombre AS type_nombre,
+                  ti.nombre AS type_icono
            FROM clasificacion sc            
            LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion                  
-           LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion        
+           LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
+           LEFT JOIN clasificacion t ON sc.type_id = t.id_clasificacion
+           LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
            WHERE `;
             let queryParams = [type_id];
 
             if (parent_id) {
                 query += ` sc.parent_id = $1 `;
-                // queryParams.push(parent_id);
                 queryParams = [parent_id];
-              } else {
-                query += ` sc.type_id = $1 `; // AND sc.parent_id IS NULL `;
-              }
+            } else {
+                query += ` sc.type_id = $1 `;
+            }
           
-              query += ` ORDER BY sc.orden, sc.nombre;`;
-                // console.log(query);
-            const result = await pool.query(query, queryParams );
-            // console.log('Resultado de la consulta:...', result.rows); 
-
+            query += ` ORDER BY sc.orden, sc.nombre;`;
+            const result = await pool.query(query, queryParams);
             return result.rows;
         } catch (error) {
             console.error("Error en getAllSubclasificaciones:", error.message);
             throw new Error("Error interno del servidor al obtener subclasificaciones.");
         }
     } 
-
-   
 
     async getAllClasificaciones() {
         try {
@@ -206,6 +205,51 @@ class Clasificacion {
             throw new Error("Error interno del servidor al eliminar la clasificación");
         }
     }
+
+    async getParentHierarchy(id_clasificacion) {
+        try {
+            console.log('Iniciando getParentHierarchy con ID:', id_clasificacion);
+            
+            // Primero probamos la función obtener_parents directamente
+            const testQuery = 'SELECT * FROM obtener_parents($1)';
+            console.log('Ejecutando consulta de prueba:', testQuery);
+            const testResult = await pool.query(testQuery, [id_clasificacion]);
+            console.log('Resultado de prueba:', testResult.rows);
+
+            // Ahora la consulta completa
+            const query = `
+                SELECT 
+                    c.id_clasificacion,
+                    c.nombre,
+                    c.descripcion,
+                    c.type_id,
+                    c.id_icono,
+                    i.nombre as icono,
+                    t.nombre as type_nombre,
+                    ti.nombre as type_icono
+                FROM obtener_parents($1) c
+                LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
+                LEFT JOIN clasificacion t ON c.type_id = t.id_clasificacion
+                LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
+            `;
+            console.log('Ejecutando consulta completa:', query);
+            const result = await pool.query(query, [id_clasificacion]);
+            console.log('Resultado completo:', result.rows);
+            
+            return result.rows;
+        } catch (error) {
+            console.error("Error detallado en getParentHierarchy:", {
+                message: error.message,
+                code: error.code,
+                detail: error.detail,
+                hint: error.hint,
+                stack: error.stack
+            });
+            throw new Error(`Error interno del servidor al obtener jerarquía de padres: ${error.message}`);
+        }
+    }
+
+    
 }
 
 export default new Clasificacion();

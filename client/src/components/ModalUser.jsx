@@ -42,7 +42,8 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     cedula: editData?.cedula || '',
     telefono: editData?.telefono || '',
     gmail: editData?.gmail || '',
-    contrasena: editData?.contrasena || '',
+    contrasena: '',
+    confirmarContrasena: '',
     id_genero: editData?.id_genero || '',
     id_pregunta: editData?.id_pregunta || '',
     respuesta: editData?.respuesta || '',
@@ -58,18 +59,24 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
   }, [isOpen, dataLoaded]);
 
   // Función para validar que solo se ingresen letras y espacios
-  const handleOnlyLetters = (e) => {
+  const handleOnlyLetters = (e, setFieldValue) => {
     const value = e.target.value;
-    if (!/^[A-Za-z\s]*$/.test(value)) {
-      e.target.value = value.replace(/[^A-Za-z\s]/g, '');
-    }
+    // Permitir letras, espacios y caracteres especiales comunes en nombres
+    const sanitizedValue = value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
+    setFieldValue(e.target.name, sanitizedValue);
   };
 
   // Función para validar que solo se ingresen números
-  const handleOnlyNumbers = (e) => {
+  const handleOnlyNumbers = (e, setFieldValue) => {
     const value = e.target.value;
-    if (!/^\d*$/.test(value)) {
-      e.target.value = value.replace(/\D/g, '');
+    // Permitir números y algunos caracteres especiales para teléfono
+    if (e.target.name === 'telefono') {
+      const sanitizedValue = value.replace(/[^0-9+\-() ]/g, '');
+      setFieldValue(e.target.name, sanitizedValue);
+    } else {
+      // Para cédula, solo números
+      const sanitizedValue = value.replace(/\D/g, '');
+      setFieldValue(e.target.name, sanitizedValue);
     }
   };
 
@@ -88,13 +95,36 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      setErrorMessage(''); // Limpiar mensaje de error al iniciar
+      setErrorMessage('');
+
+      // Validar contraseñas
+      if (!editData && (!values.contrasena || values.contrasena !== values.confirmarContrasena)) {
+        setErrorMessage('Las contraseñas no coinciden');
+        return;
+      }
+
+      if (editData && values.contrasena && values.contrasena !== values.confirmarContrasena) {
+        setErrorMessage('Las contraseñas no coinciden');
+        return;
+      }
+
+      // Preparar los datos para el backend
+      const userData = { ...values };
+      
+      // Si estamos editando y la contraseña está vacía, eliminarla del objeto
+      if (editData && !values.contrasena) {
+        delete userData.contrasena;
+      }
+      
+      // Eliminar el campo de confirmación de contraseña
+      delete userData.confirmarContrasena;
+
       if (editData) {
-        await updateUser(editData.id_persona, values);
+        await updateUser(editData.id_persona, userData);
         toast.success('Usuario actualizado correctamente');
         onClose();
       } else {
-        await createUser(values);
+        await createUser(userData);
         toast.success('Usuario creado correctamente');
         onClose();
       }
@@ -102,7 +132,6 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
       console.error("Error al guardar:", err);
       const errorMessage = err.response?.data?.message || '';
       
-      // Mensajes específicos para errores de duplicación
       if (errorMessage.includes('personas_cedula_key')) {
         setErrorMessage('Esta cédula ya está registrada en el sistema');
       } else if (errorMessage.includes('personas_gmail_key')) {
@@ -131,7 +160,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
           animationClass
         } flex flex-col max-h-[90vh]`}
       >
-        {/* Header fijo */}
+        {/* Header */}
         <div className="relative overflow-hidden p-6 border-b border-gray-100 flex-shrink-0">
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
@@ -152,7 +181,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
           </div>
         </div>
 
-        {/* Contenido con scroll */}
+        {/* Contenido */}
         <div className="flex-1 overflow-y-auto">
           <Formik
             initialValues={initialValues}
@@ -176,15 +205,80 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                 )}
 
                 {[
-                  { name: 'nombre', icon: faUser, label: 'Nombre', type: 'text', onInput: handleOnlyLetters },
-                  { name: 'apellido', icon: faUser, label: 'Apellido', type: 'text', onInput: handleOnlyLetters },
-                  { name: 'cedula', icon: faIdCard, label: 'Cédula', type: 'text', onInput: handleOnlyNumbers },
-                  { name: 'telefono', icon: faPhone, label: 'Teléfono', type: 'tel', onInput: handleOnlyNumbers },
-                  { name: 'gmail', icon: faEnvelope, label: 'Gmail', type: 'email' },
-                  { name: 'contrasena', icon: faLock, label: 'Contraseña', type: 'password' },
-                  { name: 'id_genero', icon: faVenusMars, label: 'Género', type: 'select' },
-                  { name: 'id_pregunta', icon: faQuestionCircle, label: 'Pregunta de Seguridad', type: 'select' },
-                  { name: 'respuesta', icon: faShieldAlt, label: 'Respuesta de Seguridad', type: 'text' },
+                  { 
+                    name: 'nombre', 
+                    icon: faUser, 
+                    label: 'Nombre', 
+                    type: 'text', 
+                    onInput: (e) => handleOnlyLetters(e, setFieldValue),
+                    required: true
+                  },
+                  { 
+                    name: 'apellido', 
+                    icon: faUser, 
+                    label: 'Apellido', 
+                    type: 'text', 
+                    onInput: (e) => handleOnlyLetters(e, setFieldValue),
+                    required: true
+                  },
+                  { 
+                    name: 'cedula', 
+                    icon: faIdCard, 
+                    label: 'Cédula', 
+                    type: 'text', 
+                    onInput: (e) => handleOnlyNumbers(e, setFieldValue),
+                    required: true
+                  },
+                  { 
+                    name: 'telefono', 
+                    icon: faPhone, 
+                    label: 'Teléfono', 
+                    type: 'tel', 
+                    onInput: (e) => handleOnlyNumbers(e, setFieldValue),
+                    required: true
+                  },
+                  { 
+                    name: 'gmail', 
+                    icon: faEnvelope, 
+                    label: 'Gmail', 
+                    type: 'email',
+                    required: true
+                  },
+                  { 
+                    name: 'contrasena', 
+                    icon: faLock, 
+                    label: editData ? 'Nueva Contraseña (opcional)' : 'Contraseña', 
+                    type: 'password',
+                    required: !editData
+                  },
+                  { 
+                    name: 'confirmarContrasena', 
+                    icon: faLock, 
+                    label: editData ? 'Confirmar Nueva Contraseña' : 'Confirmar Contraseña', 
+                    type: 'password',
+                    required: !editData
+                  },
+                  { 
+                    name: 'id_genero', 
+                    icon: faVenusMars, 
+                    label: 'Género', 
+                    type: 'select',
+                    required: true
+                  },
+                  { 
+                    name: 'id_pregunta', 
+                    icon: faQuestionCircle, 
+                    label: 'Pregunta de Seguridad', 
+                    type: 'select',
+                    required: true
+                  },
+                  { 
+                    name: 'respuesta', 
+                    icon: faShieldAlt, 
+                    label: 'Respuesta de Seguridad', 
+                    type: 'text',
+                    required: true
+                  },
                 ].map((field, index) => (
                   <div 
                     key={field.name}
@@ -194,6 +288,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
                       {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
                     </label>
                     {field.type === 'select' ? (
                       <Field
@@ -226,9 +321,30 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                         type={field.type}
                         name={field.name}
                         placeholder={`${field.label}...`}
-                        onInput={field.onInput}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
+                        className={`w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 ${
+                          field.name === 'confirmarContrasena' && values.contrasena !== values.confirmarContrasena
+                            ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500'
+                            : ''
+                        }`}
+                        onChange={(e) => {
+                          if (field.onInput) {
+                            field.onInput(e, setFieldValue);
+                          } else {
+                            setFieldValue(field.name, e.target.value);
+                          }
+                          
+                          if (field.name === 'confirmarContrasena') {
+                            if (values.contrasena !== e.target.value) {
+                              setFieldValue('confirmarContrasena', e.target.value);
+                            } else {
+                              setFieldValue('confirmarContrasena', e.target.value);
+                            }
+                          }
+                        }}
                       />
+                    )}
+                    {field.name === 'confirmarContrasena' && values.contrasena !== values.confirmarContrasena && (
+                      <div className="text-red-500 text-sm mt-1">Las contraseñas no coinciden</div>
                     )}
                   </div>
                 ))}
@@ -240,7 +356,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                 >
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <FontAwesomeIcon icon={faUserShield} className="mr-2 text-blue-500" />
-                    Roles
+                    Roles <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {rolesClasificacion.map((rol) => (
@@ -267,7 +383,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                   </div>
                 </div>
 
-                {/* Footer fijo */}
+                {/* Footer */}
                 <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
                   <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
                   <div className="flex justify-end space-x-4">
@@ -303,7 +419,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
   );
 };
 
-// Añadir estilos necesarios
+// Estilos
 const style = document.createElement('style');
 style.textContent = `
   @keyframes modalIn {

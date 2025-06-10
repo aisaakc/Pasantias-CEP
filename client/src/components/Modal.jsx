@@ -101,9 +101,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   };
 
-  useEffect(() => {
-    console.log('Estado actual de clasificaciones:', clasificaciones);
-  }, [clasificaciones]);
+  // useEffect(() => {
+  //   console.log('Estado actual de clasificaciones:', clasificaciones);
+  // }, [clasificaciones]);
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {

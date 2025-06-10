@@ -9,7 +9,12 @@ export const CLASSIFICATION_IDS = {
   
   MN_ROLES: 100066,
   MN_CURSO: 100141,
-  MN_CONFIGURACION: 100142
+  MN_CONFIGURACION: 100142,
+
+  ROLES_FACILITADORES: 96,
+
+  SEND_EMAIL: true
+  
 };
 
 // Exportar todo en un solo objeto para facilitar la importación

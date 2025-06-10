@@ -1,4 +1,5 @@
 import pool from "../db.js";
+import { CLASSIFICATION_IDS } from "../../client/src/config/classificationIds.js";
 
 class CursoModel {
     
@@ -179,6 +180,30 @@ class CursoModel {
     } catch (error) {
       console.error("Error en updateCurso:", error.message);
       throw new Error("Error interno del servidor al actualizar el curso.");
+    }
+  }
+
+  async getFacilitadores() {
+    const query = `
+      SELECT DISTINCT
+        p.id_persona,
+        p.nombre,
+        p.apellido,
+        p.telefono,
+        p.cedula,
+        p.gmail,
+        p.id_status
+      FROM personas p
+      CROSS JOIN LATERAL json_array_elements_text(p.id_rol->'id_rol') as roles
+      WHERE roles = $1;
+    `;
+
+    try {
+      const result = await pool.query(query, [CLASSIFICATION_IDS.ROLES_FACILITADORES.toString()]);
+      return result.rows;
+    } catch (error) {
+      console.error("Error en getFacilitadores:", error.message);
+      throw new Error("Error interno del servidor al obtener los facilitadores.");
     }
   }
 }

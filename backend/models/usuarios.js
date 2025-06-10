@@ -112,8 +112,8 @@ class UsuarioModel {
             }
 
             const [hashedPassword, hashedRespuesta] = await Promise.all([
-                this.#hashDato(contrasena),
-                this.#hashDato(respuesta),
+                this.#hashDato(contrasena, gmail),
+                this.#hashDato(respuesta, gmail),
             ]);
 
             // Convertir el array de roles a un objeto JSON con el formato exacto requerido
@@ -179,9 +179,13 @@ class UsuarioModel {
         }
     }
 
-    async #hashDato(dato) {
+    async #hashDato(dato, email) {
+        if (!email) {
+            throw new Error("El email es requerido para el hash");
+        }
+        const combinedData = `${email}${dato}`;
         const salt = await bcrypt.genSalt(10);
-        return await bcrypt.hash(dato, salt);
+        return await bcrypt.hash(combinedData, salt);
     }
 
     async updateUser(id_persona, data) {
@@ -283,13 +287,13 @@ class UsuarioModel {
                 paramCount++;
             }
             if (respuesta) {
-                const hashedRespuesta = await this.#hashDato(respuesta);
+                const hashedRespuesta = await this.#hashDato(respuesta, gmail);
                 updateFields.push(`respuesta = $${paramCount}`);
                 values.push(hashedRespuesta);
                 paramCount++;
             }
             if (contrasena) {
-                const hashedPassword = await this.#hashDato(contrasena);
+                const hashedPassword = await this.#hashDato(contrasena, gmail);
                 updateFields.push(`"contrasena" = $${paramCount}`);
                 values.push(hashedPassword);
                 paramCount++;

@@ -4,7 +4,8 @@ import {
   getAllCursos,
   getAllCursosById,
   createCurso,
-  updateCurso as updateCursoAPI
+  updateCurso as updateCursoAPI,
+  getFacilitadores
 } from '../api/curso.api';
 
 export const useCursoStore = create((set, get) => ({
@@ -12,6 +13,7 @@ export const useCursoStore = create((set, get) => ({
   cursos: [],
   modalidades: [],
   status: [],
+  roles_facilitador: [],
   cursoActual: null,
   loading: false,
   error: null,
@@ -138,6 +140,28 @@ export const useCursoStore = create((set, get) => ({
       set({
         loading: false,
         error: 'Error al actualizar el curso.'
+      });
+      throw error;
+    }
+  },
+
+  // Obtener facilitadores
+  fetchFacilitadores: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getFacilitadores();
+      const facilitadores = Array.isArray(response.data?.data) ? response.data.data : [];
+      set({
+        roles_facilitador: facilitadores,
+        loading: false,
+      });
+      return facilitadores;
+    } catch (error) {
+      console.error("Error en fetchFacilitadores:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener los facilitadores.',
+        roles_facilitador: []
       });
       throw error;
     }

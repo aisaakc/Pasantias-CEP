@@ -1,7 +1,13 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { CLASSIFICATION_IDS } from '../../client/src/config/classificationIds.js';
 
 dotenv.config();
+
+// Log de depuración de la importación
+console.log('=== DEBUG EMAIL SERVICE CONFIG ===');
+console.log('CLASSIFICATION_IDS importado:', CLASSIFICATION_IDS);
+console.log('SEND_EMAIL importado:', CLASSIFICATION_IDS.SEND_EMAIL);
 
 // Configura el transportador de Nodemailer
 const transporter = nodemailer.createTransport({
@@ -16,6 +22,20 @@ const transporter = nodemailer.createTransport({
 
 class EmailService {
     static async sendEmail({ to, subject, text, html }) {
+        // Logs de depuración
+        console.log('=== DEBUG SEND_EMAIL ===');
+        console.log('CLASSIFICATION_IDS:', CLASSIFICATION_IDS);
+        console.log('SEND_EMAIL value:', CLASSIFICATION_IDS.SEND_EMAIL);
+        console.log('SEND_EMAIL type:', typeof CLASSIFICATION_IDS.SEND_EMAIL);
+        console.log('SEND_EMAIL === false:', CLASSIFICATION_IDS.SEND_EMAIL === false);
+        console.log('!SEND_EMAIL:', !CLASSIFICATION_IDS.SEND_EMAIL);
+
+        // Si el envío de emails está deshabilitado, retornar éxito simulado
+        if (CLASSIFICATION_IDS.SEND_EMAIL === false) {
+            console.log('Envío de emails deshabilitado. Simulando envío exitoso.');
+            return { success: true, data: { response: 'Email sending disabled' } };
+        }
+
         const mailOptions = {
             from: process.env.SMTP_USER, // Usar el mismo correo que el usuario SMTP
             to,
@@ -42,6 +62,20 @@ class EmailService {
 
     // Método específico para correo de bienvenida
     static async sendWelcomeEmail(to, nombre, apellido) {
+        // Logs de depuración
+        console.log('=== DEBUG SEND_WELCOME_EMAIL ===');
+        console.log('CLASSIFICATION_IDS:', CLASSIFICATION_IDS);
+        console.log('SEND_EMAIL value:', CLASSIFICATION_IDS.SEND_EMAIL);
+        console.log('SEND_EMAIL type:', typeof CLASSIFICATION_IDS.SEND_EMAIL);
+        console.log('SEND_EMAIL === false:', CLASSIFICATION_IDS.SEND_EMAIL === false);
+        console.log('!SEND_EMAIL:', !CLASSIFICATION_IDS.SEND_EMAIL);
+
+        // Si el envío de emails está deshabilitado, retornar éxito simulado
+        if (CLASSIFICATION_IDS.SEND_EMAIL === false) {
+            console.log('Envío de emails deshabilitado. Simulando envío de bienvenida.');
+            return { success: true, data: { response: 'Welcome email sending disabled' } };
+        }
+
         const subject = '¡Bienvenido a CEP!';
         const text = `Hola ${nombre} ${apellido},\n\nBienvenido a nuestra plataforma. Esperamos que disfrutes de nuestros servicios.`;
         const html = `

@@ -11,3 +11,6 @@ export const createCurso = async (curso) =>
 
 export const updateCurso = async (id, curso) =>
    axios.put(`http://localhost:3001/api/cursos/${id}`, curso);
+
+export const getFacilitadores = async () =>
+   axios.get('http://localhost:3001/api/facilitadores')

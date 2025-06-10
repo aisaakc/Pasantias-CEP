@@ -8,6 +8,7 @@ class Curso {
         this.getAllCursos = this.getAllCursos.bind(this);
         this.createCurso = this.createCurso.bind(this);
         this.updateCurso = this.updateCurso.bind(this);
+        this.getFacilitadores = this.getFacilitadores.bind(this);
     }
 
     // Métodos de validación
@@ -162,6 +163,18 @@ class Curso {
                 success: true,
                 message: "Curso actualizado exitosamente",
                 data: cursoActualizado
+            });
+        } catch (error) {
+            return this.manejarError(error, res);
+        }
+    }
+
+    async getFacilitadores(req, res) {
+        try {
+            const facilitadores = await this.model.getFacilitadores();
+            return res.json({
+                success: true,
+                data: facilitadores
             });
         } catch (error) {
             return this.manejarError(error, res);

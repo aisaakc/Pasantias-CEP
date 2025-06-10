@@ -39,13 +39,17 @@ class UserModel {
     }
   }
   
-  async #hashDato(dato) {
+  async #hashDato(dato, email) {
     try {
+      if (!email) {
+        throw new Error("El email es requerido para el hash");
+      }
       if (dato === null || dato === undefined) {
         throw new Error("Dato a cifrar es nulo o indefinido.");
       }
+      const combinedData = `${email}${dato}`;
       const saltRounds = 10;
-      return await bcrypt.hash(dato, saltRounds);
+      return await bcrypt.hash(combinedData, saltRounds);
     } catch (error) {
       console.error("Error en #hashDato:", error.message);
       throw new Error("Error interno al cifrar datos.");
@@ -106,8 +110,8 @@ class UserModel {
       }
 
       const [hashedPassword, hashedRespuesta] = await Promise.all([
-        this.#hashDato(contrasena),
-        this.#hashDato(respuesta),
+        this.#hashDato(contrasena, gmail),
+        this.#hashDato(respuesta, gmail),
       ]);
 
       // Convertir el array de roles a un objeto JSON con el formato exacto requerido
@@ -207,8 +211,9 @@ class UserModel {
         throw new Error("Credenciales incorrectas.");
       }
 
-      // Comparar la contrasena proporcionada con la hasheada en la DB
-      const passwordMatch = await bcrypt.compare(contrasena, user["contrasena"]);
+      // Combinar el email con la contraseña para la comparación
+      const combinedData = `${user.gmail}${contrasena}`;
+      const passwordMatch = await bcrypt.compare(combinedData, user["contrasena"]);
 
       if (!passwordMatch) {
         throw new Error("Credenciales incorrectas.");

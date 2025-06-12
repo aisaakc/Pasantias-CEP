@@ -12,15 +12,17 @@ import { faXmark,
         faMoneyBill, 
         faCalendarAlt, 
         faAlignLeft, 
-        faPalette } from '@fortawesome/free-solid-svg-icons';
+        faPalette,
+        faUser } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 
 function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
-  const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error } = useCursoStore();
+  const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error, roles_facilitador, fetchFacilitadores } = useCursoStore();
   const [cursoSeleccionado, setCursoSeleccionado] = useState('');
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState('');
   const [statusSeleccionado, setStatusSeleccionado] = useState('');
+  const [facilitadorSeleccionado, setFacilitadorSeleccionado] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [duracion, setDuracion] = useState('');
   const [codigo, setCodigo] = useState('');
@@ -37,7 +39,10 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await fetchOpcionesCurso();
+        await Promise.all([
+          fetchOpcionesCurso(),
+          fetchFacilitadores()
+        ]);
         setIsDataLoaded(true);
       } catch (error) {
         console.error('Error al cargar las opciones:', error);
@@ -49,7 +54,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [fetchOpcionesCurso]);
+  }, [fetchOpcionesCurso, fetchFacilitadores]);
 
   // Efecto para cargar datos del curso cuando se está editando
   useEffect(() => {
@@ -57,6 +62,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       setCursoSeleccionado(curso.id_nombre?.toString() || '');
       setModalidadSeleccionada(curso.id_modalidad?.toString() || '');
       setStatusSeleccionado(curso.id_status?.toString() || '');
+      setFacilitadorSeleccionado(curso.id_facilitador?.toString() || '');
       setDescripcion(curso.descripcion_corto || '');
       setDuracion(curso.duracion?.toString() || '');
       setCodigo(curso.codigo || '');
@@ -200,13 +206,31 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
         duracion: duracionValue
       };
 
+      // Manejar el id_facilitador de manera segura
+      if (facilitadorSeleccionado && facilitadorSeleccionado !== '') {
+        const facilitadorId = parseInt(facilitadorSeleccionado);
+        if (!isNaN(facilitadorId)) {
+          cursoData.id_facilitador = facilitadorId;
+          console.log('ID de facilitador asignado:', facilitadorId);
+        } else {
+          console.error('ID de facilitador inválido:', facilitadorSeleccionado);
+          cursoData.id_facilitador = null;
+        }
+      } else {
+        cursoData.id_facilitador = null;
+      }
+
+      console.log('Datos del curso a enviar:', cursoData);
+
       let response;
       if (curso) {
         // Si hay un curso seleccionado, actualizar
         cursoData.id_curso = curso.id_curso;
+        console.log('Actualizando curso con datos:', cursoData);
         response = await updateCurso(cursoData);
       } else {
         // Si no hay curso seleccionado, crear nuevo
+        console.log('Creando nuevo curso con datos:', cursoData);
         response = await createCurso(cursoData);
       }
       
@@ -312,6 +336,23 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                       onChange: (e) => setStatusSeleccionado(e.target.value),
                       options: status || [],
                       disabled: loading || !isDataLoaded || !status?.length
+                    },
+                    { 
+                      name: 'facilitador', 
+                      icon: faUser, 
+                      label: 'Facilitador', 
+                      value: facilitadorSeleccionado,
+                      onChange: (e) => {
+                        const selectedValue = e.target.value;
+                        console.log('Facilitador seleccionado (valor):', selectedValue);
+                        console.log('Facilitador seleccionado (opción):', e.target.options[e.target.selectedIndex].text);
+                        setFacilitadorSeleccionado(selectedValue);
+                      },
+                      options: roles_facilitador.map(f => ({
+                        id: f.id_persona,
+                        nombre: `${f.nombre} ${f.apellido}`
+                      })) || [],
+                      disabled: loading || !isDataLoaded || !roles_facilitador?.length
                     }
                   ].map((field, index) => (
                     <div 

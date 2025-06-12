@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-08 12:38:38
+-- Started on 2025-06-11 21:11:09
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -359,7 +359,7 @@ CREATE TABLE public.personas (
     contrasena character varying NOT NULL,
     id_genero bigint NOT NULL,
     id_pregunta bigint NOT NULL,
-    cedula character varying NOT NULL,
+    cedula integer NOT NULL,
     gmail character varying NOT NULL,
     id_foto bigint,
     id_status bigint,
@@ -1842,7 +1842,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100131	Carnaval  2025	03/03/25 , 04/03/25	\N	0	100121	100121	\N	\N	0
 100132	Elecciones 2025	25/05/25	\N	0	100121	100121	\N	\N	0
 100133	Cisco Academy (Petare)		\N	0	4	100134	\N	\N	0
-100134	Informática		\N	0	110	202	\N	\N	0
+100134	Informática	Sede Petare	\N	0	110	202	\N	\N	0
 100140	Cual es tu deporte favorito?		\N	0	8	\N	\N	\N	0
 100121	Días Feriados		\N	126	\N	\N	8269	\N	0
 100141	Menú de Cursos		\N	0	73	\N	\N	\N	0
@@ -1855,10 +1855,10 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	\N	10	200	200	8245	\N	0
 100126	Víspera de Navidad	24/12	\N	6	100121	100121	\N	\N	0
 202	IUJO (Petare)		\N	20	200	200	8240	\N	0
-100070	Buenas Prácticas de Excel para Administradores y Contadores.		\N	2	5	5	8075	\N	0
 203	IUJO (Barquisimeto)		\N	30	200	200	8241	\N	0
 204	IUSF	Instituto Universitario San Francisco	\N	40	200	200	8249	\N	0
 5	Cursos		\N	40	\N	4	9019	\N	1
+100070	Buenas Prácticas de Excel para Administradores y Contadores.		\N	2	5	61	8075	\N	0
 10024	Distrito Capital		\N	0	122	122	8072	\N	1
 6	Masculino	sexo masculino	\N	1	1	\N	9053	\N	1
 100052	Presencial / Sabatino		\N	\N	100050	\N	\N	\N	0
@@ -3980,13 +3980,20 @@ COPY public.cohorte (id_cohorte, codigo, fecha_hora_inicio, fecha_hora_fin, desc
 --
 
 COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, id_forma_pago, fecha_hora_inicio, fecha_hora_fin, color) FROM stdin;
-3	108	\N	100060	\N	Curso de ejemplo	\N	100	CURS123	\N	\N	100052	\N	2025-06-01 10:00:00	2025-06-10 18:00:00	#ffcc00
 12	107	\N	100060	60	xd	\N	24	cep1	\N	\N	100053	\N	2025-06-23 00:00:00	2025-06-24 00:00:00	#FFA07A
 15	109	\N	100060	20	esto esun curso	\N	25	CEP-01	\N	\N	100052	\N	2025-06-17 13:00:00	2025-06-28 04:00:00	#d17015
 16	100070	\N	100060	20	xd	\N	20	122	\N	\N	100053	\N	2025-05-04 13:00:00	2025-05-08 22:54:00	#48e552
 17	100072	\N	100060	20	xddd	\N	20	2312	\N	\N	100053	\N	2025-05-11 13:00:00	2025-05-18 22:56:00	#140bcb
-18	100071	\N	100060	20	xddddd	\N	20	12	\N	\N	100052	\N	2025-05-24 13:00:00	2025-05-30 22:56:00	#e54887
 20	100107	\N	100060	222	22	\N	22	22	\N	\N	100053	\N	2025-06-10 13:00:00	2025-06-15 10:34:00	#4F46E5
+18	100071	\N	100060	20	xddddd	\N	21	12	\N	\N	100052	\N	2025-05-24 17:00:00	2025-05-31 02:56:00	#e54887
+3	108	\N	100060	\N	Curso de ejemplo	\N	100	CURS123	77	\N	100052	\N	2025-06-01 10:00:00	2025-06-10 18:00:00	#ffcc00
+21	100107	\N	100060	120	xddd	\N	100	1	\N	\N	100052	\N	2025-06-12 21:00:00	2025-06-15 04:50:00	#25b686
+22	100072	\N	100060	20	hola	\N	1111	12	\N	\N	100053	\N	2025-07-08 17:00:00	2025-07-10 00:54:00	#77e548
+23	100070	\N	100060	111	pepe	\N	111	111	\N	\N	100052	\N	2025-07-14 13:00:00	2025-07-16 20:56:00	#4F46E5
+24	108	\N	100060	25	1	\N	100	3	\N	\N	100052	\N	2025-07-11 13:00:00	2025-07-25 20:58:00	#e59c48
+25	108	\N	100062	1111	xcddd	\N	1111	111	\N	\N	100052	\N	2025-07-29 13:00:00	2025-07-31 21:00:00	#201a8e
+26	109	\N	100062	40	xdxd	\N	200	112	\N	\N	100053	\N	2025-08-05 13:00:00	2025-08-14 21:02:00	#72e548
+27	108	\N	100062	1	3	\N	1	1	\N	\N	100052	\N	2025-08-15 13:00:00	2025-08-16 21:07:00	#48e594
 \.
 
 
@@ -4017,10 +4024,18 @@ COPY public.horarios (id_curso, fecha_hora_inicio, fecha_hora_fin, "observación
 --
 
 COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_genero, id_pregunta, cedula, gmail, id_foto, id_status, respuesta, id_rol) FROM stdin;
-65	Yohamir	Pérez	30232876	$2b$10$.ht3EcUObiEbtKJuvxlMTuSfpIxDWQ.B5gzpnFHfMIyvwQbc1Inaa	7	1	30111010	isaacattonibarca10@gmail.com	\N	\N	$2b$10$iveUfmmdNjvPw5QYz4I87eTZvphzReuOOJr6FPA9XNNV7nF0.73aO	{"id_rol":["96","12"]}
 66	Isaac	Cattoni	04143173920	$2b$10$KhljVOoYSHqt1QcbfC5IpurXXHahrZOJzPXbBP9L5SVX.s/5TLMsy	6	57	12354321	iujo32423423@gmail.com	\N	\N	$2b$10$RMCmYw8JYK3FhCKuzvCcm.xzAyl951dawLmaLmcKUH7uwmOgopmWK	{"id_rol":["13"]}
-1	Victor	Gainza	1234567890	$2b$10$/Z0dUmPJqTKSZa1uctJSAeH2g/KH2xSIiiRDyT1HQ/ZP6xnYz5r0W	6	9	1234567890	superadmin@empresa.com	\N	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	{"id_rol": [15,96,11]}
-21	Isaac	Rodriguez	04143173920	$2b$10$50g82Vz7YgG.fSZ./CInUONLzUMWGtfUmmHnjpvgHzSEDWI7ZNoRa	6	84	30551892	isaacattonibar@gmail.com	\N	\N	$2b$10$0mV99YLr63MQmcqQHm4mw.5HFVTuSSHsdrYLf0osMuEl3lX5EKKfa	{"id_rol":["13"]}
+76	erwer	ewrew	0414214213	$2b$10$pxqGayZcz15XhQgm83tRieIpWthLIJtfopbJIRu/aVGKOYsFUDRfu	6	9	12345673	isaac1111111111111111@gmail.com	\N	\N	$2b$10$mNG.roNfWbkmOeBvFdoaHuPPz3A.7nHpUuNDDFFl6Aar1D1pxU386	{"id_rol":["12"]}
+68	Juan	Pérez	04141234567	$2b$10$ePZNyxkLs6leOWdvV6q.M.pt9VO3cI80GdFbLrrK9NddNYjVeYnAG	7	1	12345678	juan.perez@gmail.com	\N	\N	$2b$10$zMDGbajvecFP/XziZ/dRLO/yolvuttFYYj8l0bLsVaNUF9zByUGPO	{"id_rol":["13","12"]}
+21	Isaac	Rodriguez	04143173920	$2b$10$A.VGaXP6M./X7fFyIBbqzeBzNhzaiYIH8fpaQNTfl4XeErCNDXDPK	6	84	30551892	isaacattonibar@gmail.com	\N	\N	$2b$10$0mV99YLr63MQmcqQHm4mw.5HFVTuSSHsdrYLf0osMuEl3lX5EKKfa	{"id_rol":["13"]}
+69	Kevin	fragoso	04141234567	$2b$10$GtEXABWbe8XzYDKNTLBzb.S4jCwyFygGwr/RFvgZsmX1064VIJKk2	6	1	30551899	kevinfragosocontreras@gmail.com	\N	\N	$2b$10$UjNbQLlqRQcGq2sr.HxlDu5ZdXxlysxlLUAQWePU.A2gTr1.RqqIm	{"id_rol":["13","12"]}
+70	freddy	Cattoni	04143173920	$2b$10$OgHtcJFYv4YSRQdQgnJ03.MODjtUw4JQE9ay5V7hwsw/jOYWuCOK6	6	84	6525746	freddy@gmail.com	\N	\N	$2b$10$9GBuw..MywT6zjK4f8Tdk.OglHTge6vTPyoke6xCXV2EeE.4MVx2y	{"id_rol":["96"]}
+71	esmirna	colon	04143173920	$2b$10$EdkuwkC/lzRf6fjABf/7yeJMPre7TomPM5AbShItLiEs/w/p//7Ci	7	9	686211	esmirnapalacioscolon@gmail.com	\N	\N	$2b$10$YxjsMsthIzU092BKF62CMOOAVa2jUbskgUhixrzYgY5WY9N3wbSzq	{"id_rol":["98"]}
+77	Yeferson	Moronta	04143173920	$2b$10$mBrUgz8ovEgZcM3IB2lV7O/krv8y9z6py9hf9b9GTK9WfuYXZRH3K	6	100140	20212313	iujo3@gmail.com	\N	\N	$2b$10$cBhEo0hThE7w2QSWE.IJquTTAjjBe.0H62p0yW0hJVgkmGQz5JU.W	{"id_rol":["96"]}
+75	Isaac	colon	04143173920	$2b$10$AmHtIhB7/9HE78cYiKXgDulw.evcRRGcXcGKaklW7RqFvcipWs.32	6	57	30551898	isaacattoniba2rca10@gmail.com	\N	\N	$2b$10$8KjNPkrSEe7rz06IIk4SmuYln6GRakYFBnDydy9eOTXJp.T1prZVS	{"id_rol":["12"]}
+65	Yohamir	Perez	30232876	$2b$10$wcagZt7udVhjUnGcl.EqrebSZXoqPPMYOvJkFXWg9FJLqIX53j.vO	6	1	30111019	isaacattoniba1rca10@gmail.com	\N	\N	$2b$10$iveUfmmdNjvPw5QYz4I87eTZvphzReuOOJr6FPA9XNNV7nF0.73aO	{"id_rol":["14"]}
+1	Victor	Gainza	1234567890	$2b$10$3reMAACjfCrBSi5MUnNOJubAyKoVPogo.keYJ96y5s2MNiS5KPbLO	6	9	20234123	superadmin@empresa.com	\N	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	{"id_rol":["15"]}
+95	Isaac	Cattoni	04143173920	$2b$10$OzQxoFouaD3W/ZbUbPab8eqsAZANDFs1lVl0R85csWcnCGeU317na	7	84	30551812	isaacattonibarca10@gmail.com	\N	\N	$2b$10$aKLUR5ZtUya8dNq6VJMNaOFtq5H0NSfgvnF2Ugn/nK4JPSdhiypna	{"id_rol":["14","11"]}
 \.
 
 
@@ -4039,7 +4054,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100144, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100146, true);
 
 
 --
@@ -4057,7 +4072,7 @@ SELECT pg_catalog.setval('public.cohorte_id_cohorte_seq', 1, false);
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 20, true);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 27, true);
 
 
 --
@@ -4075,7 +4090,7 @@ SELECT pg_catalog.setval('public.documentos_id_documento_seq', 2, true);
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 66, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 95, true);
 
 
 --
@@ -4133,7 +4148,7 @@ ALTER TABLE ONLY public.horarios
 
 
 --
--- TOC entry 4689 (class 2606 OID 91675)
+-- TOC entry 4689 (class 2606 OID 100016)
 -- Name: personas personas_cedula_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4348,7 +4363,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-08 12:38:39
+-- Completed on 2025-06-11 21:11:09
 
 --
 -- PostgreSQL database dump complete

@@ -55,11 +55,14 @@ class Curso {
             id_nombre,
             id_modalidad,
             id_status,
+            id_facilitador,
             fecha_hora_inicio,
             fecha_hora_fin,
             costo,
             codigo
         } = datos;
+
+        console.log('Datos recibidos en validarDatosCurso:', datos);
 
         // Validar campos requeridos
         if (!id_nombre || !id_modalidad || !id_status || !fecha_hora_inicio) {
@@ -75,6 +78,20 @@ class Curso {
                 status: 400,
                 message: "Los IDs proporcionados no son válidos"
             };
+        }
+
+        // Validar id_facilitador si está presente
+        let facilitadorId = null;
+        if (id_facilitador !== undefined && id_facilitador !== null && id_facilitador !== '') {
+            try {
+                facilitadorId = BigInt(id_facilitador);
+            } catch (error) {
+                console.error('Error al convertir id_facilitador a BigInt:', error);
+                throw {
+                    status: 400,
+                    message: "El ID del facilitador no es válido"
+                };
+            }
         }
 
         // Validar fechas solo si se proporciona fecha_fin
@@ -98,17 +115,21 @@ class Curso {
             }
         }
 
-        return {
+        const datosValidados = {
             ...datos,
             id_nombre: parseInt(id_nombre),
             id_modalidad: parseInt(id_modalidad),
             id_status: parseInt(id_status),
+            id_facilitador: facilitadorId,
             costo: costo || 0,
             descripcion_corto: datos.descripcion_corto || '',
             color: datos.color || '#000000',
             codigo: codigo || null,
             duracion: datos.duracion ? parseInt(datos.duracion) : null
         };
+
+        console.log('Datos validados:', datosValidados);
+        return datosValidados;
     }
 
     // Métodos del controlador
@@ -140,8 +161,11 @@ class Curso {
 
     async createCurso(req, res) {
         try {
+            console.log('Datos recibidos en createCurso:', req.body);
             const cursoData = this.validarDatosCurso(req.body);
+            console.log('Datos validados en createCurso:', cursoData);
             const nuevoCurso = await this.model.createCurso(cursoData);
+            console.log('Curso creado:', nuevoCurso);
             
             return res.status(201).json({
                 success: true,
@@ -156,8 +180,11 @@ class Curso {
     async updateCurso(req, res) {
         try {
             const id = this.validarId(req.params.id);
+            console.log('Datos recibidos en updateCurso:', req.body);
             const cursoData = this.validarDatosCurso(req.body);
+            console.log('Datos validados en updateCurso:', cursoData);
             const cursoActualizado = await this.model.updateCurso(id, cursoData);
+            console.log('Curso actualizado:', cursoActualizado);
             
             return res.json({
                 success: true,

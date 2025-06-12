@@ -79,6 +79,7 @@ class CursoModel {
       id_nombre,
       id_modalidad,
       id_status,
+      id_facilitador,
       fecha_hora_inicio,
       fecha_hora_fin,
       costo,
@@ -88,11 +89,14 @@ class CursoModel {
       duracion
     } = cursoData;
 
+    console.log('Datos recibidos en modelo createCurso:', cursoData);
+
     const query = `
       INSERT INTO cursos (
         id_nombre,
         id_modalidad,
         id_status,
+        id_facilitador,
         fecha_hora_inicio,
         fecha_hora_fin,
         costo,
@@ -100,7 +104,7 @@ class CursoModel {
         codigo,
         color,
         duracion
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
     `;
 
@@ -109,6 +113,7 @@ class CursoModel {
         id_nombre,
         id_modalidad,
         id_status,
+        id_facilitador ? BigInt(id_facilitador) : null,
         fecha_hora_inicio,
         fecha_hora_fin,
         costo,
@@ -118,7 +123,11 @@ class CursoModel {
         duracion
       ];
 
+      console.log('Query:', query);
+      console.log('Values:', values);
+
       const result = await pool.query(query, values);
+      console.log('Resultado de la inserción:', result.rows[0]);
       return result.rows[0];
     } catch (error) {
       console.error("Error en createCurso:", error.message);
@@ -131,6 +140,7 @@ class CursoModel {
       id_nombre,
       id_modalidad,
       id_status,
+      id_facilitador,
       fecha_hora_inicio,
       fecha_hora_fin,
       costo,
@@ -140,20 +150,23 @@ class CursoModel {
       duracion
     } = cursoData;
 
+    console.log('Datos recibidos en modelo updateCurso:', cursoData);
+
     const query = `
       UPDATE cursos 
       SET 
         id_nombre = $1,
         id_modalidad = $2,
         id_status = $3,
-        fecha_hora_inicio = $4,
-        fecha_hora_fin = $5,
-        costo = $6,
-        descripcion_corto = $7,
-        codigo = $8,
-        color = $9,
-        duracion = $10
-      WHERE id_curso = $11
+        id_facilitador = $4,
+        fecha_hora_inicio = $5,
+        fecha_hora_fin = $6,
+        costo = $7,
+        descripcion_corto = $8,
+        codigo = $9,
+        color = $10,
+        duracion = $11
+      WHERE id_curso = $12
       RETURNING *;
     `;
 
@@ -162,6 +175,7 @@ class CursoModel {
         id_nombre,
         id_modalidad,
         id_status,
+        id_facilitador ? BigInt(id_facilitador) : null,
         fecha_hora_inicio,
         fecha_hora_fin,
         costo,
@@ -172,10 +186,14 @@ class CursoModel {
         id
       ];
 
+      console.log('Query:', query);
+      console.log('Values:', values);
+
       const result = await pool.query(query, values);
       if (result.rows.length === 0) {
         throw new Error("Curso no encontrado");
       }
+      console.log('Resultado de la actualización:', result.rows[0]);
       return result.rows[0];
     } catch (error) {
       console.error("Error en updateCurso:", error.message);
@@ -195,11 +213,13 @@ class CursoModel {
         p.id_status
       FROM personas p
       CROSS JOIN LATERAL json_array_elements_text(p.id_rol->'id_rol') as roles
-      WHERE roles = $1;
+      WHERE roles = $1
+      ORDER BY p.nombre, p.apellido;
     `;
 
     try {
       const result = await pool.query(query, [CLASSIFICATION_IDS.ROLES_FACILITADORES.toString()]);
+      console.log('Facilitadores obtenidos:', result.rows);
       return result.rows;
     } catch (error) {
       console.error("Error en getFacilitadores:", error.message);

@@ -5,9 +5,9 @@ import { CLASSIFICATION_IDS } from '../../client/src/config/classificationIds.js
 dotenv.config();
 
 // Log de depuración de la importación
-console.log('=== DEBUG EMAIL SERVICE CONFIG ===');
-console.log('CLASSIFICATION_IDS importado:', CLASSIFICATION_IDS);
-console.log('SEND_EMAIL importado:', CLASSIFICATION_IDS.SEND_EMAIL);
+        // console.log('=== DEBUG EMAIL SERVICE CONFIG ===');
+        // console.log('CLASSIFICATION_IDS importado:', CLASSIFICATION_IDS);
+        // console.log('SEND_EMAIL importado:', CLASSIFICATION_IDS.SEND_EMAIL);
 
 // Configura el transportador de Nodemailer
 const transporter = nodemailer.createTransport({
@@ -16,9 +16,9 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD
     },
-    debug: true,
+        debug: true,
     logger: true
-});
+        });
 
 class EmailService {
     static async sendEmail({ to, subject, text, html }) {

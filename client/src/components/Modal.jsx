@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
+import { getSubclassificationsById } from '../api/auth.api';
+import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, 
@@ -34,6 +36,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [nombreClasificacion, setNombreClasificacion] = useState('');
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [selectPosition, setSelectPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [permisos, setPermisos] = useState([]);
+  const [selectedPermisos, setSelectedPermisos] = useState([]);
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -66,6 +70,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       document.body.style.overflow = 'hidden';
       setTimeout(() => setAnimationClass('animate-modal-in'), 10);
       fetchClasificaciones();
+      fetchPermisos();
     } else {
       setAnimationClass('animate-modal-out');
       document.body.style.overflow = 'unset';
@@ -90,8 +95,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   }, [clasificaciones, parentInfo?.type_id]);
 
- 
-
   const fetchClasificaciones = async () => {
     try {
       const response = await getAllClasificaciones();
@@ -103,9 +106,29 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   };
 
-  // useEffect(() => {
-  //   console.log('Estado actual de clasificaciones:', clasificaciones);
-  // }, [clasificaciones]);
+  const fetchPermisos = async () => {
+    try {
+      const response = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
+      setPermisos(response.data.data || []);
+      
+      // If editing, set the selected permissions
+      if (editData?.permisos) {
+        const permisosArray = editData.permisos.split(',').map(p => p.trim());
+        setSelectedPermisos(permisosArray);
+      }
+    } catch (err) {
+      console.error('Error al cargar permisos:', err);
+      toast.error('Error al cargar los permisos');
+    }
+  };
+
+  const handlePermisosChange = (permisoId, setFieldValue, currentPermisos) => {
+    const permisosArray = currentPermisos ? currentPermisos.split(',').map(p => p.trim()) : [];
+    const newPermisos = permisosArray.includes(permisoId)
+      ? permisosArray.filter(id => id !== permisoId)
+      : [...permisosArray, permisoId];
+    setFieldValue('permisos', newPermisos.join(','));
+  };
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
@@ -116,6 +139,12 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         parent_id: editData ? (values.parent_id ? parseInt(values.parent_id) : null) : null,
         orden: values.orden !== '' ? parseInt(values.orden) : 0
       };
+
+      // Format permissions as an object with id_objeto array for roles
+      if (values.type_id === '3') {
+        const permisosArray = values.permisos ? values.permisos.split(',').map(p => parseInt(p.trim())) : [];
+        dataToSend.permisos = { id_objeto: permisosArray };
+      }
 
       if (editData) {
         await updateClasificacion(editData.id_clasificacion, dataToSend);
@@ -198,22 +227,13 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
+            {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => (
               <Form className="p-6 space-y-5">
                 {[
                   { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
                   { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
                   { name: 'orden', icon: faLayerGroup, label: 'Orden', type: 'number', className: 'appearance-none' },
                   { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
-                  ...(values.type_id === '3' ? [
-                    { 
-                      name: 'permisos', 
-                      icon: faLayerGroup, 
-                      label: 'Permisos', 
-                      type: 'textarea',
-                      placeholder: 'Ingrese los permisos separados por comas...'
-                    }
-                  ] : [])
                 ].map((field, index) => (
                   <div 
                     key={field.name}
@@ -341,6 +361,42 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                     />
                   </div>
                 ))}
+
+                {/* Permisos */}
+                {values.type_id === '3' && (
+                  <div 
+                    className="transform transition-all duration-300 animate-fade-slide-up"
+                    style={{ animationDelay: '400ms' }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
+                      Permisos
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {permisos.map((permiso) => (
+                        <label 
+                          key={permiso.id}
+                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={values.permisos ? values.permisos.split(',').includes(permiso.id.toString()) : false}
+                            onChange={() => handlePermisosChange(permiso.id, setFieldValue, values.permisos)}
+                            className="form-checkbox h-5 w-5 text-blue-600"
+                          />
+                          <span className="text-gray-700">
+                            {permiso.nombre}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <ErrorMessage
+                      name="permisos"
+                      component="div"
+                      className="mt-1 text-sm text-red-600"
+                    />
+                  </div>
+                )}
 
                 {error && (
                   <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake">

@@ -35,15 +35,15 @@ export default function Sidebar() {
   const rolesClasificacion = parentClasifications.find(c => c.nombre === 'Rol');
 
   return (
-    <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm">
+    <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30">
       <div className="mb-16">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent animate-gradient">
           Control del sistema
         </h2>
-        <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-blue-600 mt-3 rounded-full"></div>
+        <div className="h-1 w-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 mt-3 rounded-full"></div>
       </div>
 
-      <nav className="flex flex-col gap-2">
+      <nav className="flex flex-col gap-3">
         <div className="relative">
           <button
             onClick={() => {
@@ -52,10 +52,10 @@ export default function Sidebar() {
                 navigate('/dashboard');
               }
             }}
-            className={`flex items-center justify-between w-full px-4 py-3 rounded-lg transition-all duration-200 ${
+            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all duration-300 ${
               location.pathname === '/dashboard'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -64,11 +64,11 @@ export default function Sidebar() {
             </div>
             <FontAwesomeIcon 
               icon={iconos.faChevronDown} 
-              className={`w-4 h-4 transition-transform duration-200 ${isConfigOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 transition-transform duration-300 ${isConfigOpen ? 'rotate-180' : ''}`}
             />
           </button>
 
-          <div className={`mt-1 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden transition-all duration-200 ${
+          <div className={`mt-2 bg-gradient-to-br from-gray-900/95 to-gray-800/95 rounded-xl shadow-2xl overflow-hidden transition-all duration-300 backdrop-blur-sm ${
             isConfigOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
           }`}>
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
@@ -86,7 +86,7 @@ export default function Sidebar() {
                       <div
                         className={`flex items-center gap-4 px-5 py-4 group/item cursor-pointer transition-all duration-300 hover:translate-x-2 ${
                           active
-                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
                             : 'hover:bg-blue-700/20'
                         }`}
                         title={clasificacion.nombre}
@@ -127,10 +127,10 @@ export default function Sidebar() {
 
         <Link
           to="/dashboard/cursos"
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
             location.pathname === '/dashboard/cursos'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+              : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
           }`}
         >
           {cursosClasificacion ? (
@@ -143,10 +143,10 @@ export default function Sidebar() {
 
         <Link
           to="/dashboard/roles"
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
             location.pathname === '/dashboard/roles'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+              : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
           }`}
         >
           {rolesClasificacion ? (
@@ -159,10 +159,10 @@ export default function Sidebar() {
 
         <Link
           to="/dashboard/prueba"
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 ${
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
             location.pathname === '/dashboard/prueba'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+              : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
           }`}
         >
           <FontAwesomeIcon icon={iconos.faFilePdf} className="w-5 h-5" />
@@ -176,19 +176,36 @@ export default function Sidebar() {
 // Agregar estilos dinámicamente
 const styles = `
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
+    border-radius: 2px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.3);
-    border-radius: 3px;
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 2px;
     transition: all 0.3s ease;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.5);
+    background: rgba(99, 102, 241, 0.5);
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
   }
 `;
 

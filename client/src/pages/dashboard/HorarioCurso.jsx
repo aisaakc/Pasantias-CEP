@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useCursoStore } from '../../store/cursoStore';
 import { useClasificacionStore } from '../../store/clasificacionStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faCalendarAlt, faClock, faUser, faChalkboardTeacher, faMoneyBill, faPlus, faTrash, faCalendar } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCalendarAlt, faClock, faUser, faChalkboardTeacher, 
+  faMoneyBill, faPlus, faTrash, faCalendar } from '@fortawesome/free-solid-svg-icons';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -12,6 +13,7 @@ import listPlugin from '@fullcalendar/list';
 import esLocale from '@fullcalendar/core/locales/es';
 import { toast } from 'sonner';
 import { decodeId, encodeId } from '../../utils/hashUtils';
+import { updateHorariosCurso } from '../../api/curso.api';
 
 function HorarioCurso() {
   const { id } = useParams();
@@ -23,7 +25,8 @@ function HorarioCurso() {
   const [error, setError] = useState(null);
   const [eventosCalendario, setEventosCalendario] = useState([]);
   const [feriados, setFeriados] = useState([]);
-  const [horarios, setHorarios] = useState([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '' }]);
+  const [horarios, setHorarios] = useState([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
+  const [horariosAEliminar, setHorariosAEliminar] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState('timeGridWeek');
@@ -65,25 +68,83 @@ function HorarioCurso() {
         if (response?.data?.data && decodedId) {
           const cursoEncontrado = response.data.data.find(c => c.id_curso === parseInt(decodedId));
           if (cursoEncontrado) {
+            console.log('Curso encontrado:', cursoEncontrado);
             setCurso(cursoEncontrado);
-            // Crear evento para el calendario
-            const eventoCurso = {
-              id: String(cursoEncontrado.id_curso),
-              title: cursoEncontrado.nombre_curso,
-              start: cursoEncontrado.fecha_hora_inicio,
-              end: cursoEncontrado.fecha_hora_fin,
-              backgroundColor: cursoEncontrado.color || '#4F46E5',
-              borderColor: cursoEncontrado.color || '#4F46E5',
-              textColor: '#ffffff',
-              extendedProps: {
-                instructor: cursoEncontrado.nombre_completo_facilitador,
-                modalidad: cursoEncontrado.modalidad,
-                estado: cursoEncontrado.estado,
-                costo: cursoEncontrado.costo,
-                codigo: cursoEncontrado.codigo
+            
+            // Cargar horarios existentes
+            let horariosExistentes = [];
+            if (cursoEncontrado.horarios) {
+              try {
+                horariosExistentes = typeof cursoEncontrado.horarios === 'string' 
+                  ? JSON.parse(cursoEncontrado.horarios)
+                  : cursoEncontrado.horarios;
+                
+                console.log('Horarios existentes:', horariosExistentes);
+                
+                // Convertir los horarios existentes al formato del formulario
+                const horariosFormateados = horariosExistentes.map(horario => {
+                  const fechaInicio = new Date(horario.fecha_hora_inicio);
+                  const fechaFin = new Date(horario.fecha_hora_fin);
+                  
+                  // Ajustar al horario local
+                  const fechaInicioLocal = new Date(fechaInicio.getTime() - fechaInicio.getTimezoneOffset() * 60000);
+                  const fechaFinLocal = new Date(fechaFin.getTime() - fechaFin.getTimezoneOffset() * 60000);
+                  
+                  return {
+                    id: Date.now() + Math.random().toString(36).substr(2, 9),
+                    fechaHoraInicio: fechaInicioLocal.toISOString().slice(0, 16),
+                    fechaHoraFin: fechaFinLocal.toISOString().slice(0, 16),
+                    descripcion: horario.observacion || '',
+                    originalId: horario.id || Date.now() + Math.random().toString(36).substr(2, 9)
+                  };
+                });
+                console.log('Horarios formateados para el formulario:', horariosFormateados);
+                setHorarios(horariosFormateados);
+              } catch (error) {
+                console.error('Error al procesar horarios:', error);
+                setHorarios([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
               }
-            };
-            setEventosCalendario([eventoCurso]);
+            }
+
+            // Crear eventos para el calendario
+            const eventosCurso = [
+              // Evento principal del curso
+              {
+                id: String(cursoEncontrado.id_curso),
+                title: cursoEncontrado.nombre_curso,
+                start: cursoEncontrado.fecha_hora_inicio,
+                end: cursoEncontrado.fecha_hora_fin,
+                backgroundColor: cursoEncontrado.color || '#4F46E5',
+                borderColor: cursoEncontrado.color || '#4F46E5',
+                textColor: '#ffffff',
+                extendedProps: {
+                  instructor: cursoEncontrado.nombre_completo_facilitador,
+                  modalidad: cursoEncontrado.modalidad,
+                  estado: cursoEncontrado.estado,
+                  costo: cursoEncontrado.costo,
+                  codigo: cursoEncontrado.codigo
+                }
+              },
+              // Eventos de los horarios
+              ...horariosExistentes.map((horario, index) => ({
+                id: `horario-${index}`,
+                title: cursoEncontrado.nombre_curso,
+                start: horario.fecha_hora_inicio,
+                end: horario.fecha_hora_fin,
+                // backgroundColor: cursoEncontrado.color || '#4F46E5',
+                backgroundColor: '#555555',
+                borderColor: cursoEncontrado.color || '#4F46E5',
+                textColor: '#ffffff',
+                extendedProps: {
+                  descripcion: horario.observacion,
+                  instructor: cursoEncontrado.nombre_completo_facilitador,
+                  modalidad: cursoEncontrado.modalidad,
+                  esHorario: true
+                }
+              }))
+            ];
+            console.log('Eventos del calendario:', eventosCurso);
+            setEventosCalendario(eventosCurso);
           } else {
             setError('Curso no encontrado');
           }
@@ -149,6 +210,7 @@ function HorarioCurso() {
                 borderColor: '#EF4444',
                 textColor: '#ffffff',
                 display: 'block',
+                classNames: ['fc-event-feriado', 'fc-daygrid-block-event', 'fc-h-event'],
                 extendedProps: {
                   esFeriado: true,
                   nombre: feriado.nombre,
@@ -184,15 +246,22 @@ function HorarioCurso() {
   }, [feriados]);
 
   const handleAddRow = () => {
-    setHorarios([...horarios, { fechaHoraInicio: '', fechaHoraFin: '', descripcion: '' }]);
+    setHorarios([...horarios, { fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
   };
 
   const handleRemoveRow = (index) => {
+    const horarioAEliminar = horarios[index];
+    if (horarioAEliminar.originalId) {
+      // Si es un horario existente, agregarlo a la lista de horarios a eliminar
+      setHorariosAEliminar(prev => [...prev, horarioAEliminar.originalId]);
+    }
     const newHorarios = horarios.filter((_, i) => i !== index);
     setHorarios(newHorarios);
   };
 
   const handleHorarioChange = (index, field, value) => {
+    console.log('handleHorarioChange - Parámetros:', { index, field, value });
+    
     const newHorarios = [...horarios];
     newHorarios[index][field] = value;
     
@@ -202,54 +271,208 @@ function HorarioCurso() {
     }
     
     setHorarios(newHorarios);
+    console.log('Horarios actualizados en el estado:', newHorarios);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log('Iniciando submit de horarios');
 
     try {
       // Validar todos los horarios
       for (const horario of horarios) {
+        console.log('Validando horario:', horario);
+        
         if (!horario.fechaHoraInicio || !horario.fechaHoraFin) {
+          console.error('Error: fechas incompletas', horario);
           toast.error('Por favor complete todas las fechas de inicio y fin');
+          setIsSubmitting(false);
           return;
         }
 
         const inicio = new Date(horario.fechaHoraInicio);
         const fin = new Date(horario.fechaHoraFin);
 
-        if (inicio >= fin) {
-          toast.error('La fecha de inicio debe ser anterior a la fecha de fin');
+        console.log('Fechas a validar:', {
+          inicio: inicio.toISOString(),
+          fin: fin.toISOString(),
+          comparacion: inicio.getTime() > fin.getTime()
+        });
+
+        // Validar que la fecha de inicio no sea posterior a la fecha de fin
+        if (inicio.getTime() > fin.getTime()) {
+          console.error('Error de validación: fecha inicio posterior a fecha fin', {
+            inicio: inicio.toISOString(),
+            fin: fin.toISOString()
+          });
+          toast.error('La fecha de inicio no puede ser posterior a la fecha de fin');
+          setIsSubmitting(false);
           return;
         }
       }
 
-      // Crear eventos para cada horario
-      const nuevosEventos = horarios.map(horario => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        title: curso.nombre_curso,
-        start: horario.fechaHoraInicio,
-        end: horario.fechaHoraFin,
-        backgroundColor: curso.color || '#4F46E5',
-        borderColor: curso.color || '#4F46E5',
-        textColor: '#ffffff',
-        extendedProps: {
-          descripcion: horario.descripcion,
-          instructor: curso.nombre_completo_facilitador,
-          modalidad: curso.modalidad
-        }
-      }));
+      // Formatear los horarios para la base de datos
+      const horariosFormateados = horarios.map(horario => {
+        const fechaInicio = new Date(horario.fechaHoraInicio);
+        const fechaFin = new Date(horario.fechaHoraFin);
+        
+        // Asegurarse de que las fechas tengan segundos y milisegundos
+        fechaInicio.setSeconds(0, 0);
+        fechaFin.setSeconds(0, 0);
+        
+        // Ajustar al horario UTC
+        const fechaInicioUTC = new Date(fechaInicio.getTime() + fechaInicio.getTimezoneOffset() * 60000);
+        const fechaFinUTC = new Date(fechaFin.getTime() + fechaFin.getTimezoneOffset() * 60000);
 
-      setEventosCalendario(prev => [...prev, ...nuevosEventos]);
+        console.log('Formateando horario:', {
+          original: horario,
+          fechaInicioUTC: fechaInicioUTC.toISOString(),
+          fechaFinUTC: fechaFinUTC.toISOString()
+        });
+
+        return {
+          id: horario.originalId || Date.now() + Math.random().toString(36).substr(2, 9),
+          fecha_hora_inicio: fechaInicioUTC.toISOString(),
+          fecha_hora_fin: fechaFinUTC.toISOString(),
+          observacion: horario.descripcion || ''
+        };
+      });
+
+      console.log('Horarios formateados para la BD:', horariosFormateados);
+
+      // Obtener los horarios existentes
+      let horariosExistentes = [];
+      if (curso?.horarios) {
+        try {
+          horariosExistentes = typeof curso.horarios === 'string' 
+            ? JSON.parse(curso.horarios)
+            : curso.horarios;
+          
+          // Validar que horariosExistentes sea un array
+          if (!Array.isArray(horariosExistentes)) {
+            console.error('horariosExistentes no es un array:', horariosExistentes);
+            horariosExistentes = [];
+          }
+        } catch (error) {
+          console.error('Error al parsear horarios existentes:', error);
+          horariosExistentes = [];
+        }
+      }
+      console.log('Horarios existentes:', horariosExistentes);
       
-      // Limpiar formulario y mantener una fila vacía
-      setHorarios([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '' }]);
+      // Filtrar los horarios existentes para eliminar los marcados para eliminación
+      const horariosExistentesFiltrados = horariosExistentes.filter(
+        h => !horariosAEliminar.includes(h.id)
+      );
+
+      // Actualizar los horarios en la base de datos
+      const response = await updateHorariosCurso(decodedId, horariosFormateados);
+      console.log('Respuesta del servidor:', response);
+
+      // Recargar los datos del curso
+      const cursosResponse = await fetchCursos();
+      if (cursosResponse?.data?.data && decodedId) {
+        const cursoActualizado = cursosResponse.data.data.find(c => c.id_curso === parseInt(decodedId));
+        if (cursoActualizado) {
+          console.log('Curso actualizado:', cursoActualizado);
+          setCurso(cursoActualizado);
+          
+          // Cargar horarios actualizados
+          let horariosActualizados = [];
+          if (cursoActualizado.horarios) {
+            try {
+              horariosActualizados = typeof cursoActualizado.horarios === 'string' 
+                ? JSON.parse(cursoActualizado.horarios)
+                : cursoActualizado.horarios;
+              
+              // Convertir los horarios actualizados al formato del formulario
+              const horariosFormateados = horariosActualizados.map(horario => {
+                const fechaInicio = new Date(horario.fecha_hora_inicio);
+                const fechaFin = new Date(horario.fecha_hora_fin);
+                
+                // Ajustar al horario local
+                const fechaInicioLocal = new Date(fechaInicio.getTime() - fechaInicio.getTimezoneOffset() * 60000);
+                const fechaFinLocal = new Date(fechaFin.getTime() - fechaFin.getTimezoneOffset() * 60000);
+                
+                return {
+                  id: Date.now() + Math.random().toString(36).substr(2, 9),
+                  fechaHoraInicio: fechaInicioLocal.toISOString().slice(0, 16),
+                  fechaHoraFin: fechaFinLocal.toISOString().slice(0, 16),
+                  descripcion: horario.observacion || '',
+                  originalId: horario.id || Date.now() + Math.random().toString(36).substr(2, 9)
+                };
+              });
+              console.log('Horarios actualizados formateados:', horariosFormateados);
+              setHorarios(horariosFormateados);
+            } catch (error) {
+              console.error('Error al procesar horarios actualizados:', error);
+              setHorarios([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
+            }
+          }
+
+          // Crear eventos para el calendario incluyendo el evento principal del curso
+          const eventosCalendario = [
+            // Evento principal del curso
+            {
+              id: String(cursoActualizado.id_curso),
+              title: cursoActualizado.nombre_curso,
+              start: cursoActualizado.fecha_hora_inicio,
+              end: cursoActualizado.fecha_hora_fin,
+              backgroundColor: cursoActualizado.color || '#4F46E5',
+              borderColor: cursoActualizado.color || '#4F46E5',
+              textColor: '#ffffff',
+              display: 'block',
+              classNames: ['fc-event-principal'],
+              extendedProps: {
+                instructor: cursoActualizado.nombre_completo_facilitador,
+                modalidad: cursoActualizado.modalidad,
+                estado: cursoActualizado.estado,
+                costo: cursoActualizado.costo,
+                codigo: cursoActualizado.codigo,
+                esEventoPrincipal: true
+              }
+            },
+            // Eventos de los horarios
+            ...horariosActualizados.map((horario, index) => {
+              return {
+                id: `horario-${horario.id || index}`,
+                title: cursoActualizado.nombre_curso,
+                start: horario.fecha_hora_inicio,
+                end: horario.fecha_hora_fin,
+                backgroundColor: '#555555',
+                borderColor: '#555555',
+                textColor: '#ffffff',
+                display: 'block',
+                classNames: ['fc-event-horario', 'fc-daygrid-block-event', 'fc-h-event'],
+                extendedProps: {
+                  descripcion: horario.observacion,
+                  instructor: cursoActualizado.nombre_completo_facilitador,
+                  modalidad: cursoActualizado.modalidad,
+                  esHorario: true
+                }
+              };
+            })
+          ];
+
+          console.log('Eventos del calendario actualizados:', eventosCalendario);
+          setEventosCalendario(eventosCalendario);
+        }
+      }
       
-      toast.success('Horarios agregados exitosamente');
+      // Limpiar estado de horarios a eliminar
+      setHorariosAEliminar([]);
+      
+      toast.success('Horarios actualizados exitosamente');
     } catch (error) {
-      console.error('Error al agregar horarios:', error);
-      toast.error('Error al agregar los horarios');
+      console.error('Error detallado al agregar horarios:', error);
+      console.error('Stack trace:', error.stack);
+      console.error('Datos que causaron el error:', {
+        horarios,
+        curso: curso?.horarios
+      });
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(`Error al actualizar los horarios: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -413,33 +636,32 @@ function HorarioCurso() {
                 locale={esLocale}
                 height="auto"
                 allDaySlot={true}
-                slotMinTime="06:00:00"
-                slotMaxTime="22:00:00"
+                slotMinTime="00:00:00"
+                slotMaxTime="24:00:00"
                 weekends={true}
                 events={eventosCalendario}
                 views={{
                   dayGridMonth: {
                     titleFormat: { year: 'numeric', month: 'long' },
                     dayMaxEventRows: true,
-                    displayEventTime: false
+                    displayEventTime: false,
+                    eventDisplay: 'block'
                   },
                   timeGridWeek: {
                     titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
-                    dayMaxEventRows: true
+                    dayMaxEventRows: true,
+                    eventDisplay: 'block'
                   },
                   timeGridDay: {
                     titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
-                    dayMaxEventRows: true
+                    dayMaxEventRows: true,
+                    eventDisplay: 'block'
                   }
-                }}
-                buttonText={{
-                  today: 'Hoy',
-                  month: 'Mes',
-                  week: 'Semana',
-                  day: 'Día'
                 }}
                 eventContent={(eventInfo) => {
                   const esFeriado = eventInfo.event.extendedProps.esFeriado;
+                  const esEventoPrincipal = eventInfo.event.extendedProps.esEventoPrincipal;
+                  const esHorario = eventInfo.event.extendedProps.esHorario;
 
                   if (esFeriado) {
                     return (
@@ -459,7 +681,14 @@ function HorarioCurso() {
 
                   return (
                     <div className="p-2">
-                      <div className="font-semibold">{eventInfo.event.title}</div>
+                      <div className="font-semibold flex items-center">
+                        {eventInfo.event.title}
+                        {esHorario && (
+                          <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-0.5 rounded">
+                            Horario
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm">
                         {eventInfo.event.extendedProps.instructor && (
                           <div>Instructor: {eventInfo.event.extendedProps.instructor}</div>
@@ -484,7 +713,7 @@ function HorarioCurso() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Agregar Horarios</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {horarios.map((horario, index) => (
-                  <div key={index} className="flex items-center gap-4">
+                  <div key={horario.id} className="flex items-center gap-4">
                     <div className="flex-1">
                       <input
                         type="datetime-local"
@@ -514,15 +743,17 @@ function HorarioCurso() {
                         placeholder="Descripción"
                       />
                     </div>
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRow(index)}
-                        className="p-2 text-red-600 hover:text-red-700 transition-colors"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('¿Está seguro de que desea eliminar este horario?')) {
+                          handleRemoveRow(index);
+                        }
+                      }}
+                      className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
                   </div>
                 ))}
 
@@ -544,12 +775,12 @@ function HorarioCurso() {
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        <span>Agregando...</span>
+                        <span>Actualizando...</span>
                       </>
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                        <span>Guardar Horarios</span>
+                        <span>Actualizar Horarios</span>
                       </>
                     )}
                   </button>
@@ -656,7 +887,7 @@ function HorarioCurso() {
           }
 
           .fc-event {
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             border: none;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
@@ -856,6 +1087,133 @@ function HorarioCurso() {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+          }
+
+          .fc-event-principal {
+            background-color: var(--fc-event-bg-color) !important;
+            border-color: var(--fc-event-bg-color) !important;
+          }
+
+          .fc-event-horario {
+            background-color: #555555 !important;
+            border-color: #555555 !important;
+          }
+
+          .fc-event-feriado {
+            background-color: #EF4444 !important;
+            border-color: #EF4444 !important;
+            opacity: 0.9;
+          }
+
+          .fc-event-feriado:hover {
+            opacity: 1;
+          }
+
+          .fc-daygrid-event {
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 2px 4px;
+            margin: 1px 0;
+            border-radius: 3px;
+          }
+
+          .fc-daygrid-block-event {
+            display: block !important;
+          }
+
+          .fc-daygrid-event-harness {
+            margin-top: 0 !important;
+          }
+
+          .fc-daygrid-event-harness .fc-event {
+            margin: 1px 0;
+          }
+
+          .fc-daygrid-event-harness .fc-event-main {
+            padding: 0;
+          }
+
+          .fc-daygrid-event-harness .fc-event-main-frame {
+            padding: 0;
+          }
+
+          .fc-daygrid-event-harness .fc-event-title-container {
+            padding: 0;
+          }
+
+          .fc-daygrid-event-harness .fc-event-title {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+          }
+
+          .fc-daygrid-event-harness .fc-event-time {
+            font-size: 0.75rem;
+            line-height: 1rem;
+          }
+
+          .fc-daygrid-more-link {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.875rem;
+            font-weight: 500;
+          }
+
+          .fc-daygrid-more-link:hover {
+            background-color: #e5e7eb;
+          }
+
+          .fc-daygrid-day-events {
+            padding: 2px;
+          }
+
+          .fc-daygrid-day-events .fc-event {
+            margin: 1px 0;
+          }
+
+          .fc-daygrid-day-events .fc-event-main {
+            padding: 0;
+          }
+
+          .fc-daygrid-day-events .fc-event-main-frame {
+            padding: 0;
+          }
+
+          .fc-daygrid-day-events .fc-event-title-container {
+            padding: 0;
+          }
+
+          .fc-daygrid-day-events .fc-event-title {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+          }
+
+          .fc-daygrid-day-events .fc-event-time {
+            font-size: 0.75rem;
+            line-height: 1rem;
+          }
+
+          /* Estilos específicos para feriados en diferentes vistas */
+          .fc-timeGridWeek-view .fc-event-feriado,
+          .fc-timeGridDay-view .fc-event-feriado {
+            background-color: #EF4444 !important;
+            border-color: #EF4444 !important;
+            opacity: 0.9;
+          }
+
+          .fc-dayGridMonth-view .fc-event-feriado {
+            background-color: #EF4444 !important;
+            border-color: #EF4444 !important;
+            opacity: 0.9;
+          }
+
+          /* Asegurar que los feriados se muestren como bloques en todas las vistas */
+          .fc-timeGridWeek-view .fc-event-feriado,
+          .fc-timeGridDay-view .fc-event-feriado,
+          .fc-dayGridMonth-view .fc-event-feriado {
+            display: block !important;
           }
         `}
       </style>

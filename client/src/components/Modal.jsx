@@ -11,7 +11,7 @@ import {
   faFolder, 
   faImage, 
   faLayerGroup,
-  
+  faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
@@ -32,6 +32,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
   const [nombreClasificacion, setNombreClasificacion] = useState('');
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [selectPosition, setSelectPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -137,6 +139,18 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   };
 
+  const handleSelectClick = (e, field) => {
+    if (!field.disabled) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setSelectPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+      setIsSelectOpen(!isSelectOpen);
+    }
+  };
+
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
@@ -190,7 +204,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
                   { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
                   { name: 'orden', icon: faLayerGroup, label: 'Orden', type: 'number', className: 'appearance-none' },
-                  { name: 'id_icono', icon: faImage, label: 'Icono', type: 'select' },
+                  { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
                   ...(values.type_id === '3' ? [
                     { 
                       name: 'permisos', 
@@ -228,17 +242,39 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                       />
                     ) : field.type === 'select' ? (
                       <div className="relative">
-                        <Field
-                          as="select"
-                          name={field.name}
-                          disabled={field.disabled}
+                        <div 
                           className={`w-full px-4 py-3 rounded-lg border ${
                             touched[field.name] && errors[field.name] 
                               ? 'border-red-300 focus:ring-red-500' 
                               : 'border-gray-200 focus:ring-blue-500'
-                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none bg-white ${
-                            field.disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-                          }`}
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white ${
+                            field.disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'
+                          } flex items-center justify-between`}
+                          onClick={(e) => handleSelectClick(e, field)}
+                        >
+                          <span className="flex items-center">
+                            {field.name === 'id_icono' && values[field.name] && (
+                              <FontAwesomeIcon 
+                                icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
+                                className="text-blue-600 mr-2"
+                              />
+                            )}
+                            <span>
+                              {field.name === 'id_icono' && values[field.name] 
+                                ? clasificaciones.find(c => c.id_clasificacion === parseInt(values[field.name]))?.nombre 
+                                : 'Seleccionar ícono'}
+                            </span>
+                          </span>
+                          <FontAwesomeIcon 
+                            icon={faChevronDown} 
+                            className={`text-gray-400 transition-transform duration-200 ${isSelectOpen ? 'transform rotate-180' : ''}`}
+                          />
+                        </div>
+                        <Field
+                          as="select"
+                          name={field.name}
+                          disabled={field.disabled}
+                          className="hidden"
                         >
                           {field.name === 'id_icono' && (
                             <>
@@ -250,15 +286,40 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                               ))}
                             </>
                           )}
-                            
                         </Field>
-                        {field.name === 'id_icono' && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <FontAwesomeIcon 
-                              icon={iconos[clasificaciones.find(c => c.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
-                              className="text-blue-600"
-                            />
-                          </div>
+                        {field.name === 'id_icono' && isSelectOpen && ReactDOM.createPortal(
+                          <div 
+                            className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+                            style={{
+                              top: `${selectPosition.top}px`,
+                              left: `${selectPosition.left}px`,
+                              width: `${selectPosition.width}px`
+                            }}
+                          >
+                            <div className="max-h-60 overflow-y-auto">
+                              {[...clasificaciones]
+                                .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                                .map((c) => (
+                                  <div
+                                    key={c.id_clasificacion}
+                                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const event = { target: { name: field.name, value: c.id_clasificacion } };
+                                      handleChange(event);
+                                      setIsSelectOpen(false);
+                                    }}
+                                  >
+                                    <FontAwesomeIcon 
+                                      icon={iconos[c.nombre] || iconos.faFile} 
+                                      className="text-blue-600 mr-2"
+                                    />
+                                    <span>{c.nombre}</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>,
+                          document.body
                         )}
                       </div>
                     ) : (
@@ -289,8 +350,10 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                 )}
 
                 {/* Footer fijo */}
+                 
                 <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
                   <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                  
                   <div className="flex justify-end space-x-4">
                     <button
                       type="button"

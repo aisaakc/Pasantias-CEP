@@ -147,7 +147,8 @@ class CursoModel {
       descripcion_corto,
       codigo,
       color,
-      duracion
+      duracion,
+      horarios
     } = cursoData;
 
     console.log('Datos recibidos en modelo updateCurso:', cursoData);
@@ -165,8 +166,9 @@ class CursoModel {
         descripcion_corto = $8,
         codigo = $9,
         color = $10,
-        duracion = $11
-      WHERE id_curso = $12
+        duracion = $11,
+        horarios = $12
+      WHERE id_curso = $13
       RETURNING *;
     `;
 
@@ -183,6 +185,7 @@ class CursoModel {
         codigo,
         color,
         duracion,
+        horarios ? JSON.stringify(horarios) : null,
         id
       ];
 
@@ -198,6 +201,31 @@ class CursoModel {
     } catch (error) {
       console.error("Error en updateCurso:", error.message);
       throw new Error("Error interno del servidor al actualizar el curso.");
+    }
+  }
+
+  async updateHorariosCurso(id, horarios) {
+    const query = `
+      UPDATE cursos 
+      SET horarios = $1
+      WHERE id_curso = $2
+      RETURNING *;
+    `;
+
+    try {
+      const values = [
+        JSON.stringify(horarios),
+        id
+      ];
+
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        throw new Error("Curso no encontrado");
+      }
+      return result.rows[0];
+    } catch (error) {
+      console.error("Error en updateHorariosCurso:", error.message);
+      throw new Error("Error interno del servidor al actualizar los horarios del curso.");
     }
   }
 

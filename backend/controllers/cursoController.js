@@ -9,6 +9,7 @@ class Curso {
         this.createCurso = this.createCurso.bind(this);
         this.updateCurso = this.updateCurso.bind(this);
         this.getFacilitadores = this.getFacilitadores.bind(this);
+        this.updateHorarios = this.updateHorarios.bind(this);
     }
 
     // Métodos de validación
@@ -189,6 +190,57 @@ class Curso {
             return res.json({
                 success: true,
                 message: "Curso actualizado exitosamente",
+                data: cursoActualizado
+            });
+        } catch (error) {
+            return this.manejarError(error, res);
+        }
+    }
+
+    async updateHorarios(req, res) {
+        try {
+            const id = this.validarId(req.params.id);
+            const { horarios } = req.body;
+
+            if (!Array.isArray(horarios)) {
+                throw {
+                    status: 400,
+                    message: "Los horarios deben ser un array"
+                };
+            }
+
+            // Validar cada horario
+            horarios.forEach(horario => {
+                if (!horario.fecha_hora_inicio || !horario.fecha_hora_fin) {
+                    throw {
+                        status: 400,
+                        message: "Cada horario debe tener fecha de inicio y fin"
+                    };
+                }
+
+                const inicio = new Date(horario.fecha_hora_inicio);
+                const fin = new Date(horario.fecha_hora_fin);
+
+                if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+                    throw {
+                        status: 400,
+                        message: "Formato de fecha inválido en los horarios"
+                    };
+                }
+
+                if (inicio >= fin) {
+                    throw {
+                        status: 400,
+                        message: "La fecha de inicio debe ser anterior a la fecha de fin en cada horario"
+                    };
+                }
+            });
+
+            const cursoActualizado = await this.model.updateHorariosCurso(id, horarios);
+            
+            return res.json({
+                success: true,
+                message: "Horarios actualizados exitosamente",
                 data: cursoActualizado
             });
         } catch (error) {

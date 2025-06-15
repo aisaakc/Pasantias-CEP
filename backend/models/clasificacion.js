@@ -19,14 +19,14 @@ class Clasificacion {
     }
 
     async create(nuevaClasificacion) {
-        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = nuevaClasificacion;
+        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional } = nuevaClasificacion;
         try {
             const query = `
-                INSERT INTO clasificacion (nombre, descripcion, imagen, orden, type_id, parent_id, id_icono)
-                VALUES (TRIM($1), TRIM($2), $3, $4, $5, $6, $7)
-                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
+                INSERT INTO clasificacion (nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional)
+                VALUES (TRIM($1), TRIM($2), $3, $4, $5, $6, $7, $8)
+                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional;
             `;
-            const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono];  
+            const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional || null];  
             const result = await pool.query(query, values);
             return result.rows[0];
         } catch (error) {
@@ -52,7 +52,7 @@ class Clasificacion {
            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion                  
            LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
            LEFT JOIN clasificacion t ON sc.type_id = t.id_clasificacion
-           LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
+             LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
            WHERE `;
             let queryParams = [type_id];
 
@@ -89,7 +89,7 @@ class Clasificacion {
     }
   
     async updateClasificacion(id, clasificacionActualizada) {
-        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono } = clasificacionActualizada;
+        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional } = clasificacionActualizada;
         try {
             const query = `
                 UPDATE clasificacion 
@@ -99,9 +99,10 @@ class Clasificacion {
                     orden = $4, 
                     type_id = $5, 
                     parent_id = $6, 
-                    id_icono = $7
-                WHERE id_clasificacion = $8
-                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono;
+                    id_icono = $7,
+                    adicional = $8
+                WHERE id_clasificacion = $9
+                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional;
             `;
             const values = [
                 nombre, 
@@ -111,6 +112,7 @@ class Clasificacion {
                 type_id || null, 
                 parent_id || null, 
                 id_icono || null,
+                adicional || null,
                 id
             ];
             

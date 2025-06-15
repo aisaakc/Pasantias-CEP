@@ -25,16 +25,24 @@ class UserModel {
   }
   async getSubclassificationsById(id) {
     try {
-      const query = `
-        SELECT id_clasificacion AS id, nombre
-        FROM clasificacion
-        WHERE type_id = $1;
+      console.log('=== OBTENIENDO SUBCLASIFICACIONES ===');
+      console.log('ID solicitado:', id);
+
+      let query = `
+        SELECT 
+          c.id_clasificacion AS id, 
+          c.nombre,
+          c.adicional
+        FROM clasificacion c
+        WHERE c.type_id = $1;
       `;
+
       const result = await pool.query(query, [id]);
+      console.log('Resultado de la consulta:', result.rows);
+
       return result.rows;
     } catch (error) {
       console.error("Error en getSubclassificationsById:", error.message);
-    
       throw error;
     }
   }

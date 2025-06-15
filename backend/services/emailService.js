@@ -4,13 +4,9 @@ import { CLASSIFICATION_IDS } from '../../client/src/config/classificationIds.js
 
 dotenv.config();
 
-// Log de depuración de la importación
-        // console.log('=== DEBUG EMAIL SERVICE CONFIG ===');
-        // console.log('CLASSIFICATION_IDS importado:', CLASSIFICATION_IDS);
-        // console.log('SEND_EMAIL importado:', CLASSIFICATION_IDS.SEND_EMAIL);
-
 // Configura el transportador de Nodemailer
 const transporter = nodemailer.createTransport({
+    
     service: 'gmail',  // Usar el servicio predefinido de Gmail
     auth: {
         user: process.env.SMTP_USER,

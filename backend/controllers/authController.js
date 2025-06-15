@@ -93,7 +93,15 @@ class AuthController {
     const { cedula, gmail, contrasena } = req.body;
 
     try {
+      console.log('=== INICIO DE LOGIN ===');
+      console.log('Credenciales recibidas:', { cedula, gmail });
+      
       const usuario = await UserModel.loginUser({ cedula, gmail, contrasena });
+      console.log('Usuario encontrado:', {
+        id: usuario.id_persona,
+        nombre: usuario.nombre,
+        roles: usuario.id_rol
+      });
 
       const payload = {
         id_persona: usuario.id_persona,
@@ -101,6 +109,8 @@ class AuthController {
         gmail: usuario.gmail,
         id_rol: usuario.id_rol,
       };
+
+      console.log('Payload del token:', payload);
 
       const token = jwt.sign(payload, JWT_SECRET);
 
@@ -134,17 +144,34 @@ class AuthController {
 
   async getSubclassificationsById(req, res) {
     try {
-      const id = parseInt(req.params.id);
-      const getSubclassificationsById = await UserModel.getSubclassificationsById(id);
-      res.json({
+      const id = req.params.id;
+      console.log('=== OBTENIENDO SUBCLASIFICACIONES ===');
+      console.log('ID solicitado:', id);
+      
+      const subclassifications = await UserModel.getSubclassificationsById(id);
+      console.log('Resultado de la consulta:', JSON.stringify(subclassifications, null, 2));
+      
+      // Si es el ID de roles, mostrar el contenido completo de id_objeto
+      if (id === '3') {
+        console.log('=== DETALLE DE PERMISOS POR ROL ===');
+        subclassifications.forEach(rol => {
+          if (rol.adicional && rol.adicional.id_objeto) {
+            console.log(`Rol ${rol.nombre} (ID: ${rol.id}):`, {
+              permisos: rol.adicional.id_objeto
+            });
+          }
+        });
+      }
+      
+      return res.json({
         success: true,
-        data: getSubclassificationsById
+        data: subclassifications
       });
     } catch (error) {
-      console.error("Error en authcontroller: ", error.message);
-      res.status(500).json({ 
+      console.error('Error en getSubclassificationsById:', error);
+      return res.status(500).json({
         success: false,
-        error: "Error al buscar subclasificacion." 
+        message: error.message
       });
     }
   }

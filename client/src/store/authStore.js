@@ -8,7 +8,7 @@ import {
    } from '../api/auth.api';
 
 
-export const useAuthStore = create((set) => ({ 
+export const useAuthStore = create((set, get) => ({ 
   generos: [],
   roles: [],
   preguntas: [],
@@ -16,6 +16,7 @@ export const useAuthStore = create((set) => ({
   error: null,
   successMessage: null,
   isAuthenticated: !!localStorage.getItem('token'), 
+  permisosUsuario: [], // Array de IDs de objetos permitidos
 
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
@@ -67,6 +68,12 @@ export const useAuthStore = create((set) => ({
       const response = await login(userAuth);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Guardar los roles del usuario en localStorage
+      const rolesUsuario = response.data.user.id_rol.id_rol;
+      console.log('Roles del usuario al iniciar sesión:', rolesUsuario);
+      localStorage.setItem('userRoles', JSON.stringify(rolesUsuario));
+      
       set({
         loading: false,
         successMessage: `¡Bienvenido ${response.data.user.nombre} ${response.data.user.apellido}!`,
@@ -95,6 +102,76 @@ export const useAuthStore = create((set) => ({
 
   // Limpiar mensajes
   clearMessages: () => set({ error: null, successMessage: null }),
+
+  // Cargar permisos del usuario
+  cargarPermisosUsuario: async (rolesUsuario) => {
+    try {
+      set({ loading: true });
+      
+      console.log('=== CARGANDO PERMISOS ===');
+      console.log('Roles del usuario recibidos:', rolesUsuario);
+      
+      // Obtener todos los roles
+      const rolesResponse = await getSubclassificationsById(CLASSIFICATION_IDS.ROLES);
+      const todosLosRoles = rolesResponse.data.data;
+      console.log('Todos los roles disponibles:', todosLosRoles);
+
+      // Filtrar solo los roles que tiene el usuario
+      const rolesDelUsuario = todosLosRoles.filter(rol => 
+        rolesUsuario.includes(rol.id.toString())
+      );
+      console.log('Roles del usuario filtrados:', rolesDelUsuario);
+
+      // Extraer todos los objetos permitidos de los roles del usuario
+      const objetosPermitidos = rolesDelUsuario.reduce((acc, rol) => {
+        console.log('Procesando rol:', rol.nombre);
+        console.log('Adicional del rol:', rol.adicional);
+        if (rol.adicional && rol.adicional.id_objeto) {
+          console.log('Objetos permitidos en este rol:', rol.adicional.id_objeto);
+          // Convertir todos los IDs a números para mantener consistencia
+          const objetosNumericos = rol.adicional.id_objeto.map(id => Number(id));
+          return [...acc, ...objetosNumericos];
+        }
+        return acc;
+      }, []);
+
+      // Eliminar duplicados
+      const objetosUnicos = [...new Set(objetosPermitidos)];
+      console.log('Objetos permitidos finales (sin duplicados):', objetosUnicos);
+
+      set({ 
+        permisosUsuario: objetosUnicos,
+        loading: false 
+      });
+
+      return objetosUnicos;
+    } catch (error) {
+      console.error('Error al cargar permisos:', error);
+      set({ 
+        loading: false, 
+        error: 'Error al cargar los permisos del usuario.' 
+      });
+      return [];
+    }
+  },
+
+  // Verificar si el usuario tiene acceso a un objeto específico
+  tienePermiso: (idObjeto) => {
+    const { permisosUsuario } = get();
+    console.log('=== VERIFICANDO PERMISO ===');
+    console.log('ID del objeto a verificar:', idObjeto);
+    console.log('Permisos actuales del usuario:', permisosUsuario);
+    // Asegurar que el ID del objeto sea un número
+    const idObjetoNumerico = Number(idObjeto);
+    console.log('¿Tiene permiso?:', permisosUsuario.includes(idObjetoNumerico));
+    return permisosUsuario.includes(idObjetoNumerico);
+  },
+
+  // Verificar si el usuario tiene acceso a varios objetos
+  tienePermisos: (idsObjetos) => {
+    const { permisosUsuario } = get();
+    return idsObjetos.every(id => permisosUsuario.includes(id));
+  },
 }));
 
 export default useAuthStore;

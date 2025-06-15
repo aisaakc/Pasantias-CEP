@@ -1,10 +1,9 @@
 import { create } from 'zustand';  
-import { 
-   getParentClassifications,
- 
-  
-   create as createClasificacionAPI,
-   update as updateClasificacionAPI,
+import {
+
+    getParentClassifications,
+    create as createClasificacionAPI,
+    update as updateClasificacionAPI,
     getAllClasificaciones,
     deleteClasificacion,
     getAllSubclasificaciones,
@@ -109,9 +108,6 @@ export const useClasificacionStore = create((set, get) => ({
       throw error;
     }
   },
-
-  // Obtener clasificación en contexto
-  
 
   // Operaciones de escritura
   createClasificacion: async (data) => {

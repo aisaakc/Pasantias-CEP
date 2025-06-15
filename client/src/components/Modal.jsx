@@ -5,6 +5,8 @@ import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
 import { getSubclassificationsById } from '../api/auth.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
+import useAuthStore from '../store/authStore';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, 
@@ -29,6 +31,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     getClasificacion
   } = useClasificacionStore();
 
+  const { tienePermiso } = useAuthStore();
+
   const [clasificaciones, setClasificaciones] = useState([]);
   const [parentClasificacion, setParentClasificacion] = useState(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -47,7 +51,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     type_id: editData?.type_id || parentInfo?.type_id || '',
     parent_id: editData?.parent_id || parentId || '',
     orden: editData?.orden || "",
-    permisos: editData?.permisos || ''
+    permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : ''
   };
 
   // Función de validación personalizada
@@ -141,9 +145,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       };
 
       // Format permissions as an object with id_objeto array for roles
-      if (values.type_id === '3') {
+      if (Number(values.type_id) === CLASSIFICATION_IDS.ROLES) {
         const permisosArray = values.permisos ? values.permisos.split(',').map(p => parseInt(p.trim())) : [];
-        dataToSend.permisos = { id_objeto: permisosArray };
+        dataToSend.adicional = { id_objeto: permisosArray };
       }
 
       if (editData) {
@@ -180,6 +184,24 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   };
 
+  // Definir los campos del formulario
+  const formFields = [
+    { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
+    { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
+    { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
+  ];
+
+  // Agregar el campo orden solo si el usuario tiene el permiso
+  if (tienePermiso(CLASSIFICATION_IDS.CMP_ORDEN)) {
+    formFields.push({ 
+      name: 'orden', 
+      icon: faLayerGroup, 
+      label: 'Orden', 
+      type: 'number', 
+      className: 'appearance-none' 
+    });
+  }
+
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
@@ -192,7 +214,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       />
       
       <div 
-        className={`relative w-full max-w-xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 ${
+        className={`relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 ${
           animationClass
         } flex flex-col max-h-[90vh]`}
       >
@@ -229,12 +251,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
           >
             {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => (
               <Form className="p-6 space-y-5">
-                {[
-                  { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
-                  { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
-                  { name: 'orden', icon: faLayerGroup, label: 'Orden', type: 'number', className: 'appearance-none' },
-                  { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
-                ].map((field, index) => (
+                {formFields.map((field, index) => (
                   <div 
                     key={field.name}
                     className={`transform transition-all duration-300 animate-fade-slide-up`}
@@ -362,8 +379,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   </div>
                 ))}
 
-                {/* Permisos */}
-                {values.type_id === '3' && (
+                {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && (
                   <div 
                     className="transform transition-all duration-300 animate-fade-slide-up"
                     style={{ animationDelay: '400ms' }}
@@ -376,15 +392,21 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                       {permisos.map((permiso) => (
                         <label 
                           key={permiso.id}
-                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200"
+                          className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
                         >
                           <input
                             type="checkbox"
                             checked={values.permisos ? values.permisos.split(',').includes(permiso.id.toString()) : false}
-                            onChange={() => handlePermisosChange(permiso.id, setFieldValue, values.permisos)}
-                            className="form-checkbox h-5 w-5 text-blue-600"
+                            onChange={() => {
+                              const currentPermisos = values.permisos ? values.permisos.split(',').map(p => p.trim()) : [];
+                              const newPermisos = currentPermisos.includes(permiso.id.toString())
+                                ? currentPermisos.filter(id => id !== permiso.id.toString())
+                                : [...currentPermisos, permiso.id.toString()];
+                              setFieldValue('permisos', newPermisos.join(','));
+                            }}
+                            className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
                           />
-                          <span className="text-gray-700">
+                          <span className="text-gray-700 text-sm leading-tight">
                             {permiso.nombre}
                           </span>
                         </label>

@@ -12,7 +12,7 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { parentClasifications, fetchParentClasifications } = useClasificacionStore();
-  const { permisosUsuario, cargarPermisosUsuario, tienePermiso } = useAuthStore();
+  const { permisosUsuario, cargarPermisosUsuario, tienePermiso, filtrarClasificacionesPorPermiso } = useAuthStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   useEffect(() => {
@@ -61,6 +61,7 @@ export default function Sidebar() {
   const puedeAccederConfiguracion = tienePermiso(CLASSIFICATION_IDS.MN_CONFIGURACION);
   const puedeAccederCursos = tienePermiso(CLASSIFICATION_IDS.MN_CURSO);
   const puedeAccederRoles = tienePermiso(CLASSIFICATION_IDS.MN_ROLES);
+  const puedeAccederPDF = tienePermiso(CLASSIFICATION_IDS.MN_PDF);
 
   console.log('=== VERIFICACIÓN DE ACCESO ===');
   console.log('Permisos actuales del usuario:', permisosUsuario);
@@ -68,6 +69,7 @@ export default function Sidebar() {
   console.log('¿Puede acceder a Configuración?:', puedeAccederConfiguracion);
   console.log('¿Puede acceder a Cursos?:', puedeAccederCursos);
   console.log('¿Puede acceder a Roles?:', puedeAccederRoles);
+  console.log('¿Puede acceder a PDF?:', puedeAccederPDF);
 
   return (
     <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30">
@@ -79,6 +81,56 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-3">
+        {puedeAccederCursos && (
+          <Link
+            to="/dashboard/cursos"
+            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
+              location.pathname === '/dashboard/cursos'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
+            }`}
+          >
+            {cursosClasificacion ? (
+              <FontAwesomeIcon icon={iconos[cursosClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
+            ) : (
+              <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
+            )}
+            <span className="font-medium">Cursos</span>
+          </Link>
+        )}
+
+        {puedeAccederRoles && (
+          <Link
+            to="/dashboard/roles"
+            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
+              location.pathname === '/dashboard/roles'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
+            }`}
+          >
+            {rolesClasificacion ? (
+              <FontAwesomeIcon icon={iconos[rolesClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
+            ) : (
+              <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
+            )}
+            <span className="font-medium">Roles</span>
+          </Link>
+        )}
+
+        {!puedeAccederPDF && (
+          <Link
+            to="/dashboard/prueba"
+            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
+              location.pathname === '/dashboard/prueba'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
+            }`}
+          >
+            <FontAwesomeIcon icon={iconos.faFilePdf} className="w-5 h-5" />
+            <span className="font-medium">Generar PDF</span>
+          </Link>
+        )}
+
         {puedeAccederConfiguracion && (
           <div className="relative">
             <button
@@ -109,7 +161,7 @@ export default function Sidebar() {
             }`}>
               <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
                 <div className="divide-y divide-gray-700/30">
-                  {parentClasifications.map((clasificacion) => {
+                  {filtrarClasificacionesPorPermiso(parentClasifications).map((clasificacion) => {
                     const Icon = iconos[clasificacion.nicono] || iconos.faFile;
                     const active = isActive(clasificacion.id_clasificacion);
 
@@ -161,54 +213,6 @@ export default function Sidebar() {
             </div>
           </div>
         )}
-
-        {puedeAccederCursos && (
-          <Link
-            to="/dashboard/cursos"
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
-              location.pathname === '/dashboard/cursos'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
-            }`}
-          >
-            {cursosClasificacion ? (
-              <FontAwesomeIcon icon={iconos[cursosClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
-            ) : (
-              <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
-            )}
-            <span className="font-medium">Cursos</span>
-          </Link>
-        )}
-
-        {puedeAccederRoles && (
-          <Link
-            to="/dashboard/roles"
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
-              location.pathname === '/dashboard/roles'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
-            }`}
-          >
-            {rolesClasificacion ? (
-              <FontAwesomeIcon icon={iconos[rolesClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
-            ) : (
-              <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
-            )}
-            <span className="font-medium">Roles</span>
-          </Link>
-        )}
-
-        <Link
-          to="/dashboard/prueba"
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
-            location.pathname === '/dashboard/prueba'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-              : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
-          }`}
-        >
-          <FontAwesomeIcon icon={iconos.faFilePdf} className="w-5 h-5" />
-          <span className="font-medium">Generar PDF</span>
-        </Link>
       </nav>
     </aside>
   );

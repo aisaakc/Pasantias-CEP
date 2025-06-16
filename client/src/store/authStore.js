@@ -172,6 +172,37 @@ export const useAuthStore = create((set, get) => ({
     const { permisosUsuario } = get();
     return idsObjetos.every(id => permisosUsuario.includes(id));
   },
+
+  // Verificar si se debe mostrar una clasificación basada en los permisos
+  debeMostrarClasificacion: (clasificacion) => {
+    const { tienePermiso } = get();
+    
+    // Mapeo de IDs de clasificación a sus permisos correspondientes
+    const permisosPorClasificacion = {
+      [CLASSIFICATION_IDS.GENEROS]: CLASSIFICATION_IDS.CF_GENEROS,
+      [CLASSIFICATION_IDS.ESTADOS]: CLASSIFICATION_IDS.CF_ESTADOS,
+      [CLASSIFICATION_IDS.MUNICIPIOS]: CLASSIFICATION_IDS.CF_MUNICIPIOS,
+      [CLASSIFICATION_IDS.PARROQUIAS]: CLASSIFICATION_IDS.CF_PARROQUIAS,
+      [CLASSIFICATION_IDS.ICONOS]: CLASSIFICATION_IDS.CF_ICONOS,
+      [CLASSIFICATION_IDS.OBJETOS]: CLASSIFICATION_IDS.CF_OBJETOS,
+      [CLASSIFICATION_IDS.PREGUNTAS]: CLASSIFICATION_IDS.CF_PREGUNTA,
+      [CLASSIFICATION_IDS.ROLES]: CLASSIFICATION_IDS.CF_ROL
+    };
+
+    // Si la clasificación tiene un permiso asociado y el usuario lo tiene, no mostrarla
+    const permisoAsociado = permisosPorClasificacion[clasificacion.id_clasificacion];
+    if (permisoAsociado && tienePermiso(permisoAsociado)) {
+      return false;
+    }
+
+    // Por defecto, mostrar la clasificación si no tiene type_id
+    return clasificacion.type_id === null;
+  },
+
+  // Filtrar clasificaciones basadas en los permisos del usuario
+  filtrarClasificacionesPorPermiso: (clasificaciones) => {
+    return clasificaciones.filter(clasificacion => get().debeMostrarClasificacion(clasificacion));
+  }
 }));
 
 export default useAuthStore;

@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import useClasificacionStore from '../../store/clasificacionStore';
+import useAuthStore from '../../store/authStore';
+import { CLASSIFICATION_IDS } from '../../config/classificationIds';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { decodeId, decodeParentId, encodeId, encodeParentId } from '../../utils/hashUtils';
@@ -10,14 +12,12 @@ import { toast } from 'sonner';
 import { getParentHierarchy } from '../../api/clasificacion.api';
 
 // Componente memoizado para la fila de la tabla
-const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, searchText }) => {
+const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, searchText, puedeVerOrden }) => {
   const iconName = sub.nicono || 'faFile';
   const Icon = iconos[iconName] || iconos.faFile;
 
   // Función para resaltar el texto coincidente
   const highlightText = (text, searchText) => {
-
-    // descomentar el true
     if (true || !searchText || !text) return text;
     
     const regex = new RegExp(`(${searchText})`, 'gi');
@@ -45,7 +45,9 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, sea
           className="text-blue-600 transform hover:scale-125 transition-all duration-300" 
         />
       </td>
-      <td className="py-4 px-6 text-center text-gray-600">{sub.orden || 0}</td>
+      {puedeVerOrden && (
+        <td className="py-4 px-6 text-center text-gray-600">{sub.orden || 0}</td>
+      )}
       <td className="py-4 px-6">
         <div className="flex justify-center space-x-4">
           <button 
@@ -76,7 +78,7 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, sea
 });
 
 // Componente memoizado para el encabezado de la tabla
-const TableHeader = React.memo(({ ordenAscendente, onSort, onSortOrden, onSortDescripcion }) => (
+const TableHeader = React.memo(({ ordenAscendente, onSort, onSortOrden, onSortDescripcion, puedeVerOrden }) => (
   <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
     <th 
       className="py-4 px-6 text-left text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
@@ -103,18 +105,20 @@ const TableHeader = React.memo(({ ordenAscendente, onSort, onSortOrden, onSortDe
       </div>
     </th>
     <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white">Ícono</th>
-    <th 
-      className="py-4 px-6 text-center text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
-      onClick={onSortOrden}
-    >
-      <div className="flex items-center justify-center space-x-2 text-white">
-        <span>Orden</span>
-        <FontAwesomeIcon 
-          icon={ordenAscendente ? iconos.faSortNumericDown : iconos.faSortNumericUp}
-          className="transform group-hover:scale-110 transition-all duration-300"
-        />
-      </div>
-    </th>
+    {puedeVerOrden && (
+      <th 
+        className="py-4 px-6 text-center text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
+        onClick={onSortOrden}
+      >
+        <div className="flex items-center justify-center space-x-2 text-white">
+          <span>Orden</span>
+          <FontAwesomeIcon 
+            icon={ordenAscendente ? iconos.faSortNumericDown : iconos.faSortNumericUp}
+            className="transform group-hover:scale-110 transition-all duration-300"
+          />
+        </div>
+      </th>
+    )}
     <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white">Acciones</th>
   </tr>
 ));
@@ -188,6 +192,10 @@ export default function Tipos() {
     allClasificaciones,
     getClasificacionById
   } = useClasificacionStore();
+  const { tienePermiso } = useAuthStore();
+
+  // Verificar si el usuario puede ver la columna de orden
+  const puedeVerOrden = !tienePermiso(CLASSIFICATION_IDS.CMP_ORDEN);
 
   // Memoize parent classification data
   const parentClasificacionData = useMemo(() => {
@@ -612,6 +620,7 @@ export default function Tipos() {
                     onSort={cambiarOrden} 
                     onSortOrden={cambiarOrdenPorOrden}
                     onSortDescripcion={cambiarOrdenPorDescripcion}
+                    puedeVerOrden={puedeVerOrden}
                   />
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -624,6 +633,7 @@ export default function Tipos() {
                         onDelete={handleDelete}
                         onNavigate={handleNavigate}
                         searchText={busqueda}
+                        puedeVerOrden={puedeVerOrden}
                       />
                     ))
                   ) : (

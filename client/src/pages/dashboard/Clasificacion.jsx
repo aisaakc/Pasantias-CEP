@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import useClasificacionStore from '../../store/clasificacionStore';
+import useAuthStore from '../../store/authStore';
+import { CLASSIFICATION_IDS } from '../../config/classificationIds';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
@@ -16,11 +18,15 @@ export default function Clasificacion() {
     loading, 
     error 
   } = useClasificacionStore();
+  const { tienePermiso, debeMostrarClasificacion } = useAuthStore();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [deleteData, setDeleteData] = useState(null);
+
+  // Verificar si el usuario puede agregar configuraciones
+  const puedeAgregar = tienePermiso(CLASSIFICATION_IDS.CF_AGREGAR);
 
   useEffect(() => {
     fetchParentClasifications();
@@ -113,19 +119,21 @@ export default function Clasificacion() {
               <div className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></div>
             </span>
           </h1>
-          <button
-            onClick={openModal}
-            className="bg-blue-600 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-blue-900">
-            <FontAwesomeIcon icon={iconos.faPlus} />
-            <span>Agregar</span>
-          </button>
+          {!puedeAgregar && (
+            <button
+              onClick={openModal}
+              className="bg-blue-600 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-blue-900">
+              <FontAwesomeIcon icon={iconos.faPlus} />
+              <span>Agregar</span>
+            </button>
+          )}
         </div>
 
         {/* Grid de clasificaciones */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {parentClasifications && parentClasifications.length > 0 ? (
             parentClasifications
-              .filter(clasificacion => clasificacion.type_id === null )
+              .filter(clasificacion => debeMostrarClasificacion(clasificacion))
               .map((clasificacion, index) => {
               const Icon = iconos[clasificacion.nicono] || iconos.faFile;
               return (

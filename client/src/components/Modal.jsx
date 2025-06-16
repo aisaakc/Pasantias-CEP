@@ -191,14 +191,14 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
   ];
 
-  // Agregar el campo orden solo si el usuario tiene el permiso
-  if (tienePermiso(CLASSIFICATION_IDS.CMP_ORDEN)) {
+  // Agregar el campo orden solo si el usuario NO tiene el permiso CMP_ORDEN
+  if (!tienePermiso(CLASSIFICATION_IDS.CMP_ORDEN)) {
     formFields.push({ 
       name: 'orden', 
       icon: faLayerGroup, 
       label: 'Orden', 
       type: 'number', 
-      className: 'appearance-none' 
+      className: 'appearance-none'
     });
   }
 
@@ -364,11 +364,14 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                         type={field.type}
                         name={field.name}
                         placeholder={`${field.label}...`}
+                        disabled={field.disabled}
                         className={`w-full px-4 py-3 rounded-lg border ${
                           touched[field.name] && errors[field.name] 
                             ? 'border-red-300 focus:ring-red-500' 
                             : 'border-gray-200 focus:ring-blue-500'
-                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 ${field.className || ''}`}
+                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 ${
+                          field.disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                        } ${field.className || ''}`}
                       />
                     )}
                     <ErrorMessage

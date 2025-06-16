@@ -27,7 +27,7 @@
     "puppeteer": "^22.4.1",
     "resend": "^4.5.1",
     "smtp-client": "^0.4.0",
-    "smtp-connection": "^3.2.0"
+    "smtp-connection": "^4.0.2"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2"

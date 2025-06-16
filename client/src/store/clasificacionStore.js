@@ -9,6 +9,7 @@ import {
     getAllSubclasificaciones,
 
     } from '../api/clasificacion.api';
+import { getAllCursosById } from '../api/curso.api';
 
 
 export const useClasificacionStore = create((set, get) => ({
@@ -17,6 +18,7 @@ export const useClasificacionStore = create((set, get) => ({
   subClasificaciones: [],      
   clasificacionHijos: [],      
   allClasificaciones: [],      
+  programas: [], // Nuevo estado para los programas
   loading: false,              
   error: null,                 
   currentClasificacion: null,  // Nuevo estado para almacenar la clasificación actual
@@ -26,6 +28,32 @@ export const useClasificacionStore = create((set, get) => ({
   getClasificacionById: (id) => {
     const { allClasificaciones } = get();
     return allClasificaciones.find(c => c.id_clasificacion === id) || null;
+  },
+
+  // Obtener programas
+  fetchProgramas: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getAllCursosById(4);
+      if (response.data && response.data.success) {
+        set({
+          programas: response.data.data || [],
+          loading: false,
+        });
+      } else {
+        set({
+          programas: [],
+          loading: false,
+        });
+      }
+    } catch (error) {
+      console.error("Error al obtener programas:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener los programas.',
+        programas: []
+      });
+    }
   },
 
   // Operaciones de lectura

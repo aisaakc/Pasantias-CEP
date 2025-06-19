@@ -7,7 +7,6 @@ import {
    getSubclassificationsById
    } from '../api/auth.api';
 
-
 export const useAuthStore = create((set, get) => ({ 
   generos: [],
   roles: [],
@@ -16,7 +15,8 @@ export const useAuthStore = create((set, get) => ({
   error: null,
   successMessage: null,
   isAuthenticated: !!localStorage.getItem('token'), 
-  permisosUsuario: [], // Array de IDs de objetos permitidos
+  permisosUsuario: [], 
+  clasificacionesUsuario: [], 
 
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
@@ -28,8 +28,6 @@ export const useAuthStore = create((set, get) => ({
         getSubclassificationsById(CLASSIFICATION_IDS.GENEROS),
         getSubclassificationsById(CLASSIFICATION_IDS.ROLES)
       ]);
-
-
 
       set({
         preguntas: preguntasResponse.data.data,
@@ -71,8 +69,12 @@ export const useAuthStore = create((set, get) => ({
       
       // Guardar los roles del usuario en localStorage
       const rolesUsuario = response.data.user.id_rol.id_rol;
-      console.log('Roles del usuario al iniciar sesión:', rolesUsuario);
+      // console.log('Roles del usuario al iniciar sesión:', rolesUsuario);
       localStorage.setItem('userRoles', JSON.stringify(rolesUsuario));
+      
+      // Cargar automáticamente los permisos del usuario después del login
+      const rolesUsuarioFormateados = rolesUsuario.map(rol => rol.toString());
+      const permisos = await get().cargarPermisosUsuario(rolesUsuarioFormateados);
       
       set({
         loading: false,
@@ -103,105 +105,282 @@ export const useAuthStore = create((set, get) => ({
   // Limpiar mensajes
   clearMessages: () => set({ error: null, successMessage: null }),
 
+  // Inicializar permisos si el usuario ya está autenticado
+  inicializarPermisos: async () => {
+    const { isAuthenticated } = get();
+    if (isAuthenticated) {
+      
+      const rolesUsuario = JSON.parse(localStorage.getItem('userRoles') || '[]');
+      
+      if (rolesUsuario && rolesUsuario.length > 0) {
+        const rolesUsuarioFormateados = rolesUsuario.map(rol => rol.toString());
+        const permisos = await get().cargarPermisosUsuario(rolesUsuarioFormateados);
+
+        return permisos;
+      } else {
+        console.log('No se encontraron roles del usuario en localStorage');
+        return { objetos: [], clasificaciones: [] };
+      }
+    } else {
+      console.log('Usuario no autenticado, no se inicializan permisos');
+      return { objetos: [], clasificaciones: [] };
+    }
+  },
+
   // Cargar permisos del usuario
   cargarPermisosUsuario: async (rolesUsuario) => {
     try {
       set({ loading: true });
       
-      console.log('=== CARGANDO PERMISOS ===');
-      console.log('Roles del usuario recibidos:', rolesUsuario);
-      
       // Obtener todos los roles
       const rolesResponse = await getSubclassificationsById(CLASSIFICATION_IDS.ROLES);
       const todosLosRoles = rolesResponse.data.data;
-      console.log('Todos los roles disponibles:', todosLosRoles);
 
       // Filtrar solo los roles que tiene el usuario
       const rolesDelUsuario = todosLosRoles.filter(rol => 
         rolesUsuario.includes(rol.id.toString())
       );
-      console.log('Roles del usuario filtrados:', rolesDelUsuario);
-
+ 
       // Extraer todos los objetos permitidos de los roles del usuario
       const objetosPermitidos = rolesDelUsuario.reduce((acc, rol) => {
-        console.log('Procesando rol:', rol.nombre);
-        console.log('Adicional del rol:', rol.adicional);
+       
         if (rol.adicional && rol.adicional.id_objeto) {
-          console.log('Objetos permitidos en este rol:', rol.adicional.id_objeto);
-          // Convertir todos los IDs a números para mantener consistencia
+          
           const objetosNumericos = rol.adicional.id_objeto.map(id => Number(id));
           return [...acc, ...objetosNumericos];
         }
         return acc;
       }, []);
 
+      // Extraer todas las clasificaciones permitidas de los roles del usuario
+      const clasificacionesPermitidas = rolesDelUsuario.reduce((acc, rol) => {
+      
+        if (rol.adicional && rol.adicional.id_clasificacion) {
+    
+          const clasificacionesNumericas = rol.adicional.id_clasificacion.map(id => Number(id));
+          
+          return [...acc, ...clasificacionesNumericas];
+        }
+  
+        return acc;
+      }, []);
+
       // Eliminar duplicados
       const objetosUnicos = [...new Set(objetosPermitidos)];
-      console.log('Objetos permitidos finales (sin duplicados):', objetosUnicos);
-
+      const clasificacionesUnicas = [...new Set(clasificacionesPermitidas)];
+       
       set({ 
         permisosUsuario: objetosUnicos,
+        clasificacionesUsuario: clasificacionesUnicas,
         loading: false 
       });
 
-      return objetosUnicos;
+
+      return { objetos: objetosUnicos, clasificaciones: clasificacionesUnicas };
     } catch (error) {
       console.error('Error al cargar permisos:', error);
       set({ 
         loading: false, 
         error: 'Error al cargar los permisos del usuario.' 
       });
-      return [];
+      return { objetos: [], clasificaciones: [] };
     }
   },
 
   // Verificar si el usuario tiene acceso a un objeto específico
   tienePermiso: (idObjeto) => {
-    const { permisosUsuario } = get();
-    console.log('=== VERIFICANDO PERMISO ===');
-    console.log('ID del objeto a verificar:', idObjeto);
-    console.log('Permisos actuales del usuario:', permisosUsuario);
+    const { permisosUsuario, isAuthenticated } = get();
+    
+    // Si el usuario no está autenticado, no tiene permisos
+    if (!isAuthenticated) {
+      console.log('Usuario no autenticado, sin permisos');
+      return false;
+    }
+    
+    // Si no hay permisos cargados, no tiene permisos
+    if (!permisosUsuario || !Array.isArray(permisosUsuario) || permisosUsuario.length === 0) {
+      console.log('No hay permisos cargados o permisos inválidos');
+      return false;
+    }
+    
+    // Validar que el idObjeto sea válido
+    if (idObjeto === null || idObjeto === undefined) {
+    
+      return false;
+    }
+    
     // Asegurar que el ID del objeto sea un número
     const idObjetoNumerico = Number(idObjeto);
-    console.log('¿Tiene permiso?:', permisosUsuario.includes(idObjetoNumerico));
+    
+    // Verificar que la conversión fue exitosa
+    if (isNaN(idObjetoNumerico)) {
+    
+      return false;
+    }
+    
     return permisosUsuario.includes(idObjetoNumerico);
   },
 
   // Verificar si el usuario tiene acceso a varios objetos
   tienePermisos: (idsObjetos) => {
-    const { permisosUsuario } = get();
-    return idsObjetos.every(id => permisosUsuario.includes(id));
-  },
-
-  // Verificar si se debe mostrar una clasificación basada en los permisos
-  debeMostrarClasificacion: (clasificacion) => {
-    const { tienePermiso } = get();
+    const { permisosUsuario, isAuthenticated } = get();
     
-    // Mapeo de IDs de clasificación a sus permisos correspondientes
-    const permisosPorClasificacion = {
-      [CLASSIFICATION_IDS.GENEROS]: CLASSIFICATION_IDS.CF_GENEROS,
-      [CLASSIFICATION_IDS.ESTADOS]: CLASSIFICATION_IDS.CF_ESTADOS,
-      [CLASSIFICATION_IDS.MUNICIPIOS]: CLASSIFICATION_IDS.CF_MUNICIPIOS,
-      [CLASSIFICATION_IDS.PARROQUIAS]: CLASSIFICATION_IDS.CF_PARROQUIAS,
-      [CLASSIFICATION_IDS.ICONOS]: CLASSIFICATION_IDS.CF_ICONOS,
-      [CLASSIFICATION_IDS.OBJETOS]: CLASSIFICATION_IDS.CF_OBJETOS,
-      [CLASSIFICATION_IDS.PREGUNTAS]: CLASSIFICATION_IDS.CF_PREGUNTA,
-      [CLASSIFICATION_IDS.ROLES]: CLASSIFICATION_IDS.CF_ROL
-    };
-
-    // Si la clasificación tiene un permiso asociado y el usuario lo tiene, no mostrarla
-    const permisoAsociado = permisosPorClasificacion[clasificacion.id_clasificacion];
-    if (permisoAsociado && tienePermiso(permisoAsociado)) {
+    // Si el usuario no está autenticado, no tiene permisos
+    if (!isAuthenticated) {
+      console.log('Usuario no autenticado, sin permisos múltiples');
       return false;
     }
+    
+    // Si no hay permisos cargados, no tiene permisos
+    if (!permisosUsuario || !Array.isArray(permisosUsuario) || permisosUsuario.length === 0) {
+      
+      return false;
+    }
+    
+    // Validar que idsObjetos sea un array válido
+    if (!Array.isArray(idsObjetos) || idsObjetos.length === 0) {
+  
+      return false;
+    }
+    
+    // Verificar que todos los IDs sean válidos y convertirlos a números
+    const idsNumericos = idsObjetos.map(id => {
+      const idNumerico = Number(id);
+      if (isNaN(idNumerico)) {
+        console.log('ID de objeto no es un número válido:', id);
+        return null;
+      }
+      return idNumerico;
+    });
+    
+    // Si algún ID no es válido, retornar false
+    if (idsNumericos.includes(null)) {
+      console.log('Algunos IDs de objetos no son válidos');
+      return false;
+    }
+        
+    const tieneTodosLosPermisos = idsNumericos.every(id => permisosUsuario.includes(id));
 
-    // Por defecto, mostrar la clasificación si no tiene type_id
-    return clasificacion.type_id === null;
+    
+    return tieneTodosLosPermisos;
   },
 
   // Filtrar clasificaciones basadas en los permisos del usuario
   filtrarClasificacionesPorPermiso: (clasificaciones) => {
-    return clasificaciones.filter(clasificacion => get().debeMostrarClasificacion(clasificacion));
+    const { tienePermisoClasificacion } = get();
+        
+    const clasificacionesFiltradas = clasificaciones.filter(clasificacion => {
+     
+      
+      // Verificar si el usuario tiene permiso para esta clasificación específica
+      const tienePermisoDirecto = tienePermisoClasificacion(clasificacion.id_clasificacion);
+      
+      if (tienePermisoDirecto) {
+        // console.log(`✅ Usuario tiene permiso directo para clasificación: ${clasificacion.nombre}`);
+        return true;
+      } else {
+        console.log(`❌ Usuario NO tiene permiso directo para clasificación: ${clasificacion.nombre}`);
+        return false;
+      }
+    });
+    
+    // console.log('Clasificaciones filtradas finales:', clasificacionesFiltradas.map(c => c.nombre));
+    return clasificacionesFiltradas;
+  },
+
+  // Verificar si el usuario tiene acceso a una clasificación específica
+  tienePermisoClasificacion: (idClasificacion) => {
+    const { clasificacionesUsuario, isAuthenticated } = get();
+    
+    // Si el usuario no está autenticado, no tiene permisos
+    if (!isAuthenticated) {
+      console.log('Usuario no autenticado, sin permisos de clasificación');
+      return false;
+    }
+    
+    // Si no hay clasificaciones cargadas, no tiene permisos
+    if (!clasificacionesUsuario || !Array.isArray(clasificacionesUsuario) || clasificacionesUsuario.length === 0) {
+      console.log('No hay clasificaciones cargadas o clasificaciones inválidas');
+      return false;
+    }
+    
+    // Validar que el idClasificacion sea válido
+    if (idClasificacion === null || idClasificacion === undefined) {
+      console.log('ID de clasificación inválido:', idClasificacion);
+      return false;
+    }
+    
+    // Asegurar que el ID de la clasificación sea un número
+    const idClasificacionNumerico = Number(idClasificacion);
+    
+    // Verificar que la conversión fue exitosa
+    if (isNaN(idClasificacionNumerico)) {
+      console.log('ID de clasificación no es un número válido:', idClasificacion);
+      return false;
+    }
+    
+    return clasificacionesUsuario.includes(idClasificacionNumerico);
+  },
+
+  // Obtener información detallada sobre los permisos del usuario
+  obtenerInfoPermisos: () => {
+    const { permisosUsuario, clasificacionesUsuario, isAuthenticated, loading } = get();
+    
+    return {
+      isAuthenticated,
+      loading,
+      totalPermisos: permisosUsuario ? permisosUsuario.length : 0,
+      totalClasificaciones: clasificacionesUsuario ? clasificacionesUsuario.length : 0,
+      permisos: permisosUsuario || [],
+      clasificaciones: clasificacionesUsuario || [],
+      tienePermisos: permisosUsuario && permisosUsuario.length > 0,
+      tieneClasificaciones: clasificacionesUsuario && clasificacionesUsuario.length > 0,
+      estado: isAuthenticated ? 'autenticado' : 'no_autenticado'
+    };
+  },
+
+  // Verificar si el usuario tiene al menos uno de los permisos especificados
+  tieneAlgunPermiso: (idsObjetos) => {
+    const { permisosUsuario, isAuthenticated } = get();
+    
+    // Si el usuario no está autenticado, no tiene permisos
+    if (!isAuthenticated) {
+      console.log('Usuario no autenticado, sin permisos');
+      return false;
+    }
+    
+    // Si no hay permisos cargados, no tiene permisos
+    if (!permisosUsuario || !Array.isArray(permisosUsuario) || permisosUsuario.length === 0) {
+      console.log('No hay permisos cargados');
+      return false;
+    }
+    
+    // Validar que idsObjetos sea un array válido
+    if (!Array.isArray(idsObjetos) || idsObjetos.length === 0) {
+      console.log('Array de IDs de objetos inválido:', idsObjetos);
+      return false;
+    }
+    
+    // Verificar que todos los IDs sean válidos y convertirlos a números
+    const idsNumericos = idsObjetos.map(id => {
+      const idNumerico = Number(id);
+      if (isNaN(idNumerico)) {
+        console.log('ID de objeto no es un número válido:', id);
+        return null;
+      }
+      return idNumerico;
+    });
+    
+    // Si algún ID no es válido, retornar false
+    if (idsNumericos.includes(null)) {
+      console.log('Algunos IDs de objetos no son válidos');
+      return false;
+    }
+    
+    const tieneAlgunPermiso = idsNumericos.some(id => permisosUsuario.includes(id));
+    console.log('¿Tiene algún permiso?:', tieneAlgunPermiso);
+    
+    return tieneAlgunPermiso;
   }
 }));
 

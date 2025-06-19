@@ -120,4 +120,5 @@ class PersonaController {
     }
 
 };
+
 export default new PersonaController();

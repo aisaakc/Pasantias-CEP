@@ -8,6 +8,7 @@ import {
     deleteClasificacion,
     getAllSubclasificaciones,
 
+
     } from '../api/clasificacion.api';
 import { getAllCursosById } from '../api/curso.api';
 
@@ -19,6 +20,7 @@ export const useClasificacionStore = create((set, get) => ({
   clasificacionHijos: [],      
   allClasificaciones: [],      
   programas: [], // Nuevo estado para los programas
+
   loading: false,              
   error: null,                 
   currentClasificacion: null,  // Nuevo estado para almacenar la clasificación actual
@@ -58,15 +60,22 @@ export const useClasificacionStore = create((set, get) => ({
 
   // Operaciones de lectura
   fetchParentClasifications: async () => {
+   
     set({ loading: true, error: null });
     try {
+      
       const response = await getParentClassifications();
+ 
+      
       // Filtrar solo las clasificaciones principales (type_id === null)
       const parentClasifications = response.data.filter(c => c.type_id === null);
+     
+      
       set({
         parentClasifications: parentClasifications,
         loading: false,
       });
+     
     } catch (error) {
       console.error("Error en fetchParentClasifications:", error);
       set({
@@ -116,24 +125,22 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  // Obtener una clasificación específica
-  fetchClasificacionById: async (id) => {
+  // Obtener todos los íconos
+  fetchIcons: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await getClasificacion(id);
+      const response = await getAllIcons();
       set({
-        currentClasificacion: response.data,
+        icons: response.data,
         loading: false,
       });
-      return response.data;
     } catch (error) {
-      console.error("Error al obtener la clasificación:", error);
+      console.error("Error al obtener los íconos:", error);
       set({
         loading: false,
-        error: 'Error al obtener la clasificación.',
-        currentClasificacion: null
+        error: 'Error al obtener los íconos.',
+        icons: []
       });
-      throw error;
     }
   },
 

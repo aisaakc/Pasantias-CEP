@@ -16,4 +16,4 @@ export const updateHorariosCurso = async (id, horarios) =>
    axios.put(`http://localhost:3001/api/cursos/${id}/horarios`, { horarios });
 
 export const getFacilitadores = async () =>
-   axios.get('http://localhost:3001/api/facilitadores')
+   axios.get('http://localhost:3001/api/facilitadores');

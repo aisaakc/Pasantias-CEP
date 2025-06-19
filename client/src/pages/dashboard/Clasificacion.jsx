@@ -18,7 +18,7 @@ export default function Clasificacion() {
     loading, 
     error 
   } = useClasificacionStore();
-  const { tienePermiso, debeMostrarClasificacion } = useAuthStore();
+  const { tienePermiso, filtrarClasificacionesPorPermiso } = useAuthStore();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -132,8 +132,7 @@ export default function Clasificacion() {
         {/* Grid de clasificaciones */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {parentClasifications && parentClasifications.length > 0 ? (
-            parentClasifications
-              .filter(clasificacion => debeMostrarClasificacion(clasificacion))
+            filtrarClasificacionesPorPermiso(parentClasifications)
               .map((clasificacion, index) => {
               const Icon = iconos[clasificacion.nicono] || iconos.faFile;
               return (
@@ -203,7 +202,12 @@ export default function Clasificacion() {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} editData={editData} />
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={closeModal} 
+        editData={editData} 
+        parentInfo={null}
+      />
       <DeleteModal 
         isOpen={isDeleteModalOpen} 
         onClose={closeDeleteModal} 

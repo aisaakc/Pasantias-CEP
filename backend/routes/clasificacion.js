@@ -17,4 +17,6 @@ router.delete('/clasificaciones/delete/:id', Clasificacion.deleteClasificacion);
 
 router.get('/clasificaciones/parents/:id_clasificacion', Clasificacion.getParentHierarchy); 
 
+router.get('/clasificaciones/icons', Clasificacion.getAllIcons);
+
 export default router;

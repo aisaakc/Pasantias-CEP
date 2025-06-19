@@ -145,23 +145,8 @@ class AuthController {
   async getSubclassificationsById(req, res) {
     try {
       const id = req.params.id;
-      console.log('=== OBTENIENDO SUBCLASIFICACIONES ===');
-      console.log('ID solicitado:', id);
       
       const subclassifications = await UserModel.getSubclassificationsById(id);
-      console.log('Resultado de la consulta:', JSON.stringify(subclassifications, null, 2));
-      
-      // Si es el ID de roles, mostrar el contenido completo de id_objeto
-      if (id === '3') {
-        console.log('=== DETALLE DE PERMISOS POR ROL ===');
-        subclassifications.forEach(rol => {
-          if (rol.adicional && rol.adicional.id_objeto) {
-            console.log(`Rol ${rol.nombre} (ID: ${rol.id}):`, {
-              permisos: rol.adicional.id_objeto
-            });
-          }
-        });
-      }
       
       return res.json({
         success: true,

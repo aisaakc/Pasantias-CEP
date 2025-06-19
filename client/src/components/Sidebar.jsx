@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield, FaFilePdf } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield, FaFilePdf, FaFileAlt } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import useClasificacionStore from '../store/clasificacionStore';
 import useAuthStore from '../store/authStore';
@@ -12,32 +12,62 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { parentClasifications, fetchParentClasifications } = useClasificacionStore();
-  const { permisosUsuario, cargarPermisosUsuario, tienePermiso, filtrarClasificacionesPorPermiso } = useAuthStore();
+  const { 
+    permisosUsuario, 
+    tienePermiso, 
+    filtrarClasificacionesPorPermiso,
+    obtenerInfoPermisos,
+    tienePermisoClasificacion,
+    inicializarPermisos
+  } = useAuthStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   useEffect(() => {
     fetchParentClasifications();
-    // Cargar permisos del usuario al montar el componente
-    const rolesUsuario = JSON.parse(localStorage.getItem('userRoles') || '[]');
-    console.log('=== DEBUG PERMISOS ===');
-    console.log('Roles del usuario:', rolesUsuario);
-    console.log('Tipo de rolesUsuario:', typeof rolesUsuario, Array.isArray(rolesUsuario));
-    
-    // Asegurarnos de que rolesUsuario sea un array de strings
-    const rolesUsuarioFormateados = rolesUsuario.map(rol => rol.toString());
-    console.log('Roles formateados:', rolesUsuarioFormateados);
-    
-    cargarPermisosUsuario(rolesUsuarioFormateados).then(permisos => {
-      console.log('Permisos cargados (desde promesa):', permisos);
+    // Inicializar permisos del usuario al montar el componente
+   
+    inicializarPermisos().then(permisos => {
+      console.log('Permisos inicializados desde Sidebar:', permisos);
+      console.log('Clasificaciones cargadas:', permisos.clasificaciones);
     });
     
     console.log('Permisos cargados (desde estado):', permisosUsuario);
     console.log('IDs de clasificación:', {
       MN_CONFIGURACION: CLASSIFICATION_IDS.MN_CONFIGURACION,
       MN_CURSO: CLASSIFICATION_IDS.MN_CURSO,
-      MN_ROLES: CLASSIFICATION_IDS.MN_ROLES
+      MN_ROLES: CLASSIFICATION_IDS.MN_ROLES,
+      MN_DOCUMENTOS: CLASSIFICATION_IDS.MN_DOCUMENTOS
     });
-  }, [fetchParentClasifications, cargarPermisosUsuario]);
+  }, [fetchParentClasifications, inicializarPermisos]);
+
+  // Efecto separado para el filtrado que se ejecuta cuando las clasificaciones están disponibles
+  useEffect(() => {
+    if (parentClasifications.length > 0) {
+      // console.log('=== CLASIFICACIONES CARGADAS, EJECUTANDO FILTRADO ===');
+      // console.log('Total de clasificaciones padre cargadas:', parentClasifications.length);
+      console.log('Clasificaciones padre:', parentClasifications.map(c => ({
+        id: c.id_clasificacion,
+        nombre: c.nombre,
+        icono: c.nicono,
+        type_id: c.type_id
+      })));
+      
+      // Verificar que los permisos estén cargados antes de filtrar
+      const infoPermisos = obtenerInfoPermisos();
+      // console.log('Información de permisos antes del filtrado:', infoPermisos);
+      
+      if (infoPermisos.tieneClasificaciones) {
+        const clasificacionesFiltradas = filtrarClasificacionesPorPermiso(parentClasifications);
+        // console.log('=== RESULTADO DEL FILTRADO ===');
+        console.log('Clasificaciones filtradas:', clasificacionesFiltradas.length);
+        console.log('Clasificaciones filtradas:', clasificacionesFiltradas.map(c => c.nombre));
+      } else {
+        console.log('⚠️ No hay clasificaciones cargadas en los permisos, mostrando todas');
+      }
+    // } else {
+    //   console.log('⚠️ No hay clasificaciones padre cargadas aún');
+    }
+  }, [parentClasifications, filtrarClasificacionesPorPermiso, obtenerInfoPermisos]);
 
   const isActive = (id) => {
     const encodedId = encodeId(id);
@@ -53,23 +83,44 @@ export default function Sidebar() {
     return <FontAwesomeIcon icon={Icon} className="w-5 h-5" />;
   };
 
-  // Encontrar las clasificaciones específicas para Cursos y Roles
+  // Encontrar las clasificaciones específicas para Cursos, Roles y Documentos
   const cursosClasificacion = parentClasifications.find(c => c.nombre === 'Cursos');
   const rolesClasificacion = parentClasifications.find(c => c.nombre === 'Rol');
+  const documentosClasificacion = parentClasifications.find(c => c.nombre === 'Tipo de Documento');
 
-  // Verificar permisos para cada sección
+  // Obtener información de permisos del contexto del authStore
+  const infoPermisos = obtenerInfoPermisos();
+
+  // Verificar permisos usando el contexto interno del authStore
   const puedeAccederConfiguracion = tienePermiso(CLASSIFICATION_IDS.MN_CONFIGURACION);
   const puedeAccederCursos = tienePermiso(CLASSIFICATION_IDS.MN_CURSO);
   const puedeAccederRoles = tienePermiso(CLASSIFICATION_IDS.MN_ROLES);
   const puedeAccederPDF = tienePermiso(CLASSIFICATION_IDS.MN_PDF);
+  const puedeAccederDocumentos = tienePermiso(CLASSIFICATION_IDS.MN_DOCUMENTOS);
 
-  console.log('=== VERIFICACIÓN DE ACCESO ===');
-  console.log('Permisos actuales del usuario:', permisosUsuario);
-  console.log('Tipo de permisosUsuario:', typeof permisosUsuario, Array.isArray(permisosUsuario));
-  console.log('¿Puede acceder a Configuración?:', puedeAccederConfiguracion);
-  console.log('¿Puede acceder a Cursos?:', puedeAccederCursos);
-  console.log('¿Puede acceder a Roles?:', puedeAccederRoles);
-  console.log('¿Puede acceder a PDF?:', puedeAccederPDF);
+  // Función helper para renderizar enlaces del sidebar
+  const renderSidebarLink = (to, label, icon, canAccess, clasificacion = null) => {
+    if (!canAccess) return null;
+
+    const isActive = location.pathname === to;
+    const iconToUse = clasificacion ? 
+      (iconos[clasificacion.nicono] || icon) : 
+      icon;
+
+    return (
+      <Link
+        to={to}
+        className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
+          isActive
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
+            : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
+        }`}
+      >
+        <FontAwesomeIcon icon={iconToUse} className="w-5 h-5" />
+        <span className="font-medium">{label}</span>
+      </Link>
+    );
+  };
 
   return (
     <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30">
@@ -82,54 +133,18 @@ export default function Sidebar() {
 
       <nav className="flex flex-col gap-3">
         {puedeAccederCursos && (
-          <Link
-            to="/dashboard/cursos"
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
-              location.pathname === '/dashboard/cursos'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
-            }`}
-          >
-            {cursosClasificacion ? (
-              <FontAwesomeIcon icon={iconos[cursosClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
-            ) : (
-              <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
-            )}
-            <span className="font-medium">Cursos</span>
-          </Link>
+          renderSidebarLink('/dashboard/cursos', 'Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion)
+        )}
+
+        {puedeAccederDocumentos && (
+          renderSidebarLink('/dashboard/documentos', 'Documentos', iconos.faFileAlt, puedeAccederDocumentos, documentosClasificacion)
         )}
 
         {puedeAccederRoles && (
-          <Link
-            to="/dashboard/roles"
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
-              location.pathname === '/dashboard/roles'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
-            }`}
-          >
-            {rolesClasificacion ? (
-              <FontAwesomeIcon icon={iconos[rolesClasificacion.nicono] || iconos.faFile} className="w-5 h-5" />
-            ) : (
-              <FontAwesomeIcon icon={iconos.faFile} className="w-5 h-5" />
-            )}
-            <span className="font-medium">Roles</span>
-          </Link>
+          renderSidebarLink('/dashboard/roles', 'Roles', iconos.faFile, puedeAccederRoles, rolesClasificacion)
         )}
 
-        {!puedeAccederPDF && (
-          <Link
-            to="/dashboard/prueba"
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
-              location.pathname === '/dashboard/prueba'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
-            }`}
-          >
-            <FontAwesomeIcon icon={iconos.faFilePdf} className="w-5 h-5" />
-            <span className="font-medium">Generar PDF</span>
-          </Link>
-        )}
+        {renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF)}
 
         {puedeAccederConfiguracion && (
           <div className="relative">

@@ -15,6 +15,9 @@ export const getAllSubclasificaciones = async (id, id_parent) =>
 export const getAllClasificaciones = async () =>
     axios.get('http://localhost:3001/api/clasificaciones/all');
 
+export const getAllIcons = async () => 
+    axios.get('http://localhost:3001/api/clasificaciones/icons');
+
 export const deleteClasificacion = async (id) =>
     axios.delete(`http://localhost:3001/api/clasificaciones/delete/${id}`);
 

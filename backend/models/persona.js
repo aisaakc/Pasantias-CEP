@@ -25,9 +25,6 @@ class UserModel {
   }
   async getSubclassificationsById(id) {
     try {
-      console.log('=== OBTENIENDO SUBCLASIFICACIONES ===');
-      console.log('ID solicitado:', id);
-
       let query = `
         SELECT 
           c.id_clasificacion AS id, 
@@ -38,7 +35,6 @@ class UserModel {
       `;
 
       const result = await pool.query(query, [id]);
-      console.log('Resultado de la consulta:', result.rows);
 
       return result.rows;
     } catch (error) {

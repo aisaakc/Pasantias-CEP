@@ -62,6 +62,16 @@ class clasificacionController {
           res.status(500).json({ error: "Error interno del servidor al obtener todas las clasificaciones." });
         }
     }
+
+    async getAllIcons(req, res) {
+        try {
+            const icons = await Clasificacion.getAllIcons();
+            res.status(200).json(icons);
+        } catch (error) {
+            console.error("Error en clasificacionController.getAllIcons:", error.message);
+            res.status(500).json({ error: "Error interno del servidor al obtener todos los íconos." });
+        }
+    }
       
     async updateClasificacion(req, res) {
         const id = parseInt(req.params.id);

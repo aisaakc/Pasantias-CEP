@@ -14,6 +14,7 @@ import useAuthStore from "./store/authStore";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Prueba from "./pages/dashboard/prueba";
+import Documentos from "./pages/dashboard/documentos";
 import { Toaster } from 'sonner';
 import React from 'react';
 
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="roles" element={<Roles />} />
           <Route path="horario-curso/:id" element={<HorarioCurso /> } />
           <Route path="prueba" element={<Prueba/>} />  
+          <Route path="documentos" element={<Documentos/>} />
 
         </Route>
       </Routes>

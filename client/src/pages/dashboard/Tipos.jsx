@@ -18,7 +18,7 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, sea
 
   // Función para resaltar el texto coincidente
   const highlightText = (text, searchText) => {
-    if (true || !searchText || !text) return text;
+    if (!searchText || !text) return text;
     
     const regex = new RegExp(`(${searchText})`, 'gi');
     const parts = text.split(regex);
@@ -193,9 +193,42 @@ export default function Tipos() {
     getClasificacionById
   } = useClasificacionStore();
   const { tienePermiso } = useAuthStore();
+  const { tienePermisoClasificacion } = useAuthStore();
 
   // Verificar si el usuario puede ver la columna de orden
   const puedeVerOrden = !tienePermiso(CLASSIFICATION_IDS.CMP_ORDEN);
+
+  // Función para verificar si el usuario puede acceder a una subclasificación
+  const puedeAccederSubclasificacion = useCallback((subclasificacion) => {
+    // Si el usuario tiene permiso directo para la clasificación padre, puede acceder
+    if (tienePermisoClasificacion(subclasificacion.type_id)) {
+      return true;
+    }
+    
+    // Si no tiene permiso directo, verificar si tiene permiso para el objeto correspondiente
+    // Mapear el type_id a los IDs de objetos correspondientes
+    const mapeoTypeIdAObjeto = {
+      [CLASSIFICATION_IDS.GENEROS]: CLASSIFICATION_IDS.CF_GENEROS,
+      [CLASSIFICATION_IDS.ESTADOS]: CLASSIFICATION_IDS.CF_ESTADOS,
+      [CLASSIFICATION_IDS.MUNICIPIOS]: CLASSIFICATION_IDS.CF_MUNICIPIOS,
+      [CLASSIFICATION_IDS.PARROQUIAS]: CLASSIFICATION_IDS.CF_PARROQUIAS,
+      [CLASSIFICATION_IDS.ICONOS]: CLASSIFICATION_IDS.CF_ICONOS,
+      [CLASSIFICATION_IDS.OBJETOS]: CLASSIFICATION_IDS.CF_OBJETOS,
+      [CLASSIFICATION_IDS.PREGUNTAS]: CLASSIFICATION_IDS.CF_PREGUNTA,
+      [CLASSIFICATION_IDS.ROLES]: CLASSIFICATION_IDS.CF_ROL
+    };
+    
+    const objetoCorrespondiente = mapeoTypeIdAObjeto[subclasificacion.type_id];
+    if (objetoCorrespondiente) {
+      const tienePermisoObjeto = tienePermiso(objetoCorrespondiente);
+      if (tienePermisoObjeto) {
+        return true;
+      }
+    }
+    
+    // Por defecto, permitir acceso si no hay restricciones específicas
+    return true;
+  }, [tienePermisoClasificacion, tienePermiso]);
 
   // Memoize parent classification data
   const parentClasificacionData = useMemo(() => {
@@ -207,39 +240,22 @@ export default function Tipos() {
 
   // Memoize parent name and icon
   const parentInfo = useMemo(() => {
-    console.log('=== DEBUG parentInfo ===');
-    console.log('subClasificaciones:', subClasificaciones);
-    console.log('realParentId:', realParentId);
-    console.log('realId:', realId);
-
     if (subClasificaciones.length > 0) {
-      console.log('Primera subclasificación:', {
-        type_nombre: subClasificaciones[0].type_nombre,
-        type_icono: subClasificaciones[0].type_icono,
-        parent_nombre: subClasificaciones[0].parent_nombre,
-        parent_icono: subClasificaciones[0].parent_icono
-      });
-
       // Si no hay parent_id, usar la información del tipo
       if (!realParentId) {
-        console.log('No hay parent_id, usando información del tipo');
         const info = {
           nombre: subClasificaciones[0].type_nombre || 'Cargando...',
           icono: subClasificaciones[0].type_icono
         };
-        console.log('Info del tipo:', info);
         return info;
       }
       // Si hay parent_id, usar la información del padre
-      console.log('Hay parent_id, usando información del padre');
       const info = {
         nombre: subClasificaciones[0].parent_nombre,
         icono: subClasificaciones[0].parent_icono
       };
-      console.log('Info del padre:', info);
       return info;
     }
-    console.log('No hay subclasificaciones, retornando estado de carga');
     return {
       nombre: 'Cargando Subclasificaciones...',
       icono: null
@@ -249,15 +265,9 @@ export default function Tipos() {
   // Single effect for initial data loading
   useEffect(() => {
     const loadInitialData = async () => {
-      console.log('=== DEBUG loadInitialData ===');
-      console.log('Cargando datos con:', { realId, realParentId });
-      
       if (realId) {
-        console.log('Llamando a fetchSubClasificaciones');
-        const response = await fetchSubClasificaciones(realId, realParentId);
-        console.log('Respuesta de fetchSubClasificaciones:', response);
+        await fetchSubClasificaciones(realId, realParentId);
       }
-      console.log('Llamando a fetchAllClasificaciones');
       await fetchAllClasificaciones();
     };
     
@@ -265,11 +275,8 @@ export default function Tipos() {
   }, [realId, realParentId, fetchSubClasificaciones, fetchAllClasificaciones]);
 
   useEffect(() => {
-    console.log('=== DEBUG useEffect nombreClasificacion ===');
-    console.log('realId:', realId);
     if (realId) {
       const clasificacion = getClasificacionById(realId);
-      console.log('Clasificación encontrada:', clasificacion);
       if (clasificacion) {
         setNombreClasificacion(clasificacion.nombre);
       }
@@ -284,19 +291,6 @@ export default function Tipos() {
       
       // Solo mostrar si son diferentes a las últimas mostradas
       if (currentSubclasificacionesStr !== lastSubclasificacionesRef.current) {
-        console.log('=== SUBCLASIFICACIONES ACTUALES ===');
-        console.log('ID Padre:', realId);
-        console.log('Subclasificaciones:', subClasificaciones.map(sub => ({
-          id: sub.id_clasificacion,
-          nombre: sub.nombre,
-          descripcion: sub.descripcion,
-          tipo: sub.type_id,
-          icono: sub.nicono,
-          parent_id: sub.parent_id,
-          parent_nombre: sub.parent_nombre,
-          parent_icono: sub.parent_icono
-        })));
-        
         // Actualizar la referencia con las subclasificaciones actuales
         lastSubclasificacionesRef.current = currentSubclasificacionesStr;
       }
@@ -305,8 +299,13 @@ export default function Tipos() {
 
   // Memoizar las subclasificaciones filtradas
   const subClasificacionesFiltradas = useMemo(() => {
-    // Primero filtramos por búsqueda
-    const filtradas = subClasificaciones.filter(sub => 
+    // Primero filtramos por permisos
+    const filtradasPorPermisos = subClasificaciones.filter(sub => 
+      puedeAccederSubclasificacion(sub)
+    );
+
+    // Luego filtramos por búsqueda
+    const filtradas = filtradasPorPermisos.filter(sub => 
       sub.nombre.toLowerCase().includes(busqueda.toLowerCase())
     );
 
@@ -337,7 +336,7 @@ export default function Tipos() {
       const ordenB = b.orden || 0;
       return ordenAscendente ? ordenA - ordenB : ordenB - ordenA;
     });
-  }, [subClasificaciones, busqueda, ordenAscendente, ordenarPorNombre, ordenarPorDescripcion]);
+  }, [subClasificaciones, busqueda, ordenAscendente, ordenarPorNombre, ordenarPorDescripcion, puedeAccederSubclasificacion]);
 
   // Función para cambiar el orden por nombre
   const cambiarOrden = () => {
@@ -365,12 +364,6 @@ export default function Tipos() {
 
   // Memoize breadcrumb items
   const breadcrumbItems = useMemo(() => {
-    console.log('=== DEBUG breadcrumbItems ===');
-    console.log('parentInfo:', parentInfo);
-    console.log('nombreClasificacion:', nombreClasificacion);
-    console.log('realId:', realId);
-    console.log('realParentId:', realParentId);
-
     const items = [
       {
         label: 'Inicio',
@@ -395,7 +388,6 @@ export default function Tipos() {
       });
     }
 
-    console.log('Items finales del breadcrumb:', items);
     return items;
   }, [parentInfo, nombreClasificacion, realId, realParentId, selectedClasificacion]);
 
@@ -413,8 +405,11 @@ export default function Tipos() {
   const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
     setSelectedClasificacion(null);
-    fetchSubClasificaciones(realId);
-  }, [fetchSubClasificaciones, realId]);
+    // Refrescar datos después de cerrar el modal
+    if (realId) {
+      fetchSubClasificaciones(realId, realParentId);
+    }
+  }, [realId, realParentId, fetchSubClasificaciones]);
 
   // Memoizar las funciones de callback
   const handleDelete = useCallback((clasificacion) => {
@@ -423,20 +418,6 @@ export default function Tipos() {
   }, []);
 
   const handleNavigate = useCallback((sub) => {
-    // Asegurarnos de que los datos se muestren en la consola
-    console.log('=== DATOS DE LA SUBCLASIFICACIÓN ===');
-    console.log('Navegando a subclasificación:', {
-      id: sub.id_clasificacion,
-      nombre: sub.nombre,
-      descripcion: sub.descripcion,
-      tipo: sub.type_id,
-      icono: sub.nicono,
-      parent_id: sub.parent_id,
-      parent_nombre: sub.parent_nombre,
-      parent_icono: sub.parent_icono,
-      datos_completos: sub
-    });
-
     navigate(`/dashboard/tipos/${encodeId(sub.type_id)}/${encodeParentId(sub.id_clasificacion)}`);
   }, [navigate]);
 
@@ -455,10 +436,22 @@ export default function Tipos() {
 
   // Efecto para mostrar las subclasificaciones filtradas solo cuando cambie la búsqueda o el orden
   useEffect(() => {
-    if (busqueda !== '' || ordenAscendente !== true) {
-      console.log('Subclasificaciones filtradas:', subClasificacionesFiltradas);
-    }
+    // Log silencioso para debugging si es necesario
+    // if (busqueda !== '' || ordenAscendente !== true) {
+    //   console.log('Subclasificaciones filtradas:', subClasificacionesFiltradas);
+    // }
   }, [busqueda, ordenAscendente, subClasificacionesFiltradas]);
+
+  // Efecto para mostrar información sobre el filtrado por permisos
+  useEffect(() => {
+    if (subClasificaciones.length > 0) {
+      const totalSubclasificaciones = subClasificaciones.length;
+      const subclasificacionesConPermiso = subClasificaciones.filter(sub => puedeAccederSubclasificacion(sub)).length;
+      
+      // Log silencioso para debugging si es necesario
+      // console.log(`Total: ${totalSubclasificaciones}, Con permiso: ${subclasificacionesConPermiso}`);
+    }
+  }, [subClasificaciones, puedeAccederSubclasificacion]);
 
   // Add this new useEffect to fetch parent hierarchy
   useEffect(() => {
@@ -467,25 +460,16 @@ export default function Tipos() {
         // Si tenemos parent_id, usamos ese, si no, usamos el type_id
         const idToUse = realParentId || realId;
         if (!idToUse) {
-          console.log('No hay ID para obtener la jerarquía');
           return;
         }
 
-        console.log('=== DEBUG fetchParentHierarchy ===');
-        console.log('ID a usar:', idToUse);
-        console.log('realParentId:', realParentId);
-        console.log('realId:', realId);
-
         const encodedId = encodeId(idToUse);
-        console.log('ID codificado:', encodedId);
         
         const response = await getParentHierarchy(encodedId);
-        console.log('Respuesta de getParentHierarchy:', response);
         
         if (response.data && Array.isArray(response.data)) {
           // Invertir el orden del array para mostrar desde el más jerárquico
           const reversedData = [...response.data].reverse();
-          console.log('Datos invertidos:', reversedData);
           setParentHierarchy(reversedData);
         } else {
           console.error('Respuesta inválida del servidor:', response.data);
@@ -670,7 +654,7 @@ export default function Tipos() {
           editData={selectedClasificacion}
           parentId={realId}
           parentInfo={{
-            type_id: realId,
+            type_id: Number(realId) === CLASSIFICATION_IDS.ROLES ? CLASSIFICATION_IDS.ROLES : (selectedClasificacion?.type_id || realId),
             nombre: parentInfo.nombre,
             icono: parentInfo.icono
           }}

@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import useClasificacionStore from '../store/clasificacionStore';
-import { getAllClasificaciones } from '../api/clasificacion.api';
+import { getAllClasificaciones, getAllIcons } from '../api/clasificacion.api';
 import { getSubclassificationsById } from '../api/auth.api';
-import { getAllCursosById } from '../api/curso.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import useAuthStore from '../store/authStore';
 
@@ -37,6 +36,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const { tienePermiso } = useAuthStore();
 
   const [clasificaciones, setClasificaciones] = useState([]);
+  const [icons, setIcons] = useState([]);
   const [parentClasificacion, setParentClasificacion] = useState(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
@@ -45,6 +45,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [selectPosition, setSelectPosition] = useState({ top: 0, left: 0, width: 0 });
   const [permisos, setPermisos] = useState([]);
   const [selectedPermisos, setSelectedPermisos] = useState([]);
+  const [clasificacionesPrincipales, setClasificacionesPrincipales] = useState([]);
+  const [selectedClasificaciones, setSelectedClasificaciones] = useState([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -54,8 +57,12 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     type_id: editData?.type_id || parentInfo?.type_id || '',
     parent_id: editData?.parent_id || parentId || '',
     orden: editData?.orden || "",
-    permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : ''
+    permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
+    clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : ''
   };
+
+  // Determinar si es una clasificación principal o subclasificación
+  const isMainClassification = !parentInfo && !editData?.type_id;
 
   // Función de validación personalizada
   const validateForm = (values) => {
@@ -65,83 +72,16 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     } else if (values.nombre.length < 3) {
       errors.nombre = 'El nombre debe tener al menos 3 caracteres';
     }
+    
+    // Validar que se seleccione un programa para cursos
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS && !values.parent_id) {
+      errors.parent_id = 'Debe seleccionar un programa';
+    }
+    
     if (values.orden !== '' && (isNaN(values.orden) || parseInt(values.orden) < 0)) {
       errors.orden = 'El orden debe ser un número positivo';
     }
     return errors;
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => setAnimationClass('animate-modal-in'), 10);
-      fetchClasificaciones();
-      fetchPermisos();
-      // Si es una clasificación de cursos, obtener los programas
-      if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) {
-        fetchProgramas();
-      }
-    } else {
-      setAnimationClass('animate-modal-out');
-      document.body.style.overflow = 'unset';
-      const timeout = setTimeout(() => setShouldRender(false), 300);
-      return () => clearTimeout(timeout);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      clearError();
-    }
-  }, [isOpen, clearError]);
-
-  useEffect(() => {
-    // Encontrar el nombre de la clasificación actual basado en el type_id
-    if (clasificaciones.length > 0) {
-      const clasificacionActual = clasificaciones.find(c => c.id_clasificacion === parseInt(parentInfo?.type_id));
-      if (clasificacionActual) {
-        setNombreClasificacion(clasificacionActual.nombre);
-      }
-    }
-  }, [clasificaciones, parentInfo?.type_id]);
-
-  // Efecto para mostrar el programa seleccionado en la consola
-  useEffect(() => {
-    if (editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) {
-      console.log('Datos de edición:', {
-        editData,
-        parent_id: editData.parent_id,
-        programas
-      });
-    }
-  }, [editData, programas, parentInfo?.type_id]);
-
-  const fetchClasificaciones = async () => {
-    try {
-      const response = await getAllClasificaciones();
-      console.log('Datos recibidos de getAllClasificaciones:', response.data);
-      setClasificaciones(response.data);
-    } catch (err) {
-      console.error('Error al cargar clasificaciones:', err);
-      toast.error('Error al cargar las clasificaciones');
-    }
-  };
-
-  const fetchPermisos = async () => {
-    try {
-      const response = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
-      setPermisos(response.data.data || []);
-      
-      // If editing, set the selected permissions
-      if (editData?.permisos) {
-        const permisosArray = editData.permisos.split(',').map(p => p.trim());
-        setSelectedPermisos(permisosArray);
-      }
-    } catch (err) {
-      console.error('Error al cargar permisos:', err);
-      toast.error('Error al cargar los permisos');
-    }
   };
 
   const handlePermisosChange = (permisoId, setFieldValue, currentPermisos) => {
@@ -158,22 +98,36 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         ...values,
         id_icono: values.id_icono !== '' ? parseInt(values.id_icono) : null,
         type_id: values.type_id ? parseInt(values.type_id) : null,
-        parent_id: editData ? (values.parent_id ? parseInt(values.parent_id) : null) : null,
+        parent_id: values.parent_id ? parseInt(values.parent_id) : null,
         orden: values.orden !== '' ? parseInt(values.orden) : 0
       };
 
-      // Format permissions as an object with id_objeto array for roles
+     
+
+      // Format permissions as an object with id_objeto array and id_clasificacion array for roles
       if (Number(values.type_id) === CLASSIFICATION_IDS.ROLES) {
         const permisosArray = values.permisos ? values.permisos.split(',').map(p => parseInt(p.trim())) : [];
-        dataToSend.adicional = { id_objeto: permisosArray };
+        const clasificacionesArray = values.clasificaciones ? values.clasificaciones.split(',').map(c => parseInt(c.trim())) : [];
+        
+       
+        
+        dataToSend.adicional = { 
+          id_objeto: permisosArray,
+          id_clasificacion: clasificacionesArray
+        };
+        
+        console.log('Objeto adicional final:', dataToSend.adicional);
       }
 
       if (editData) {
         await updateClasificacion(editData.id_clasificacion, dataToSend);
-        toast.success(`Subclasificación "${dataToSend.nombre}" actualizada correctamente`);
+        toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`);
       } else {
         await createClasificacion(dataToSend);
-        toast.success(`Subclasificación "${dataToSend.nombre}" creada correctamente`);
+        const message = isMainClassification 
+          ? `Clasificación principal "${dataToSend.nombre}" creada correctamente`
+          : `Subclasificación "${dataToSend.nombre}" creada correctamente`;
+        toast.success(message);
       }
 
       onClose();
@@ -234,6 +188,115 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     });
   }
 
+  // Función para limpiar el estado del modal
+  const clearModalState = useCallback(() => {
+    setClasificaciones([]);
+    setIcons([]);
+    setPermisos([]);
+    setClasificacionesPrincipales([]);
+    setSelectedPermisos([]);
+    setSelectedClasificaciones([]);
+    setNombreClasificacion('');
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => setAnimationClass('animate-modal-in'), 10);
+      
+      // Solo cargar datos una vez cuando se abre el modal
+      if (!dataLoaded) {
+        // Cargar datos de forma asíncrona
+        const loadData = async () => {
+          try {
+            // Cargar íconos directamente desde la API
+            const iconsResponse = await getAllIcons();
+            setIcons(iconsResponse.data);
+            
+            // Cargar todas las clasificaciones para otros usos
+            const response = await getAllClasificaciones();
+            setClasificaciones(response.data);
+            
+            // Solo cargar permisos y clasificaciones principales si es necesario
+            if (parentInfo || editData?.type_id) {
+              const permisosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
+              setPermisos(permisosResponse.data.data || []);
+              
+              // If editing, set the selected permissions
+              if (editData?.adicional?.id_objeto) {
+                const permisosArray = editData.adicional.id_objeto.map(p => p.toString());
+                setSelectedPermisos(permisosArray);
+              }
+              
+              const principalesResponse = await getAllClasificaciones();
+              const principales = principalesResponse.data.filter(c => c.type_id === null);
+              setClasificacionesPrincipales(principales);
+              
+              // If editing, set the selected classifications
+              if (editData?.adicional?.id_clasificacion) {
+                const clasificacionesArray = editData.adicional.id_clasificacion.map(c => c.toString());
+                setSelectedClasificaciones(clasificacionesArray);
+              }
+            }
+            
+            // Si es una clasificación de cursos, obtener los programas
+            if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) {
+              fetchProgramas();
+            }
+            
+            setDataLoaded(true);
+          } catch (err) {
+            console.error('Error al cargar datos:', err);
+            toast.error('Error al cargar los datos');
+          }
+        };
+        
+        loadData();
+      }
+    } else {
+      // Limpiar estado inmediatamente cuando se cierra
+      clearModalState();
+      setDataLoaded(false);
+      setAnimationClass('animate-modal-out');
+      document.body.style.overflow = 'unset';
+      const timeout = setTimeout(() => {
+        setShouldRender(false);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen, dataLoaded, parentInfo?.type_id, editData?.type_id, editData?.adicional]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      clearError();
+    }
+  }, [isOpen, clearError]);
+
+  // Resetear dataLoaded cuando cambian los props importantes
+  useEffect(() => {
+    if (isOpen) {
+      setDataLoaded(false);
+    }
+  }, [editData?.id_clasificacion, parentInfo?.type_id]);
+
+  useEffect(() => {
+    // Encontrar el nombre de la clasificación actual basado en el type_id
+    if (clasificaciones.length > 0 && parentInfo?.type_id) {
+      const clasificacionActual = clasificaciones.find(c => c.id_clasificacion === parseInt(parentInfo.type_id));
+      if (clasificacionActual) {
+        setNombreClasificacion(clasificacionActual.nombre);
+      }
+    }
+  }, [clasificaciones, parentInfo?.type_id]);
+
+  // Efecto para mostrar el programa seleccionado en la consola
+  useEffect(() => {
+    if (editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) {
+      // Log silencioso para debugging si es necesario
+    }
+  }, [editData, programas, parentInfo?.type_id]);
+
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
@@ -255,7 +318,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {editData ? `Editar ${editData.nombre}` : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
+              {editData ? `Editar ${editData.nombre}` : isMainClassification ? 'Crear Clasificación Principal' : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
               {editData?.nicono && (
                 <FontAwesomeIcon
                   icon={iconos[editData.nicono] || iconos.faFile}
@@ -310,31 +373,102 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                         } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
                       />
                     ) : field.type === 'select' ? (
-                      <Field
-                        as="select"
-                        name={field.name}
-                        className={`w-full px-4 py-3 rounded-lg border ${
-                          touched[field.name] && errors[field.name] 
-                            ? 'border-red-300 focus:ring-red-500' 
-                            : 'border-gray-200 focus:ring-blue-500'
-                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                      >
-                        <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                        {field.name === 'id_icono' && clasificaciones.map((c) => (
-                          <option key={c.id_clasificacion} value={c.id_clasificacion}>
-                            {c.nombre}
-                          </option>
-                        ))}
-                        {field.name === 'parent_id' && programas.map((p) => (
-                          <option 
-                            key={p.id} 
-                            value={p.id}
-                            selected={editData?.parent_id === p.id}
+                      field.name === 'id_icono' ? (
+                        <div className="relative">
+                          <div 
+                            className={`w-full px-4 py-3 rounded-lg border ${
+                              touched[field.name] && errors[field.name] 
+                                ? 'border-red-300 focus:ring-red-500' 
+                                : 'border-gray-200 focus:ring-blue-500'
+                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white cursor-pointer flex items-center justify-between`}
+                            onClick={(e) => handleSelectClick(e, field)}
                           >
-                            {p.nombre}
-                          </option>
-                        ))}
-                      </Field>
+                            <span className="flex items-center">
+                              {values[field.name] && icons && (
+                                <FontAwesomeIcon 
+                                  icon={iconos[icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
+                                  className="text-blue-600 mr-2"
+                                />
+                              )}
+                              <span>
+                                {values[field.name] && icons
+                                  ? icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre 
+                                  : 'Seleccionar ícono'}
+                              </span>
+                            </span>
+                            <FontAwesomeIcon 
+                              icon={faChevronDown} 
+                              className={`text-gray-400 transition-transform duration-200 ${isSelectOpen ? 'transform rotate-180' : ''}`}
+                            />
+                          </div>
+                          <Field
+                            as="select"
+                            name={field.name}
+                            className="hidden"
+                          >
+                            <option value="">Seleccionar ícono</option>
+                            {icons && icons.map((i) => (
+                              <option key={i.id_clasificacion} value={i.id_clasificacion}>
+                                {i.nombre}
+                              </option>
+                            ))}
+                          </Field>
+                          {isSelectOpen && icons && ReactDOM.createPortal(
+                            <div 
+                              className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+                              style={{
+                                top: `${selectPosition.top}px`,
+                                left: `${selectPosition.left}px`,
+                                width: `${selectPosition.width}px`
+                              }}
+                            >
+                              <div className="max-h-60 overflow-y-auto">
+                                {[...icons]
+                                  .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                                  .map((i) => (
+                                    <div
+                                      key={i.id_clasificacion}
+                                      className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const event = { target: { name: field.name, value: i.id_clasificacion } };
+                                        handleChange(event);
+                                        setIsSelectOpen(false);
+                                      }}
+                                    >
+                                      <FontAwesomeIcon 
+                                        icon={iconos[i.nombre] || iconos.faFile} 
+                                        className="text-blue-600 mr-2"
+                                      />
+                                      <span>{i.nombre}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>,
+                            document.body
+                          )}
+                        </div>
+                      ) : (
+                        <Field
+                          as="select"
+                          name={field.name}
+                          className={`w-full px-4 py-3 rounded-lg border ${
+                            touched[field.name] && errors[field.name] 
+                              ? 'border-red-300 focus:ring-red-500' 
+                              : 'border-gray-200 focus:ring-blue-500'
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                        >
+                          <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                          {field.name === 'parent_id' && programas.map((p) => (
+                            <option 
+                              key={p.id} 
+                              value={p.id}
+                            >
+                              {p.nombre}
+                            </option>
+                          ))}
+                        </Field>
+                      )
                     ) : (
                       <Field
                         type={field.type}
@@ -358,14 +492,14 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   </div>
                 ))}
 
-                {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && (
+                {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
                   <div 
                     className="transform transition-all duration-300 animate-fade-slide-up"
                     style={{ animationDelay: '400ms' }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
-                      Permisos
+                      Permisos de Objetos
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {permisos.map((permiso) => (
@@ -393,6 +527,47 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                     </div>
                     <ErrorMessage
                       name="permisos"
+                      component="div"
+                      className="mt-1 text-sm text-red-600"
+                    />
+                  </div>
+                )}
+
+                {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
+                  <div 
+                    className="transform transition-all duration-300 animate-fade-slide-up"
+                    style={{ animationDelay: '500ms' }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
+                      Configuraciones Accesibles
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {clasificacionesPrincipales.map((clasificacion) => (
+                        <label 
+                          key={clasificacion.id_clasificacion}
+                          className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={values.clasificaciones ? values.clasificaciones.split(',').includes(clasificacion.id_clasificacion.toString()) : false}
+                            onChange={() => {
+                              const currentClasificaciones = values.clasificaciones ? values.clasificaciones.split(',').map(c => c.trim()) : [];
+                              const newClasificaciones = currentClasificaciones.includes(clasificacion.id_clasificacion.toString())
+                                ? currentClasificaciones.filter(id => id !== clasificacion.id_clasificacion.toString())
+                                : [...currentClasificaciones, clasificacion.id_clasificacion.toString()];
+                              setFieldValue('clasificaciones', newClasificaciones.join(','));
+                            }}
+                            className="form-checkbox h-4 w-4 text-green-600 mt-1 flex-shrink-0"
+                          />
+                          <span className="text-gray-700 text-sm leading-tight">
+                            Configuración de {clasificacion.nombre}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <ErrorMessage
+                      name="clasificaciones"
                       component="div"
                       className="mt-1 text-sm text-red-600"
                     />

@@ -1,3 +1,5 @@
+import md5 from 'md5';
+
 export function encodeId(id) {
   try {
     if (id === undefined || id === null) {
@@ -51,5 +53,10 @@ export function decodeParentId(encoded) {
     console.error('Error al decodificar parentID:', error);
     return null;
   }
+}
+
+// Hash determinista por id (y salt fijo opcional)
+export function hashDeterministaPorId(id, salt = 'CEP_DOC_SALT') {
+  return md5(String(id) + salt);
 }
   

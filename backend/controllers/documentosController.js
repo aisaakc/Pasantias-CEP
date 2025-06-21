@@ -1,5 +1,5 @@
 import documentosModel from "../models/documentos.js";
-import { hashFileName, isValidFileType } from "../utils/hashUtils.js";
+import { hashFileName, isValidFileType, hashDeterministaPorId, getFileExtension } from "../utils/hashUtils.js";
 import { getFileUrl, getFilePath } from "../middleware/uploadMiddleware.js";
 import fs from 'fs';
 import path from 'path';
@@ -171,7 +171,8 @@ class DocumentosController {
                 id_tipo,
                 fecha_hora,
                 url: finalUrl,
-                descripcion
+                descripcion,
+                tamano: req.file ? req.file.size : null
             });
 
             // Agregar información adicional al resultado
@@ -379,11 +380,16 @@ class DocumentosController {
                 }
             }
 
+            // En updateDocumento, si no se recibe ext en el body, usar el valor anterior de la BD
+            const extValue = req.body.ext !== undefined ? req.body.ext : documentoExistente.ext;
             const documentoActualizado = await documentosModel.update(id, {
                 id_tipo,
                 fecha_hora,
+                nombre: req.body.nombre,
                 url: finalUrl,
-                descripcion
+                descripcion,
+                ext: extValue,
+                tamano: req.file ? req.file.size : null
             });
 
             // Agregar información adicional si se actualizó el archivo
@@ -537,7 +543,7 @@ class DocumentosController {
     // Subir archivo físico
     async uploadDocumento(req, res) {
         try {
-            const { id_tipo, fecha_hora, descripcion } = req.body;
+            const { id_tipo, fecha_hora, descripcion, nombre } = req.body;
 
             // Validaciones básicas
             if (!id_tipo || !fecha_hora || !descripcion) {
@@ -554,32 +560,51 @@ class DocumentosController {
                 });
             }
 
-            // Construir la URL del archivo
-            const fileUrl = getFileUrl(req.file.filename);
+            // Obtener extensión (sin punto, minúsculas)
+            const ext = getFileExtension(req.file.originalname);
+            const extWithDot = ext ? '.' + ext : '';
 
-            const documento = await documentosModel.createDocumet({
+            // LOG: Datos recibidos
+            console.log('--- uploadDocumento LOG ---');
+            console.log('req.file:', req.file);
+            console.log('Campos body:', { id_tipo, fecha_hora, descripcion, nombre });
+            console.log('Extensión:', ext);
+
+            // 1. Guardar registro con el nombre del documento (input del usuario) y extensión
+            let documento = await documentosModel.createDocumet({
                 id_tipo,
                 fecha_hora,
-                url: fileUrl,
-                descripcion
+                nombre, // nombre del input del modal
+                descripcion,
+                ext,
+                tamano: req.file.size // tamaño en bytes
             });
+            console.log('Documento insertado en BD:', documento);
 
-            // Agregar información adicional al resultado
-            const responseData = {
-                ...documento,
-                originalFileName: req.file.originalname,
-                hashedFileName: req.file.filename,
-                fileSize: req.file.size,
-                mimeType: req.file.mimetype
-            };
+            // 2. Generar hash determinista por id
+            const hashedName = hashDeterministaPorId(documento.id_documento) + extWithDot;
+            console.log('Nombre hasheado:', hashedName);
 
+            // 3. Renombrar archivo físico
+            const docsPath = req.file.destination;
+            const oldPath = path.join(docsPath, req.file.filename);
+            const newPath = path.join(docsPath, hashedName);
+            console.log('docsPath:', docsPath);
+            console.log('oldPath:', oldPath);
+            console.log('newPath:', newPath);
+            fs.renameSync(oldPath, newPath);
+            console.log('Archivo renombrado correctamente');
+
+            // 4. No actualizar el campo nombre, solo el archivo físico se renombra
+
+            // 5. Responder
             res.status(201).json({
                 success: true,
-                data: responseData,
+                data: documento,
                 message: "Archivo subido exitosamente"
             });
         } catch (error) {
-            console.error("Error en uploadDocumento controller:", error.message);
+            console.error("Error en uploadDocumento controller:", error);
             res.status(500).json({
                 success: false,
                 message: "Error al subir el archivo",
@@ -611,13 +636,13 @@ class DocumentosController {
             const documentosCreados = [];
 
             for (const file of req.files) {
-                const fileUrl = getFileUrl(file.filename);
-
                 const documento = await documentosModel.createDocumet({
                     id_tipo,
                     fecha_hora,
-                    url: fileUrl,
-                    descripcion: `${descripcion} - ${file.originalname}`
+                    nombre: file.filename,
+                    descripcion: `${descripcion} - ${file.originalname}`,
+                    ext: file.originalname.split('.').pop(),
+                    tamano: file.size
                 });
 
                 documentosCreados.push({
@@ -724,13 +749,24 @@ class DocumentosController {
             }
 
             // Construir nueva URL del archivo
-            const fileUrl = getFileUrl(req.file.filename);
+            const ext = req.file.originalname.split('.').pop().toLowerCase();
+            const extWithDot = ext ? '.' + ext : '';
+            const hashedName = hashDeterministaPorId(id) + extWithDot;
+            const docsPath = req.file.destination;
+            const oldPath = path.join(docsPath, req.file.filename);
+            const newPath = path.join(docsPath, hashedName);
+            fs.renameSync(oldPath, newPath);
+
+            const fileUrl = `/docs/${hashedName}`;
 
             const documentoActualizado = await documentosModel.update(id, {
                 id_tipo,
                 fecha_hora,
+                nombre: req.body.nombre,
+                descripcion,
+                ext,
                 url: fileUrl,
-                descripcion
+                tamano: req.file.size
             });
 
             // Agregar información adicional al resultado

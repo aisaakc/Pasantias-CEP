@@ -18,7 +18,7 @@ export default function NavbarAuth() {
   };
 
   const goToProfile = () => {
-    navigate('/perfil');
+    navigate('/dashboard/perfil');
     setIsOpen(false);
   };
 

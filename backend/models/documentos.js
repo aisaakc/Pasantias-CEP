@@ -4,13 +4,13 @@ class Documentos {
     // Crear un nuevo documento
     async createDocumet(documento) {
         try {
-            const { id_tipo, fecha_hora, url, descripcion } = documento;
+            const { id_tipo, fecha_hora, nombre, descripcion, ext, tamano } = documento;
             const query = `
-                INSERT INTO documentos (id_tipo, fecha_hora, url, descripcion)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO documentos (id_tipo, fecha_hora, nombre, descripcion, ext, tamano)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
             `;
-            const values = [id_tipo, fecha_hora, url, descripcion];
+            const values = [id_tipo, fecha_hora, nombre, descripcion, ext, tamano];
             const result = await pool.query(query, values);
             return result.rows[0];
         } catch (error) {
@@ -54,14 +54,14 @@ class Documentos {
     // Actualizar documento
     async update(id_documento, documento) {
         try {
-            const { id_tipo, fecha_hora, url, descripcion } = documento;
+            const { id_tipo, fecha_hora, nombre, descripcion, ext } = documento;
             const query = `
                 UPDATE documentos 
-                SET id_tipo = $1, fecha_hora = $2, url = $3, descripcion = $4
-                WHERE id_documento = $5
+                SET id_tipo = $1, fecha_hora = $2, nombre = $3, descripcion = $4, ext = $5
+                WHERE id_documento = $6
                 RETURNING *
             `;
-            const values = [id_tipo, fecha_hora, url, descripcion, id_documento];
+            const values = [id_tipo, fecha_hora, nombre, descripcion, ext, id_documento];
             const result = await pool.query(query, values);
             return result.rows[0];
         } catch (error) {

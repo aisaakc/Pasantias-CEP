@@ -245,7 +245,7 @@ class CursoModel {
 
     try {
       const result = await pool.query(query, [CLASSIFICATION_IDS.ROLES_FACILITADORES.toString()]);
-      console.log('Facilitadores obtenidos:', result.rows);
+        // console.log('Facilitadores obtenidos:', result.rows);
       return result.rows;
     } catch (error) {
       console.error("Error en getFacilitadores:", error.message);

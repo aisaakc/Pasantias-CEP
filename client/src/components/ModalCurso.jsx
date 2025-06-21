@@ -265,7 +265,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       />
       
       <div 
-        className={`relative w-full max-w-xl bg-white rounded-2xl shadow-2xl transform transition-all duration-300 ${
+        className={`relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl transform transition-all duration-300 ${
           animationClass
         } flex flex-col max-h-[90vh]`}
       >

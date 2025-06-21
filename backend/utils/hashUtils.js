@@ -33,21 +33,13 @@ export function hashFileName(originalFileName) {
 
 // Función para validar tipos de archivo permitidos
 export function isValidFileType(fileName) {
-    const allowedExtensions = [
-        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-        '.txt', '.rtf', '.odt', '.ods', '.odp', '.csv', '.zip', '.rar',
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.mp4', '.avi',
-        '.mp3', '.wav', '.flv', '.webm'
-    ];
-
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-    return allowedExtensions.includes(extension);
+    return true; // Permitir cualquier tipo de archivo
 }
 
-// Función para obtener la extensión de un archivo
+// Función para obtener la extensión de un archivo (sin punto, minúsculas)
 export function getFileExtension(fileName) {
     const lastDotIndex = fileName.lastIndexOf('.');
-    return lastDotIndex === -1 ? '' : fileName.substring(lastDotIndex).toLowerCase();
+    return lastDotIndex === -1 ? '' : fileName.substring(lastDotIndex + 1).toLowerCase();
 }
 
 // Función para obtener el tipo MIME basado en la extensión
@@ -84,4 +76,9 @@ export function getMimeType(fileName) {
     };
 
     return mimeTypes[extension] || 'application/octet-stream';
+}
+
+// Hash determinista por id (y salt fijo opcional)
+export function hashDeterministaPorId(id, salt = 'CEP_DOC_SALT') {
+    return crypto.createHash('md5').update(String(id) + salt).digest('hex');
 } 

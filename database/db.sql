@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-21 01:44:38
+-- Started on 2025-06-21 03:33:52
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1849,41 +1849,75 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 8008	fa8		\N	\N	27	\N	8008	\N	1
 100129	Fin de Año	31/12	\N	8	100121	100121	\N	\N	0
 100167	Agregar Configuraciones		\N	0	73	\N	\N	\N	0
-100188	PDF	FaFilePdf className="h-5 w-5 text-red-500"	\N	0	100187	100187	\N	\N	0
+100188	PDF	FaFilePdf className="h-5 w-5 text-red-500"	\N	0	100187	\N	\N	\N	0
 100028	Divisas en efectivo ( directamente en caja principal)		\N	\N	100026	100026	\N	\N	0
 100130	Halloween	31/10	\N	10	100121	100121	\N	\N	0
 100147	Cisco Academy		\N	0	4	100152	\N	\N	0
-100189	DOC	FaFileWord className="h-5 w-5 text-blue-500"	\N	0	100187	100187	\N	\N	0
+100189	DOC	FaFileWord className="h-5 w-5 text-blue-500"	\N	0	100187	\N	\N	\N	0
 100131	Carnaval  2025	03/03/25 , 04/03/25	\N	11	100121	100121	\N	\N	0
 100148	Diplomado		\N	0	4	\N	\N	\N	0
 100149	Oficio Tecnológico emergente		\N	0	4	100152	\N	\N	0
 100169	Manejo de Bases de Datos con PostgreSQL		\N	0	5	\N	8488	\N	0
-100190	Prefijos Móvil (Venezuela)		\N	81	\N	\N	9106	\N	0
+100190	Prefijos Telefónicos (Venezuela)		\N	81	\N	\N	9104	\N	0
 100132	Elecciones 2025	25/05/25	\N	9	100121	100121	\N	\N	0
 100150	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		\N	0	5	100147	8438	\N	0
-100191	0412	Digitel	\N	0	100190	100190	\N	\N	0
+100191	0412	Digitel	\N	0	100190	\N	9104	\N	0
 100133	Cisco Academy (Petare)		\N	0	4	100134	\N	\N	0
 100151	Curso Básico de Mantenimiento y Reparación de PC		\N	0	5	100149	9078	\N	0
-100171	Menú de Tipos de Documentos		\N	0	73	73	\N	\N	0
-100192	Día de Todos los Santos	01/11\n	\N	0	100121	100121	\N	\N	0
+100171	Menú de Tipos de Documentos		\N	0	73	\N	\N	\N	0
+100192	Día de Todos los Santos	01/11\n	\N	0	100121	\N	\N	\N	0
 100152	Informática		\N	0	110	201	\N	\N	0
 100134	Informática (Sede Petare)		\N	0	110	202	\N	\N	0
-100193	Día de los Reyes Magos	06/01\n	\N	0	100121	100121	\N	\N	0
-100194	Día de la Divina Pastora	14/01\n	\N	0	100121	100121	\N	\N	0
+100193	Día de los Reyes Magos	06/01\n	\N	0	100121	\N	\N	\N	0
+100194	Día de la Divina Pastora	14/01\n	\N	0	100121	\N	\N	\N	0
 15	Super Administrador		\N	1	3	3	9776	{"id_objeto":[100166,100171,100156,100157,100158,100141,100159,100142,100161,100162,100066,100164,100067,100068,100160],"id_clasificacion":[73,110,4,1,123,124,122,100172,100173,100155,100121,5,200,100050,100026,100059,8,27,100094,3,100174,100178,100179,100181,100187,100190]}	0
-100195	Declaración de la Independencia	19/04	\N	0	100121	100121	\N	\N	0
+100195	Declaración de la Independencia	19/04	\N	0	100121	\N	\N	\N	0
 100154	Campo ORDEN (Clasificacion)		\N	0	73	\N	\N	\N	0
-100196	Día de la Bandera	03/08\n	\N	0	100121	100121	\N	\N	0
+100196	Día de la Bandera	03/08\n	\N	0	100121	\N	\N	\N	0
 100155	Bancos		\N	129	\N	\N	8244	\N	1
-100197	Día de la Guardía Nacional	04/08	\N	0	100121	100121	\N	\N	0
-100198	Día de la Resistencia Indígena	12/10\n	\N	0	100121	100121	\N	\N	0
+100197	Día de la Guardía Nacional	04/08	\N	0	100121	\N	\N	\N	0
+100198	Día de la Resistencia Indígena	12/10\n	\N	0	100121	\N	\N	\N	0
 100140	¿Cuál es tu deporte favorito?		\N	0	8	8	9817	\N	0
+100199	0414	Movistar	\N	0	100190	\N	9104	\N	0
+100201	0416	Movilnet	\N	0	100190	\N	9104	\N	0
 100121	Días Feriados		\N	126	\N	\N	8269	\N	0
 100141	Menú de Cursos		\N	0	73	\N	\N	\N	0
+100200	0424	Movistar	\N	0	100190	\N	9104	\N	0
 100122	Año Nuevo	01/01	\N	1	100121	100121	\N	\N	0
 100142	Menú de Configuración		\N	0	73	\N	\N	\N	0
+100202	0426	Movilnet	\N	0	100190	\N	9104	\N	0
 100123	Batalla de Carabobo	24/06	\N	3	100121	100121	\N	\N	0
 100124	Día Del Trabajador	01/05	\N	2	100121	100121	\N	\N	0
+100204	0212	Distrito Capital (Caracas, El Junquito)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100205	0234	Miranda (Los Teques)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100206	0235	Miranda (Guatire)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100207	0239	Miranda (Guarenas)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100208	0243	Aragua (Maracay)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100209	0241	Carabobo (Valencia)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100210	0251	Lara (Barquisimeto)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100211	0261	Zulia (Maracaibo)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100212	0268	Falcón (Coro, Punto Fijo)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100213	0269	Falcón (Tucacas)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100214	0281	Anzoátegui (Barcelona, Puerto La Cruz)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100215	0285	Bolívar (Ciudad Bolívar)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100216	0286	Bolívar ( Ciudad Guayana)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100217	0295	Nueva Esparta (Isla Margarita)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100218	0276	Táchira (San Cristóbal)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100219	0274	Mérida (Mérida)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100220	0271	Trujillo (Trujillo)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100221	0257	Portuguesa (Guanare)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100222	0258	Cojedes (San Carlos)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100223	0246	Guárico (Calabozo)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100224	0247	Guárico (San Juan de Los Morros)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100225	0291	Monagas (Maturín)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100226	0293	Sucre (Cumaná)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100227	0287	Delta Amacuro (Tucupita)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100228	0282	Amazonas (Puerto Ayacucho)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100229	0247	Apure (San Fernando de Apure)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100230	0273	Barinas (Barinas)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100231	0254	Yaracuy (San Felipe)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100233	0212	La Guaira (La Guaira)	\N	\N	100190	\N	9265	{"mobile": false}	0
+100232	0292	Dependencias Federales	\N	\N	100190	\N	9265	{"mobile": false}	0
 100125	Día de la Independencia	05/07	\N	4	100121	100121	\N	\N	0
 100066	Menú de Roles		\N	0	73	73	\N	\N	0
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	\N	10	200	200	8245	\N	0
@@ -4024,6 +4058,7 @@ COPY public.documentos (id_documento, id_tipo, fecha_hora, nombre, descripcion, 
 30	100102	2025-06-20 03:57:48.901	setup	xd	exe	126882312
 32	100095	2025-06-20 04:28:32.016	musica de ia	xd xd xd\n\n	mp3	3718004
 31	100099	2025-06-20 04:28:43.349	base de datos de tesis	base de datos de tesis	mp4	452096
+33	100099	2025-06-21 06:18:43.87	sadas	asdas	pdf	490704
 \.
 
 
@@ -4056,7 +4091,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100198, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100233, true);
 
 
 --
@@ -4074,7 +4109,7 @@ SELECT pg_catalog.setval('public.cursos_id_curso_seq', 31, true);
 -- Name: documentos_id_documento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.documentos_id_documento_seq', 32, true);
+SELECT pg_catalog.setval('public.documentos_id_documento_seq', 33, true);
 
 
 --
@@ -4317,7 +4352,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-21 01:44:38
+-- Completed on 2025-06-21 03:33:52
 
 --
 -- PostgreSQL database dump complete

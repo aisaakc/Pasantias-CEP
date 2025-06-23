@@ -174,23 +174,6 @@ class Clasificacion {
                 throw protectedError;
             }
 
-            // Si es una clasificación padre (type_id es NULL), verificamos si tiene subclasificaciones
-            if (!clasificacion.type_id) {
-                const subclasificacionesQuery = `
-                    SELECT COUNT(*) 
-                    FROM clasificacion 
-                    WHERE parent_id = $1;
-                `;
-                const subclasificacionesResult = await pool.query(subclasificacionesQuery, [id]);
-                const tieneSubclasificaciones = parseInt(subclasificacionesResult.rows[0].count) > 0;
-
-                if (tieneSubclasificaciones) {
-                    const subclasificacionesError = new Error("No se puede eliminar esta clasificación porque tiene subclasificaciones asociadas");
-                    subclasificacionesError.name = "SubclasificacionesError";
-                    throw subclasificacionesError;
-                }
-            }
-
             // Procedemos con la eliminación
             const deleteQuery = `
                 DELETE FROM clasificacion 
@@ -210,9 +193,6 @@ class Clasificacion {
                 throw error;
             }
             if (error.name === "ProtectedError") {
-                throw error;
-            }
-            if (error.name === "SubclasificacionesError") {
                 throw error;
             }
             if (error.code === '23503') {

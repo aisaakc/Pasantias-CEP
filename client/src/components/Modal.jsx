@@ -48,6 +48,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [clasificacionesPrincipales, setClasificacionesPrincipales] = useState([]);
   const [selectedClasificaciones, setSelectedClasificaciones] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [institutos, setInstitutos] = useState([]);
+  const [carreras, setCarreras] = useState([]);
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -55,7 +57,13 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     descripcion: editData?.descripcion || '',
     id_icono: editData?.id_icono || '',
     type_id: editData?.type_id || parentInfo?.type_id || '',
-    parent_id: editData?.parent_id || parentId || '',
+    parent_id: (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS
+      ? (editData?.parent_id || parentId || '')
+      : Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(editData?.type_id) === CLASSIFICATION_IDS.CARRERAS
+        ? (editData?.parent_id || parentId || '')
+        : Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(editData?.type_id) === CLASSIFICATION_IDS.PROGRAMAS
+          ? (editData?.parent_id || parentId || '')
+          : ''),
     orden: editData?.orden || "",
     permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
     clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : ''
@@ -78,6 +86,16 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       errors.parent_id = 'Debe seleccionar un programa';
     }
     
+    // Validar que se seleccione un instituto para carreras
+    if ((Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(values.type_id) === CLASSIFICATION_IDS.CARRERAS) && !values.parent_id) {
+      errors.parent_id = 'Debe seleccionar un instituto';
+    }
+
+    // Validar que se seleccione una carrera para programas
+    if ((Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(values.type_id) === CLASSIFICATION_IDS.PROGRAMAS) && !values.parent_id) {
+      errors.parent_id = 'Debe seleccionar una carrera';
+    }
+    
     if (values.orden !== '' && (isNaN(values.orden) || parseInt(values.orden) < 0)) {
       errors.orden = 'El orden debe ser un número positivo';
     }
@@ -94,15 +112,22 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
+      console.log('Valores en submit:', values);
+      const isCursos = Number(values.type_id) === CLASSIFICATION_IDS.CURSOS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS;
+      const isCarrera = Number(values.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS;
+      const isPrograma = Number(values.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
+      let parentIdValue = null;
+      if (isCursos || isCarrera || isPrograma) {
+        parentIdValue = values.parent_id && values.parent_id !== '' ? Number(values.parent_id) : null;
+      }
       const dataToSend = {
         ...values,
         id_icono: values.id_icono !== '' ? parseInt(values.id_icono) : null,
         type_id: values.type_id ? parseInt(values.type_id) : null,
-        parent_id: values.parent_id ? parseInt(values.parent_id) : null,
+        parent_id: parentIdValue,
         orden: values.orden !== '' ? parseInt(values.orden) : 0
       };
-
-     
+      console.log('Objeto enviado:', dataToSend);
 
       // Format permissions as an object with id_objeto array and id_clasificacion array for roles
       if (Number(values.type_id) === CLASSIFICATION_IDS.ROLES) {
@@ -163,17 +188,30 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
   ];
 
-  // Agregar el campo de programa si es una clasificación de cursos
-  if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) {
+  // Solo uno de los dos: programa para cursos, instituto para carreras
+  if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS || Number(editData?.type_id) === CLASSIFICATION_IDS.CURSOS) {
     formFields.push({
       name: 'parent_id',
       icon: faFolder,
       label: 'Programa',
       type: 'select',
-      options: programas.map(p => ({
-        value: p.id,
-        label: p.nombre
-      }))
+      options: programas.map(p => ({ value: p.id, label: p.nombre }))
+    });
+  } else if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(editData?.type_id) === CLASSIFICATION_IDS.CARRERAS) {
+    formFields.push({
+      name: 'parent_id',
+      icon: faFolder,
+      label: 'Instituto',
+      type: 'select',
+      options: institutos.map(i => ({ value: i.id, label: i.nombre }))
+    });
+  } else if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(editData?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) {
+    formFields.push({
+      name: 'parent_id',
+      icon: faFolder,
+      label: 'Carrera',
+      type: 'select',
+      options: carreras.map(c => ({ value: c.id, label: c.nombre }))
     });
   }
 
@@ -243,6 +281,18 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             // Si es una clasificación de cursos, obtener los programas
             if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) {
               fetchProgramas();
+            }
+            
+            // Si es una carrera, obtener los institutos
+            if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(editData?.type_id) === CLASSIFICATION_IDS.CARRERAS) {
+              const institutosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.INSTITUTOS);
+              setInstitutos(institutosResponse.data.data || []);
+            }
+            
+            // Si es un programa, obtener las carreras
+            if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(editData?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) {
+              const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
+              setCarreras(carrerasResponse.data.data || []);
             }
             
             setDataLoaded(true);
@@ -344,273 +394,271 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => (
-              <Form className="p-6 space-y-5">
-                {formFields.map((field, index) => (
-                  <div 
-                    key={field.name}
-                    className={`transform transition-all duration-300 animate-fade-slide-up`}
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
-                      {field.label}
-                      {field.name === 'parent_id' && parentClasificacion && (
-                        <span className="ml-2 text-sm text-gray-500">
-                          (Actual: {parentClasificacion.nombre})
-                        </span>
-                      )}
-                    </label>
-                    {field.type === 'textarea' ? (
-                      <Field
-                        as="textarea"
-                        name={field.name}
-                        placeholder={`${field.label} detallado...`}
-                        className={`w-full px-4 py-3 rounded-lg border ${
-                          touched[field.name] && errors[field.name] 
-                            ? 'border-red-300 focus:ring-red-500' 
-                            : 'border-gray-200 focus:ring-blue-500'
-                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
-                      />
-                    ) : field.type === 'select' ? (
-                      field.name === 'id_icono' ? (
-                        <div className="relative">
-                          <div 
-                            className={`w-full px-4 py-3 rounded-lg border ${
-                              touched[field.name] && errors[field.name] 
-                                ? 'border-red-300 focus:ring-red-500' 
-                                : 'border-gray-200 focus:ring-blue-500'
-                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white cursor-pointer flex items-center justify-between`}
-                            onClick={(e) => handleSelectClick(e, field)}
-                          >
-                            <span className="flex items-center">
-                              {values[field.name] && icons && (
-                                <FontAwesomeIcon 
-                                  icon={iconos[icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
-                                  className="text-blue-600 mr-2"
-                                />
-                              )}
-                              <span>
-                                {values[field.name] && icons
-                                  ? icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre 
-                                  : 'Seleccionar ícono'}
-                              </span>
-                            </span>
-                            <FontAwesomeIcon 
-                              icon={faChevronDown} 
-                              className={`text-gray-400 transition-transform duration-200 ${isSelectOpen ? 'transform rotate-180' : ''}`}
-                            />
-                          </div>
-                          <Field
-                            as="select"
-                            name={field.name}
-                            className="hidden"
-                          >
-                            <option value="">Seleccionar ícono</option>
-                            {icons && icons.map((i) => (
-                              <option key={i.id_clasificacion} value={i.id_clasificacion}>
-                                {i.nombre}
-                              </option>
-                            ))}
-                          </Field>
-                          {isSelectOpen && icons && ReactDOM.createPortal(
-                            <div 
-                              className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
-                              style={{
-                                top: `${selectPosition.top}px`,
-                                left: `${selectPosition.left}px`,
-                                width: `${selectPosition.width}px`
-                              }}
-                            >
-                              <div className="max-h-60 overflow-y-auto">
-                                {[...icons]
-                                  .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                                  .map((i) => (
-                                    <div
-                                      key={i.id_clasificacion}
-                                      className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        const event = { target: { name: field.name, value: i.id_clasificacion } };
-                                        handleChange(event);
-                                        setIsSelectOpen(false);
-                                      }}
-                                    >
-                                      <FontAwesomeIcon 
-                                        icon={iconos[i.nombre] || iconos.faFile} 
-                                        className="text-blue-600 mr-2"
-                                      />
-                                      <span>{i.nombre}</span>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>,
-                            document.body
-                          )}
-                        </div>
-                      ) : (
+            {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => {
+              console.log('Valores actuales del formulario:', values);
+              return (
+                <Form className="p-6 space-y-5">
+                  {formFields.map((field, index) => (
+                    <div 
+                      key={field.name}
+                      className={`transform transition-all duration-300 animate-fade-slide-up`}
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
+                        {field.label}
+                        {field.name === 'parent_id' && parentClasificacion && (
+                          <span className="ml-2 text-sm text-gray-500">
+                            (Actual: {parentClasificacion.nombre})
+                          </span>
+                        )}
+                      </label>
+                      {field.type === 'textarea' ? (
                         <Field
-                          as="select"
+                          as="textarea"
                           name={field.name}
+                          placeholder={`${field.label} detallado...`}
                           className={`w-full px-4 py-3 rounded-lg border ${
                             touched[field.name] && errors[field.name] 
                               ? 'border-red-300 focus:ring-red-500' 
                               : 'border-gray-200 focus:ring-blue-500'
-                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                        >
-                          <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                          {field.name === 'parent_id' && programas.map((p) => (
-                            <option 
-                              key={p.id} 
-                              value={p.id}
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
+                        />
+                      ) : field.type === 'select' ? (
+                        field.name === 'id_icono' ? (
+                          <div className="relative">
+                            <div 
+                              className={`w-full px-4 py-3 rounded-lg border ${
+                                touched[field.name] && errors[field.name] 
+                                  ? 'border-red-300 focus:ring-red-500' 
+                                  : 'border-gray-200 focus:ring-blue-500'
+                              } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white cursor-pointer flex items-center justify-between`}
+                              onClick={(e) => handleSelectClick(e, field)}
                             >
-                              {p.nombre}
-                            </option>
-                          ))}
-                        </Field>
-                      )
-                    ) : (
-                      <Field
-                        type={field.type}
+                              <span className="flex items-center">
+                                {values[field.name] && icons && (
+                                  <FontAwesomeIcon 
+                                    icon={iconos[icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
+                                    className="text-blue-600 mr-2"
+                                  />
+                                )}
+                                <span>
+                                  {values[field.name] && icons
+                                    ? icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre 
+                                    : 'Seleccionar ícono'}
+                                </span>
+                              </span>
+                              <FontAwesomeIcon 
+                                icon={faChevronDown} 
+                                className={`text-gray-400 transition-transform duration-200 ${isSelectOpen ? 'transform rotate-180' : ''}`}
+                              />
+                            </div>
+                            <Field
+                              as="select"
+                              name={field.name}
+                              className="hidden"
+                            >
+                              <option value="">Seleccionar ícono</option>
+                              {icons && icons.map((i) => (
+                                <option key={i.id_clasificacion} value={i.id_clasificacion}>
+                                  {i.nombre}
+                                </option>
+                              ))}
+                            </Field>
+                            {isSelectOpen && icons && ReactDOM.createPortal(
+                              <div 
+                                className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+                                style={{
+                                  top: `${selectPosition.top}px`,
+                                  left: `${selectPosition.left}px`,
+                                  width: `${selectPosition.width}px`
+                                }}
+                              >
+                                <div className="max-h-60 overflow-y-auto">
+                                  {[...icons]
+                                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                                    .map((i) => (
+                                      <div
+                                        key={i.id_clasificacion}
+                                        className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const event = { target: { name: field.name, value: i.id_clasificacion } };
+                                          handleChange(event);
+                                          setIsSelectOpen(false);
+                                        }}
+                                      >
+                                        <FontAwesomeIcon 
+                                          icon={iconos[i.nombre] || iconos.faFile} 
+                                          className="text-blue-600 mr-2"
+                                        />
+                                        <span>{i.nombre}</span>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>,
+                              document.body
+                            )}
+                          </div>
+                        ) : (
+                          <Field
+                            as="select"
+                            name={field.name}
+                            className={`w-full px-4 py-3 rounded-lg border ${
+                              touched[field.name] && errors[field.name] 
+                                ? 'border-red-300 focus:ring-red-500' 
+                                : 'border-gray-200 focus:ring-blue-500'
+                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                          >
+                            <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                            {field.options && field.options.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </Field>
+                        )
+                      ) : (
+                        <Field
+                          type={field.type}
+                          name={field.name}
+                          placeholder={`${field.label}...`}
+                          disabled={field.disabled}
+                          className={`w-full px-4 py-3 rounded-lg border ${
+                            touched[field.name] && errors[field.name] 
+                              ? 'border-red-300 focus:ring-red-500' 
+                              : 'border-gray-200 focus:ring-blue-500'
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 ${
+                            field.disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                          } ${field.className || ''}`}
+                        />
+                      )}
+                      <ErrorMessage
                         name={field.name}
-                        placeholder={`${field.label}...`}
-                        disabled={field.disabled}
-                        className={`w-full px-4 py-3 rounded-lg border ${
-                          touched[field.name] && errors[field.name] 
-                            ? 'border-red-300 focus:ring-red-500' 
-                            : 'border-gray-200 focus:ring-blue-500'
-                        } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 ${
-                          field.disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-                        } ${field.className || ''}`}
+                        component="div"
+                        className="mt-1 text-sm text-red-600"
                       />
-                    )}
-                    <ErrorMessage
-                      name={field.name}
-                      component="div"
-                      className="mt-1 text-sm text-red-600"
-                    />
-                  </div>
-                ))}
-
-                {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
-                  <div 
-                    className="transform transition-all duration-300 animate-fade-slide-up"
-                    style={{ animationDelay: '400ms' }}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
-                      Permisos de Objetos
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {permisos.map((permiso) => (
-                        <label 
-                          key={permiso.id}
-                          className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={values.permisos ? values.permisos.split(',').includes(permiso.id.toString()) : false}
-                            onChange={() => {
-                              const currentPermisos = values.permisos ? values.permisos.split(',').map(p => p.trim()) : [];
-                              const newPermisos = currentPermisos.includes(permiso.id.toString())
-                                ? currentPermisos.filter(id => id !== permiso.id.toString())
-                                : [...currentPermisos, permiso.id.toString()];
-                              setFieldValue('permisos', newPermisos.join(','));
-                            }}
-                            className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
-                          />
-                          <span className="text-gray-700 text-sm leading-tight">
-                            {permiso.nombre}
-                          </span>
-                        </label>
-                      ))}
                     </div>
-                    <ErrorMessage
-                      name="permisos"
-                      component="div"
-                      className="mt-1 text-sm text-red-600"
-                    />
-                  </div>
-                )}
+                  ))}
 
-                {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
-                  <div 
-                    className="transform transition-all duration-300 animate-fade-slide-up"
-                    style={{ animationDelay: '500ms' }}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
-                      Configuraciones Accesibles
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {clasificacionesPrincipales.map((clasificacion) => (
-                        <label 
-                          key={clasificacion.id_clasificacion}
-                          className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={values.clasificaciones ? values.clasificaciones.split(',').includes(clasificacion.id_clasificacion.toString()) : false}
-                            onChange={() => {
-                              const currentClasificaciones = values.clasificaciones ? values.clasificaciones.split(',').map(c => c.trim()) : [];
-                              const newClasificaciones = currentClasificaciones.includes(clasificacion.id_clasificacion.toString())
-                                ? currentClasificaciones.filter(id => id !== clasificacion.id_clasificacion.toString())
-                                : [...currentClasificaciones, clasificacion.id_clasificacion.toString()];
-                              setFieldValue('clasificaciones', newClasificaciones.join(','));
-                            }}
-                            className="form-checkbox h-4 w-4 text-green-600 mt-1 flex-shrink-0"
-                          />
-                          <span className="text-gray-700 text-sm leading-tight">
-                            Configuración de {clasificacion.nombre}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                    <ErrorMessage
-                      name="clasificaciones"
-                      component="div"
-                      className="mt-1 text-sm text-red-600"
-                    />
-                  </div>
-                )}
-
-                {error && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake">
-                    <FontAwesomeIcon icon={faTimes} className="text-red-500" />
-                    <p>{error}</p>
-                  </div>
-                )}
-
-                {/* Footer fijo */}
-                 
-                <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
-                  <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                  
-                  <div className="flex justify-end space-x-4">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105"
-                      disabled={isSubmitting}
+                  {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
+                    <div 
+                      className="transform transition-all duration-300 animate-fade-slide-up"
+                      style={{ animationDelay: '400ms' }}
                     >
-                      <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                      <span>Cancelar</span>
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105 disabled:opacity-50"
-                      disabled={isSubmitting}
-                    >
-                      <FontAwesomeIcon 
-                        icon={faSave} 
-                        className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
+                        Permisos de Objetos
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {permisos.map((permiso) => (
+                          <label 
+                            key={permiso.id}
+                            className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={values.permisos ? values.permisos.split(',').includes(permiso.id.toString()) : false}
+                              onChange={() => {
+                                const currentPermisos = values.permisos ? values.permisos.split(',').map(p => p.trim()) : [];
+                                const newPermisos = currentPermisos.includes(permiso.id.toString())
+                                  ? currentPermisos.filter(id => id !== permiso.id.toString())
+                                  : [...currentPermisos, permiso.id.toString()];
+                                setFieldValue('permisos', newPermisos.join(','));
+                              }}
+                              className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
+                            />
+                            <span className="text-gray-700 text-sm leading-tight">
+                              {permiso.nombre}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <ErrorMessage
+                        name="permisos"
+                        component="div"
+                        className="mt-1 text-sm text-red-600"
                       />
-                      <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
-                    </button>
+                    </div>
+                  )}
+
+                  {Number(values.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
+                    <div 
+                      className="transform transition-all duration-300 animate-fade-slide-up"
+                      style={{ animationDelay: '500ms' }}
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
+                        Configuraciones Accesibles
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {clasificacionesPrincipales.map((clasificacion) => (
+                          <label 
+                            key={clasificacion.id_clasificacion}
+                            className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={values.clasificaciones ? values.clasificaciones.split(',').includes(clasificacion.id_clasificacion.toString()) : false}
+                              onChange={() => {
+                                const currentClasificaciones = values.clasificaciones ? values.clasificaciones.split(',').map(c => c.trim()) : [];
+                                const newClasificaciones = currentClasificaciones.includes(clasificacion.id_clasificacion.toString())
+                                  ? currentClasificaciones.filter(id => id !== clasificacion.id_clasificacion.toString())
+                                  : [...currentClasificaciones, clasificacion.id_clasificacion.toString()];
+                                setFieldValue('clasificaciones', newClasificaciones.join(','));
+                              }}
+                              className="form-checkbox h-4 w-4 text-green-600 mt-1 flex-shrink-0"
+                            />
+                            <span className="text-gray-700 text-sm leading-tight">
+                              Configuración de {clasificacion.nombre}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <ErrorMessage
+                        name="clasificaciones"
+                        component="div"
+                        className="mt-1 text-sm text-red-600"
+                      />
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2 animate-shake">
+                      <FontAwesomeIcon icon={faTimes} className="text-red-500" />
+                      <p>{error}</p>
+                    </div>
+                  )}
+
+                  {/* Footer fijo */}
+                   
+                  <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
+                    <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                    
+                    <div className="flex justify-end space-x-4">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow transform hover:scale-105"
+                        disabled={isSubmitting}
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                        <span>Cancelar</span>
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105 disabled:opacity-50"
+                        disabled={isSubmitting}
+                      >
+                        <FontAwesomeIcon 
+                          icon={faSave} 
+                          className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
+                        />
+                        <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </Form>
-            )}
+                </Form>
+              );
+            }}
           </Formik>
         </div>
       </div>

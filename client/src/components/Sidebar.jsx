@@ -94,6 +94,7 @@ export default function Sidebar() {
   // Verificar permisos usando el contexto interno del authStore
   const puedeAccederConfiguracion = tienePermiso(CLASSIFICATION_IDS.MN_CONFIGURACION);
   const puedeAccederCursos = tienePermiso(CLASSIFICATION_IDS.MN_CURSO);
+  const puedeAccederListaCursos = tienePermiso(CLASSIFICATION_IDS.MN_LISTCURSOS);
   const puedeAccederRoles = tienePermiso(CLASSIFICATION_IDS.MN_ROLES);
   const puedeAccederPDF = tienePermiso(CLASSIFICATION_IDS.MN_PDF);
   const puedeAccederDocumentos = tienePermiso(CLASSIFICATION_IDS.MN_DOCUMENTOS);
@@ -134,6 +135,10 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-3">
         {puedeAccederCursos && (
           renderSidebarLink('/dashboard/cursos', 'Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion)
+        )}
+
+        {puedeAccederListaCursos && (
+          renderSidebarLink('/dashboard/listcursos', 'Lista de Cursos', iconos.faClipboardList, puedeAccederListaCursos)
         )}
 
         {puedeAccederDocumentos && (

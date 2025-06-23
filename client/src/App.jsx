@@ -16,6 +16,7 @@ import Footer from "./components/Footer";
 import Prueba from "./pages/dashboard/prueba";
 import Documentos from "./pages/dashboard/documentos";
 import Perfil from "./pages/dashboard/profile/perfil";
+import ListCursos from "./pages/dashboard/ListCursos";
 import { Toaster } from 'sonner';
 import React from 'react';
 
@@ -66,6 +67,7 @@ export default function App() {
           <Route path="prueba" element={<Prueba/>} />  
           <Route path="documentos" element={<Documentos/>} />
           <Route path="perfil" element={<Perfil />} />
+          <Route path="listcursos" element={<ListCursos/>} />
         </Route>
       </Routes>
     </main>

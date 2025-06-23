@@ -156,7 +156,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
       />
       
       <div 
-        className={`relative w-full max-w-xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 ${
+        className={`relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl transform transition-all duration-500 ${
           animationClass
         } flex flex-col max-h-[90vh]`}
       >

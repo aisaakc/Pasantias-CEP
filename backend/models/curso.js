@@ -82,9 +82,11 @@ class CursoModel {
       fecha_hora_fin,
       costo,
       descripcion_corto,
+      descripcion_html,
       codigo,
       color,
-      duracion
+      duracion,
+      codigo_cohorte
     } = cursoData;
 
     console.log('Datos recibidos en modelo createCurso:', cursoData);
@@ -99,10 +101,12 @@ class CursoModel {
         fecha_hora_fin,
         costo,
         descripcion_corto,
+        descripcion_html,
         codigo,
         color,
-        duracion
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        duracion,
+        codigo_cohorte
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *;
     `;
 
@@ -116,9 +120,11 @@ class CursoModel {
         fecha_hora_fin,
         costo,
         descripcion_corto,
+        descripcion_html || null,
         codigo,
         color,
-        duracion
+        duracion,
+        codigo_cohorte || null
       ];
 
       console.log('Query:', query);

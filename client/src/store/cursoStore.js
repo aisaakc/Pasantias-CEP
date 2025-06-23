@@ -21,7 +21,11 @@ export const useCursoStore = create((set, get) => ({
   // Cargar opciones del formulario
   fetchOpcionesCurso: async () => {
     const state = get();
-    if (state.loading || (state.cursos.length > 0 && state.modalidades.length > 0)) {
+    if (state.loading) {
+      return;
+    }
+    // Si alguno de los arrays está vacío, forzar recarga
+    if (state.cursos.length > 0 && state.modalidades.length > 0 && state.status.length > 0) {
       return;
     }
   

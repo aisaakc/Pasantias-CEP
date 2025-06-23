@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-21 03:33:52
+-- Started on 2025-06-23 00:09:07
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -542,6 +542,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 10007	Carabobo		\N	\N	122	\N	\N	\N	1
 10008	Cojedes		\N	\N	122	\N	\N	\N	1
 10009	Delta Amacuro		\N	\N	122	\N	\N	\N	1
+100289	Foto de Perfil del Usuario		\N	0	100094	\N	\N	\N	0
 57	¿Cuál es tu pelicula favorita?		\N	0	8	8	8683	\N	0
 3	Rol	Roles del Sistema	\N	110	\N	\N	9751	\N	1
 100107	Módulo 1: Introduction to Network		\N	0	5	100147	8438	{"id":"CEP-CISCO-01"}	0
@@ -1850,15 +1851,18 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100129	Fin de Año	31/12	\N	8	100121	100121	\N	\N	0
 100167	Agregar Configuraciones		\N	0	73	\N	\N	\N	0
 100188	PDF	FaFilePdf className="h-5 w-5 text-red-500"	\N	0	100187	\N	\N	\N	0
+100290	Menú de Lista de Cursos		\N	0	73	\N	\N	\N	0
 100028	Divisas en efectivo ( directamente en caja principal)		\N	\N	100026	100026	\N	\N	0
 100130	Halloween	31/10	\N	10	100121	100121	\N	\N	0
 100147	Cisco Academy		\N	0	4	100152	\N	\N	0
 100189	DOC	FaFileWord className="h-5 w-5 text-blue-500"	\N	0	100187	\N	\N	\N	0
+100270	Administración  de Empresas		\N	0	110	201	\N	\N	0
 100131	Carnaval  2025	03/03/25 , 04/03/25	\N	11	100121	100121	\N	\N	0
-100148	Diplomado		\N	0	4	\N	\N	\N	0
 100149	Oficio Tecnológico emergente		\N	0	4	100152	\N	\N	0
-100169	Manejo de Bases de Datos con PostgreSQL		\N	0	5	\N	8488	\N	0
 100190	Prefijos Telefónicos (Venezuela)		\N	81	\N	\N	9104	\N	0
+100169	Manejo de Bases de Datos con PostgreSQL		\N	0	5	100149	8488	\N	0
+100148	Diplomado		\N	0	4	100270	\N	\N	0
+100271	Contaduria		\N	0	110	\N	\N	\N	0
 100132	Elecciones 2025	25/05/25	\N	9	100121	100121	\N	\N	0
 100150	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		\N	0	5	100147	8438	\N	0
 100191	0412	Digitel	\N	0	100190	\N	9104	\N	0
@@ -1866,12 +1870,12 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100151	Curso Básico de Mantenimiento y Reparación de PC		\N	0	5	100149	9078	\N	0
 100171	Menú de Tipos de Documentos		\N	0	73	\N	\N	\N	0
 100192	Día de Todos los Santos	01/11\n	\N	0	100121	\N	\N	\N	0
-100152	Informática		\N	0	110	201	\N	\N	0
 100134	Informática (Sede Petare)		\N	0	110	202	\N	\N	0
 100193	Día de los Reyes Magos	06/01\n	\N	0	100121	\N	\N	\N	0
+100152	Informática		\N	0	110	201	8414	\N	0
 100194	Día de la Divina Pastora	14/01\n	\N	0	100121	\N	\N	\N	0
-15	Super Administrador		\N	1	3	3	9776	{"id_objeto":[100166,100171,100156,100157,100158,100141,100159,100142,100161,100162,100066,100164,100067,100068,100160],"id_clasificacion":[73,110,4,1,123,124,122,100172,100173,100155,100121,5,200,100050,100026,100059,8,27,100094,3,100174,100178,100179,100181,100187,100190]}	0
 100195	Declaración de la Independencia	19/04	\N	0	100121	\N	\N	\N	0
+15	Super Administrador		\N	1	3	\N	9776	{"id_objeto":[100166,100171,100156,100157,100158,100141,100159,100161,100162,100066,100164,100067,100068,100160,100290,100142],"id_clasificacion":[73,110,4,1,123,124,122,100172,100173,100155,100121,5,200,100050,100026,100059,8,27,100094,3,100174,100178,100179,100181,100187,100190,100234]}	0
 100154	Campo ORDEN (Clasificacion)		\N	0	73	\N	\N	\N	0
 100196	Día de la Bandera	03/08\n	\N	0	100121	\N	\N	\N	0
 100155	Bancos		\N	129	\N	\N	8244	\N	1
@@ -1920,14 +1924,12 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100232	0292	Dependencias Federales	\N	\N	100190	\N	9265	{"mobile": false}	0
 100125	Día de la Independencia	05/07	\N	4	100121	100121	\N	\N	0
 100066	Menú de Roles		\N	0	73	73	\N	\N	0
-201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	\N	10	200	200	8245	\N	0
+10024	Distrito Capital		\N	0	122	\N	8072	\N	0
 100126	Víspera de Navidad	24/12	\N	6	100121	100121	\N	\N	0
-202	IUJO (Petare)		\N	20	200	200	8240	\N	0
 100164	Menú de PDF		\N	0	73	\N	\N	\N	0
 203	IUJO (Barquisimeto)		\N	30	200	200	8241	\N	0
 204	IUSF	Instituto Universitario San Francisco	\N	40	200	200	8249	\N	0
 5	Cursos		\N	40	\N	4	9019	\N	1
-10024	Distrito Capital		\N	0	122	122	8072	\N	1
 6	Masculino	sexo masculino	\N	1	1	\N	9053	\N	1
 12	Estudiante IUJO		\N	6	3	11	9772	{"id_objeto":[]}	0
 100052	Presencial / Sabatino		\N	\N	100050	\N	\N	\N	0
@@ -1965,6 +1967,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 9326	faRProject		\N	\N	27	\N	9326	\N	1
 9327	faRadiation		\N	\N	27	\N	9327	\N	1
 200	Institutos	Institutos asociados a Fe y Alegría 	\N	10	\N	\N	9404	\N	0
+202	IUJO (Petare)		\N	20	200	200	8240	\N	0
+201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	\N	10	200	200	8245	\N	0
 27	Íconos		\N	80	\N	\N	8926	\N	1
 100094	Tipo de Documento	Listado de Tipos de Documentos	\N	120	\N	\N	8678	\N	0
 100095	Informativo		\N	0	100094	\N	\N	\N	0
@@ -4037,6 +4041,8 @@ COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripci
 18	100071	\N	100060	20	xddddd	\N	21	12	\N	\N	100052	2025-05-24 21:00:00	2025-05-31 06:56:00	#4b5468	\N	1-2025	\N	\N
 31	100107	\N	100060	111	xddd	\N	111	13	97	\N	100052	2025-06-09 13:00:00	2025-06-13 01:26:00	#0a082b	\N	1-2025	\N	\N
 30	100107	\N	100060	10	xd	\N	12	12	97	\N	100052	2025-06-02 13:00:00	2025-06-05 01:24:00	#4F46E5	\N	2-2025	\N	\N
+32	100169	\N	100060	40		\N	12	12	97	\N	100052	2025-06-16 15:00:00	2025-06-28 00:00:00	#0f7dd2	\N	\N	\N	\N
+33	100072	\N	100060	40	f	\N	12	12	97	\N	100052	2025-06-09 10:00:00	2025-06-16 14:00:00	#4F46E5	\N	\N	\N	\N
 \.
 
 
@@ -4091,7 +4097,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100233, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100290, true);
 
 
 --
@@ -4100,7 +4106,7 @@ SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100233, tr
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 31, true);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 33, true);
 
 
 --
@@ -4352,7 +4358,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-21 03:33:52
+-- Completed on 2025-06-23 00:09:08
 
 --
 -- PostgreSQL database dump complete

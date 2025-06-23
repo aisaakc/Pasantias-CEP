@@ -13,17 +13,20 @@ import { faXmark,
         faCalendarAlt, 
         faAlignLeft, 
         faPalette,
-        faUser } from '@fortawesome/free-solid-svg-icons';
+        faUser,
+        faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
+import { Editor } from '@tinymce/tinymce-react';
 
-function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
+function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error, roles_facilitador, fetchFacilitadores } = useCursoStore();
   const [cursoSeleccionado, setCursoSeleccionado] = useState('');
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState('');
   const [statusSeleccionado, setStatusSeleccionado] = useState('');
   const [facilitadorSeleccionado, setFacilitadorSeleccionado] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [descripcionHtml, setDescripcionHtml] = useState('');
   const [duracion, setDuracion] = useState('');
   const [codigo, setCodigo] = useState('');
   const [costo, setCosto] = useState('');
@@ -35,6 +38,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [holidayWarning, setHolidayWarning] = useState('');
+  const [codigoCohorte, setCodigoCohorte] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,20 +69,21 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       setStatusSeleccionado(curso.id_status?.toString() || '');
       setFacilitadorSeleccionado(curso.id_facilitador?.toString() || '');
       setDescripcion(curso.descripcion_corto || '');
+      setDescripcionHtml(curso.descripcion_html || '');
       setDuracion(curso.duracion?.toString() || '');
       setCodigo(curso.codigo || '');
       setCosto(curso.costo?.toString() || '');
       
-      // Formatear la fecha y hora para el input datetime-local
-      if (curso.fecha_hora_inicio) {
-        const fechaHoraInicio = new Date(curso.fecha_hora_inicio);
-        setFechaInicio(fechaHoraInicio.toISOString().slice(0, 16));
-      }
-      
-      if (curso.fecha_hora_fin) {
-        const fechaHoraFin = new Date(curso.fecha_hora_fin);
-        setFechaFin(fechaHoraFin.toISOString().slice(0, 16));
-      }
+      const fechaInicio = curso.fecha_hora_inicio ? new Date(curso.fecha_hora_inicio) : new Date(fecha);
+      const fechaFin = curso.fecha_hora_fin ? new Date(curso.fecha_hora_fin) : new Date(fecha);
+
+      // Formatear a YYYY-MM-DDTHH:mm para el input
+      const pad = (num) => num.toString().padStart(2, '0');
+      const formatForInput = (date) => 
+        `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+      setFechaInicio(formatForInput(fechaInicio));
+      setFechaFin(formatForInput(fechaFin));
       
       setColor(curso.color || '#4F46E5');
     } else if (fecha && isDataLoaded) {
@@ -100,6 +106,83 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
       setFechaFin('');
     }
   }, [curso, fecha, isDataLoaded]);
+
+  useEffect(() => {
+    if (!fechaInicio || !fechaFin || !feriados || feriados.length === 0) {
+      setHolidayWarning('');
+      return;
+    }
+
+    const start = new Date(fechaInicio);
+    const end = new Date(fechaFin);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+      setHolidayWarning('');
+      return;
+    }
+
+    const holidaysInRange = [];
+
+    const getDayOnly = (date) => {
+      const newDate = new Date(date);
+      newDate.setHours(0, 0, 0, 0);
+      return newDate;
+    };
+
+    const startDate = getDayOnly(start);
+    const endDate = getDayOnly(end);
+
+    feriados.forEach(feriado => {
+      if (feriado && feriado.descripcion) {
+        const fechas = feriado.descripcion.split(',').map(f => f.trim());
+        
+        fechas.forEach(fechaStr => {
+          const parts = fechaStr.split('/');
+          if (parts.length < 2) return;
+
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+
+          if (parts.length === 3) {
+            const year = 2000 + parseInt(parts[2], 10);
+            const holidayDate = new Date(year, month, day);
+            if (!isNaN(holidayDate.getTime())) {
+              const holidayDayOnly = getDayOnly(holidayDate);
+              if (holidayDayOnly >= startDate && holidayDayOnly <= endDate) {
+                holidaysInRange.push({ name: feriado.nombre, date: holidayDate });
+              }
+            }
+          } else {
+            for (let year = startDate.getFullYear(); year <= endDate.getFullYear(); year++) {
+              const holidayDate = new Date(year, month, day);
+              if (!isNaN(holidayDate.getTime())) {
+                const holidayDayOnly = getDayOnly(holidayDate);
+                if (holidayDayOnly >= startDate && holidayDayOnly <= endDate) {
+                  holidaysInRange.push({ name: feriado.nombre, date: holidayDate });
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+
+    const uniqueHolidays = holidaysInRange.reduce((acc, current) => {
+      if (!acc.find(item => item.date.getTime() === current.date.getTime())) {
+        acc.push(current);
+      }
+      return acc;
+    }, []).sort((a, b) => a.date - b.date);
+
+    if (uniqueHolidays.length > 0) {
+      const holidayNames = uniqueHolidays
+        .map(h => `${h.name} (${h.date.toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })})`)
+        .join(', ');
+      setHolidayWarning(`Atención: El período seleccionado incluye los siguientes feriados: ${holidayNames}.`);
+    } else {
+      setHolidayWarning('');
+    }
+  }, [fechaInicio, fechaFin, feriados]);
 
   const handleClose = () => {
     setAnimationClass('animate-modal-out');
@@ -201,9 +284,11 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
         fecha_hora_fin: fechaFin || null,
         costo: costoValue,
         descripcion_corto: descripcion || null,
+        descripcion_html: descripcionHtml || null,
         codigo: codigo || null,
         color: color,
-        duracion: duracionValue
+        duracion: duracionValue,
+        codigo_cohorte: codigoCohorte || null
       };
 
       // Manejar el id_facilitador de manera segura
@@ -378,16 +463,18 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                           backgroundSize: "1.5em 1.5em"
                         }}
                       >
-                        <option key={`${field.name}-default`} value="">-- Selecciona {field.label.toLowerCase()} --</option>
-                        {field.options && field.options.length > 0 ? (
-                          field.options.map((option, index) => (
+                        {field.disabled ? (
+                          <option value="" disabled>Cargando opciones...</option>
+                        ) : field.options && field.options.length > 0 ? (
+                          [<option key={`${field.name}-default`} value="">-- Selecciona {field.label.toLowerCase()} --</option>,
+                          ...field.options.map((option, index) => (
                             <option 
                               key={`${field.name}-option-${option.id || option.nombre || index}`} 
                               value={option.id}
                             >
                               {option.nombre}
                             </option>
-                          ))
+                          ))]
                         ) : (
                           <option value="" disabled>No hay opciones disponibles</option>
                         )}
@@ -405,15 +492,38 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                 <div className="transition-all duration-300">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <FontAwesomeIcon icon={faAlignLeft} className="mr-2 text-blue-500" />
-                    Descripción
+                    Descripción del Curso
                   </label>
                   <textarea
                     value={descripcion}
                     onChange={(e) => setDescripcion(e.target.value)}
-                    className="w-full min-h-[120px] px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white transition-colors
+                    className="w-full min-h-[80px] px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white transition-colors
                       focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-                      hover:border-blue-300 resize-vertical"
-                    placeholder="Ingrese la descripción detallada del curso..."
+                      hover:border-blue-300 resize-vertical mb-4"
+                    placeholder="Ingrese la descripción corta del curso..."
+                  />
+                </div>
+                <div className="transition-all duration-300">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">
+                    <FontAwesomeIcon icon={faAlignLeft} className="mr-2 text-blue-500" />
+                    Contenido del Curso
+                  </label>
+                  <Editor
+                    apiKey="6azagf27n3g1p9vmbwz7clfcg4a0ews7xyj2i5wmrulogory"
+                    value={descripcionHtml}
+                    onEditorChange={(content) => setDescripcionHtml(content)}
+                    init={{
+                      height: 200,
+                      menubar: false,
+                      plugins: [
+                        'advlist autolink lists link charmap preview anchor',
+                        'searchreplace visualblocks code fullscreen',
+                        'insertdatetime table paste help wordcount'
+                      ],
+                      toolbar:
+                        'undo redo | formatselect | bold italic backcolor | \n                        alignleft aligncenter alignright alignjustify | \n                        bullist numlist outdent indent | removeformat | help',
+                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                    }}
                   />
                 </div>
               </div>
@@ -438,6 +548,23 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                           focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
                           hover:border-blue-300"
                         placeholder="Ingrese el código del curso"
+                      />
+                    </div>
+
+                    {/* Código de Cohorte */}
+                    <div className="transition-all duration-300">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faHashtag} className="mr-2 text-blue-500" />
+                        Código de Cohorte
+                      </label>
+                      <input
+                        type="text"
+                        value={codigoCohorte || ''}
+                        onChange={(e) => setCodigoCohorte(e.target.value)}
+                        className="w-full h-11 px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white transition-colors
+                          focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+                          hover:border-blue-300"
+                        placeholder="Ingrese el código de la cohorte"
                       />
                     </div>
 
@@ -547,6 +674,19 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved }) {
                   </div>
                 </div>
               </div>
+
+              {holidayWarning && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg my-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <FontAwesomeIcon icon={faTriangleExclamation} className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">{holidayWarning}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {submitError && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">

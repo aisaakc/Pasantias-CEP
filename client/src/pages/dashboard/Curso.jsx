@@ -210,6 +210,8 @@ function Curso() {
     const instructor = eventInfo.event.extendedProps.instructor;
     const costo = eventInfo.event.extendedProps.costo;
     const esFeriado = eventInfo.event.extendedProps.esFeriado;
+    const descripcion = eventInfo.event.extendedProps.descripcion;
+    const esHorario = eventInfo.event.extendedProps.esHorario;
 
     // Si es un feriado, mostrar un diseño específico
     if (esFeriado) {
@@ -228,28 +230,28 @@ function Curso() {
       );
     }
 
-    // Si estamos en vista de lista, mostrar un diseño más detallado
-    if (eventInfo.view.type === 'listWeek' || eventInfo.view.type === 'listMonth') {
+    // Si estamos en vista de semana o día, mostrar el bloque detallado como en HorarioCurso.jsx
+    if (eventInfo.view.type === 'timeGridWeek' || eventInfo.view.type === 'timeGridDay') {
       return (
-        <div className="flex flex-col p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            {icon && <FontAwesomeIcon icon={icon} className="text-white text-lg" />}
-            <span className="font-semibold text-lg">{eventInfo.event.title}</span>
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">{status}</span>
+        <div className="p-2">
+          <div className="font-semibold flex items-center">
+            {eventInfo.event.title}
+            {esHorario && (
+              <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-0.5 rounded">
+                Horario
+              </span>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-              <FontAwesomeIcon icon={iconos.faChalkboardTeacher} className="text-white/80" />
-              <span>{modalidad}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-              <FontAwesomeIcon icon={iconos.faUser} className="text-white/80" />
-              <span>{instructor}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 p-2 rounded-lg">
-              <FontAwesomeIcon icon={iconos.faMoneyBill} className="text-white/80" />
-              <span>${costo}</span>
-            </div>
+          <div className="text-sm">
+            {instructor && (
+              <div>Instructor: {instructor}</div>
+            )}
+            {modalidad && (
+              <div>Modalidad: {modalidad}</div>
+            )}
+            {descripcion && (
+              <div>Descripción: {descripcion}</div>
+            )}
           </div>
         </div>
       );
@@ -266,16 +268,14 @@ function Curso() {
   };
 
   const handleDateClick = (arg) => {
-    // Crear una nueva fecha y establecer la hora a las 13:00
+    // Usar la fecha y hora real seleccionada en el calendario
     const fechaSeleccionada = new Date(arg.date);
-    fechaSeleccionada.setHours(13, 0, 0, 0);
-    
-    // Convertir a string en formato ISO y ajustar para la zona horaria local
     const year = fechaSeleccionada.getFullYear();
     const month = String(fechaSeleccionada.getMonth() + 1).padStart(2, '0');
     const day = String(fechaSeleccionada.getDate()).padStart(2, '0');
-    const fechaFormateada = `${year}-${month}-${day}T13:00`;
-    
+    const hour = String(fechaSeleccionada.getHours()).padStart(2, '0');
+    const min = String(fechaSeleccionada.getMinutes()).padStart(2, '0');
+    const fechaFormateada = `${year}-${month}-${day}T${hour}:${min}`;
     setSelectedDate(fechaFormateada);
     setSelectedCurso(null);
     setModalOpen(true);
@@ -304,6 +304,33 @@ function Curso() {
     }
   };
 
+  // Calcular slotMinTime y slotMaxTime dinámicamente según los cursos
+  const [slotMinTime, slotMaxTime] = React.useMemo(() => {
+    // Filtrar solo eventos de cursos (no feriados)
+    const eventosCursos = cursosCalendario.filter(curso => curso && curso.fecha_hora_inicio && curso.fecha_hora_fin);
+    if (eventosCursos.length === 0) {
+      return ["01:00:00", "23:59:59"];
+    }
+    const horasInicio = eventosCursos.map(curso => new Date(curso.fecha_hora_inicio).getHours());
+    const horasFin = eventosCursos.map(curso => new Date(curso.fecha_hora_fin).getHours());
+    const min = Math.min(...horasInicio, 0);
+    const max = Math.max(...horasFin, 23) + 1;
+    // Formatear a HH:mm:ss
+    const pad = n => n.toString().padStart(2, '0');
+    return [`${pad(min)}:00:00`, `${pad(max)}:00:00`];
+  }, [cursosCalendario]);
+
+  // Calcular scrollTime dinámicamente según la hora de inicio del primer curso
+  const scrollTime = React.useMemo(() => {
+    const eventosCursos = cursosCalendario.filter(curso => curso && curso.fecha_hora_inicio);
+    if (eventosCursos.length === 0) return "01:00:00";
+    // Buscar el curso más próximo en fecha de inicio
+    const primerCurso = eventosCursos.reduce((min, curr) => new Date(curr.fecha_hora_inicio) < new Date(min.fecha_hora_inicio) ? curr : min, eventosCursos[0]);
+    const fecha = new Date(primerCurso.fecha_hora_inicio);
+    const pad = n => n.toString().padStart(2, '0');
+    return `${pad(fecha.getHours())}:00:00`;
+  }, [cursosCalendario]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -318,25 +345,42 @@ function Curso() {
                   value=""
                 >
                   <option value="">__________ Ver Horarios del Curso __________</option>
-                  {cursosCalendario && Object.entries(
-                    cursosCalendario.reduce((groups, curso) => {
-                  
-                      const parentName = curso.nombre_parent || "Sin categoría";
-                      if (!groups[parentName]) {
-                        groups[parentName] = [];
-                      }
-                      groups[parentName].push(curso);
-                      return groups;
-                    }, {})
-                  ).map(([parentName, group]) => (
-                    <optgroup key={parentName} label={parentName}>
-                      {group.map((curso) => (
-                        <option key={curso.id_curso} value={curso.id_curso}>
-                          {curso.nombre_curso}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
+                  {cursosCalendario && cursosCalendario.length > 0 ? (
+                    Object.entries(
+                      cursosCalendario.reduce((groups, curso) => {
+                        const parentName = curso.nombre_parent || "Sin categoría";
+                        if (!groups[parentName]) {
+                          groups[parentName] = [];
+                        }
+                        groups[parentName].push(curso);
+                        return groups;
+                      }, {})
+                    ).map(([parentName, group]) => (
+                      <optgroup key={parentName} label={parentName}>
+                        {group.map((curso) => {
+                          let timeString = '';
+                          if (curso.fecha_hora_inicio && curso.fecha_hora_fin) {
+                            try {
+                              const startTime = new Date(curso.fecha_hora_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                              const endTime = new Date(curso.fecha_hora_fin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                              timeString = ` (${startTime} - ${endTime})`;
+                            } catch (e) {
+                              console.error("Error al formatear la fecha para el curso:", curso.id_curso, e);
+                            }
+                          }
+                          return (
+                            <option key={curso.id_curso} value={curso.id_curso}>
+                              {`${curso.nombre_curso}${timeString}`}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      No hay cursos asignados
+                    </option>
+                  )}
                 </select>
               </div>
             </div>
@@ -417,8 +461,8 @@ function Curso() {
                   locale={esLocale}
                   height="auto"
                   allDaySlot={true}
-                  slotMinTime="06:00:00"
-                  slotMaxTime="22:00:00"
+                  slotMinTime={slotMinTime}
+                  slotMaxTime={slotMaxTime}
                   dayMaxEvents={true}
                   weekends={true}
                   selectable={true}
@@ -451,6 +495,7 @@ function Curso() {
                   eventClassNames="fc-event-with-icon"
                   dateClick={handleDateClick}
                   eventClick={handleEventClick}
+                  scrollTime={scrollTime}
                 />
               </>
             )}
@@ -465,6 +510,7 @@ function Curso() {
           onClose={closeModal} 
           cursosCalendario={cursosCalendario}
           onCursoSaved={handleCursoSaved}
+          feriados={feriados}
         />
       )}
 

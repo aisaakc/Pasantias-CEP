@@ -108,23 +108,6 @@ function HorarioCurso() {
 
             // Crear eventos para el calendario
             const eventosCurso = [
-              // Evento principal del curso
-              {
-                id: String(cursoEncontrado.id_curso),
-                title: cursoEncontrado.nombre_curso,
-                start: cursoEncontrado.fecha_hora_inicio,
-                end: cursoEncontrado.fecha_hora_fin,
-                backgroundColor: cursoEncontrado.color || '#4F46E5',
-                borderColor: cursoEncontrado.color || '#4F46E5',
-                textColor: '#ffffff',
-                extendedProps: {
-                  instructor: cursoEncontrado.nombre_completo_facilitador,
-                  modalidad: cursoEncontrado.modalidad,
-                  estado: cursoEncontrado.estado,
-                  costo: cursoEncontrado.costo,
-                  codigo: cursoEncontrado.codigo
-                }
-              },
               // Eventos de los horarios
               ...horariosExistentes.map((horario, index) => ({
                 id: `horario-${index}`,
@@ -321,20 +304,11 @@ function HorarioCurso() {
         fechaInicio.setSeconds(0, 0);
         fechaFin.setSeconds(0, 0);
         
-        // Ajustar al horario UTC
-        const fechaInicioUTC = new Date(fechaInicio.getTime() + fechaInicio.getTimezoneOffset() * 60000);
-        const fechaFinUTC = new Date(fechaFin.getTime() + fechaFin.getTimezoneOffset() * 60000);
-
-        console.log('Formateando horario:', {
-          original: horario,
-          fechaInicioUTC: fechaInicioUTC.toISOString(),
-          fechaFinUTC: fechaFinUTC.toISOString()
-        });
-
+        // Guardar la fecha y hora tal como la selecciona el usuario (sin ajustar a UTC)
         return {
           id: horario.originalId || Date.now() + Math.random().toString(36).substr(2, 9),
-          fecha_hora_inicio: fechaInicioUTC.toISOString(),
-          fecha_hora_fin: fechaFinUTC.toISOString(),
+          fecha_hora_inicio: fechaInicio.toISOString().slice(0, 16),
+          fecha_hora_fin: fechaFin.toISOString().slice(0, 16),
           observacion: horario.descripcion || ''
         };
       });
@@ -413,26 +387,6 @@ function HorarioCurso() {
 
           // Crear eventos para el calendario incluyendo el evento principal del curso
           const eventosCalendario = [
-            // Evento principal del curso
-            {
-              id: String(cursoActualizado.id_curso),
-              title: cursoActualizado.nombre_curso,
-              start: cursoActualizado.fecha_hora_inicio,
-              end: cursoActualizado.fecha_hora_fin,
-              backgroundColor: cursoActualizado.color || '#4F46E5',
-              borderColor: cursoActualizado.color || '#4F46E5',
-              textColor: '#ffffff',
-              display: 'block',
-              classNames: ['fc-event-principal'],
-              extendedProps: {
-                instructor: cursoActualizado.nombre_completo_facilitador,
-                modalidad: cursoActualizado.modalidad,
-                estado: cursoActualizado.estado,
-                costo: cursoActualizado.costo,
-                codigo: cursoActualizado.codigo,
-                esEventoPrincipal: true
-              }
-            },
             // Eventos de los horarios
             ...horariosActualizados.map((horario, index) => {
               return {
@@ -636,7 +590,7 @@ function HorarioCurso() {
                 locale={esLocale}
                 height="auto"
                 allDaySlot={true}
-                slotMinTime="00:00:00"
+                slotMinTime="01:00:00"
                 slotMaxTime="24:00:00"
                 weekends={true}
                 events={eventosCalendario}

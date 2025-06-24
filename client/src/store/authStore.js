@@ -6,6 +6,7 @@ import {
    login,
    getSubclassificationsById
    } from '../api/auth.api';
+import { getRoles } from '../api/persona.api';
 
 export const useAuthStore = create((set, get) => ({ 
   generos: [],
@@ -19,6 +20,7 @@ export const useAuthStore = create((set, get) => ({
   permisosUsuario: [], 
   clasificacionesUsuario: [], 
   isSupervisor: !!localStorage.getItem('isSupervisor'),
+  rolesDisponibles: [],
 
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
@@ -81,7 +83,7 @@ export const useAuthStore = create((set, get) => ({
       localStorage.setItem('userRoles', JSON.stringify(rolesUsuario));
       // Cargar automáticamente los permisos del usuario después del login
       const rolesUsuarioFormateados = rolesUsuario.map(rol => rol.toString());
-      const permisos = await get().cargarPermisosUsuario(rolesUsuarioFormateados);
+      await get().cargarPermisosUsuario(rolesUsuarioFormateados);
       set({
         loading: false,
         successMessage: `¡Bienvenido ${response.data.user.nombre} ${response.data.user.apellido}!`,
@@ -184,7 +186,6 @@ export const useAuthStore = create((set, get) => ({
         clasificacionesUsuario: clasificacionesUnicas,
         loading: false 
       });
-
 
       return { objetos: objetosUnicos, clasificaciones: clasificacionesUnicas };
     } catch (error) {
@@ -391,7 +392,20 @@ export const useAuthStore = create((set, get) => ({
     console.log('¿Tiene algún permiso?:', tieneAlgunPermiso);
     
     return tieneAlgunPermiso;
-  }
+  },
+
+  fetchRolesDisponibles: async () => {
+    try {
+      const response = await getRoles();
+      const rolesArray = Array.isArray(response.data)
+        ? response.data
+        : response.data.data || response.data.roles || [];
+      set({ rolesDisponibles: rolesArray });
+    } catch (error) {
+      console.error('Error al obtener roles:', error);
+      set({ rolesDisponibles: [] });
+    }
+  },
 }));
 
 export default useAuthStore;

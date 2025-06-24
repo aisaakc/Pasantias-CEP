@@ -1,0 +1,96 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
+import { CLASSIFICATION_IDS } from '../config/classificationIds';
+
+// Mapeo de rutas a permisos específicos
+const ROUTE_PERMISSIONS = {
+  '/dashboard/cursos': CLASSIFICATION_IDS.MN_CURSO,
+  '/dashboard/listcursos': CLASSIFICATION_IDS.MN_LISTCURSOS,
+  '/dashboard/roles': CLASSIFICATION_IDS.MN_ROLES,
+  '/dashboard/documentos': CLASSIFICATION_IDS.MN_DOCUMENTOS,
+  '/dashboard/prueba': CLASSIFICATION_IDS.MN_PDF,
+};
+
+// Hook personalizado para verificar permisos de rutas
+export const usePermissionGuard = (requiredPermission = null) => {
+  const { isAuthenticated, tienePermiso, loading } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      // Si está cargando, esperar
+      if (loading) {
+        return;
+      }
+
+      // Si no está autenticado, redirigir al login
+      if (!isAuthenticated) {
+        console.log('❌ Usuario no autenticado, redirigiendo al login');
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      // Si se requiere un permiso específico, verificarlo
+      if (requiredPermission) {
+        if (!tienePermiso(requiredPermission)) {
+          console.log(`❌ Acceso denegado: Usuario no tiene permiso ${requiredPermission} para ${location.pathname}`);
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+      }
+
+      // Verificar permisos basados en la ruta actual
+      const requiredPermissionForRoute = ROUTE_PERMISSIONS[location.pathname];
+      if (requiredPermissionForRoute && !tienePermiso(requiredPermissionForRoute)) {
+        console.log(`❌ Acceso denegado: Usuario no tiene permiso ${requiredPermissionForRoute} para ${location.pathname}`);
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      // Si llegamos aquí, el usuario tiene acceso
+      setHasAccess(true);
+      setIsChecking(false);
+    };
+
+    checkAccess();
+  }, [isAuthenticated, requiredPermission, location.pathname, navigate, tienePermiso, loading]);
+
+  return {
+    hasAccess,
+    isChecking,
+    loading,
+    isAuthenticated,
+    currentPath: location.pathname,
+    requiredPermission: ROUTE_PERMISSIONS[location.pathname] || requiredPermission
+  };
+};
+
+// Hook para verificar si el usuario puede acceder a una ruta específica
+export const useCanAccessRoute = (route) => {
+  const { tienePermiso } = useAuthStore();
+  const requiredPermission = ROUTE_PERMISSIONS[route];
+  
+  return {
+    canAccess: requiredPermission ? tienePermiso(requiredPermission) : true,
+    requiredPermission
+  };
+};
+
+// Hook para obtener todos los permisos de rutas del usuario
+export const useRoutePermissions = () => {
+  const { tienePermiso } = useAuthStore();
+  
+  const routePermissions = Object.entries(ROUTE_PERMISSIONS).reduce((acc, [route, permission]) => {
+    acc[route] = {
+      canAccess: tienePermiso(permission),
+      permission
+    };
+    return acc;
+  }, {});
+
+  return routePermissions;
+}; 

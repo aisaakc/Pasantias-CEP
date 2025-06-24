@@ -10,6 +10,7 @@ import Curso from "./pages/dashboard/Curso";
 import Roles from "./pages/dashboard/Roles";
 import HorarioCurso from "./pages/dashboard/HorarioCurso";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import useAuthStore from "./store/authStore";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -17,11 +18,12 @@ import Prueba from "./pages/dashboard/prueba";
 import Documentos from "./pages/dashboard/documentos";
 import Perfil from "./pages/dashboard/profile/perfil";
 import ListCursos from "./pages/dashboard/ListCursos";
+import PermissionTest from "./pages/dashboard/PermissionTest";
 import { Toaster } from 'sonner';
 import React from 'react';
 
-// Componente para proteger rutas
-const ProtectedRoute = ({ children }) => {
+// Componente para proteger rutas básicas (solo autenticación)
+const BasicProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -53,21 +55,42 @@ export default function App() {
         <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
         <Route path="/registro" element={<Registro />} />
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <BasicProtectedRoute>
             <Layout />
-          </ProtectedRoute>
+          </BasicProtectedRoute>
         }>
           <Route index element={<Clasificacion />} />
           <Route path="clasificacion" element={<Clasificacion />} />
           <Route path="tipos/:id" element={<Tipos />} />
           <Route path="tipos/:id/:parentId" element={<Tipos />} />
-          <Route path="cursos" element={<Curso />} />
-          <Route path="roles" element={<Roles />} />
+          <Route path="cursos" element={
+            <ProtectedRoute>
+              <Curso />
+            </ProtectedRoute>
+          } />
+          <Route path="roles" element={
+            <ProtectedRoute>
+              <Roles />
+            </ProtectedRoute>
+          } />
           <Route path="horario-curso/:id" element={<HorarioCurso /> } />
-          <Route path="prueba" element={<Prueba/>} />  
-          <Route path="documentos" element={<Documentos/>} />
+          <Route path="prueba" element={
+            <ProtectedRoute>
+              <Prueba/>
+            </ProtectedRoute>
+          } />  
+          <Route path="documentos" element={
+            <ProtectedRoute>
+              <Documentos/>
+            </ProtectedRoute>
+          } />
           <Route path="perfil" element={<Perfil />} />
-          <Route path="listcursos" element={<ListCursos/>} />
+          <Route path="listcursos" element={
+            <ProtectedRoute>
+              <ListCursos/>
+            </ProtectedRoute>
+          } />
+          <Route path="permission-test" element={<PermissionTest />} />
         </Route>
       </Routes>
     </main>

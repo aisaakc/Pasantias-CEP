@@ -33,7 +33,6 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [color, setColor] = useState('#4F46E5');
-  const [shouldRender, setShouldRender] = useState(true);
   const [animationClass, setAnimationClass] = useState('animate-modal-in');
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

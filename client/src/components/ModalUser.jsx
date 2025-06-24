@@ -27,7 +27,6 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     createUser, 
     updateUser, 
     loading, 
-    error,
     fetchSubclasificaciones,
     preguntas,
     generos,
@@ -188,7 +187,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ isSubmitting, values, setFieldValue }) => (
+            {({ values, setFieldValue }) => (
               <Form className="p-6 space-y-5">
                 {/* Mensaje de error */}
                 {errorMessage && (

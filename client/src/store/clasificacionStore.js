@@ -126,23 +126,23 @@ export const useClasificacionStore = create((set, get) => ({
   },
 
   // Obtener todos los íconos
-  fetchIcons: async () => {
-    set({ loading: true, error: null });
-    try {
-      const response = await getAllIcons();
-      set({
-        icons: response.data,
-        loading: false,
-      });
-    } catch (error) {
-      console.error("Error al obtener los íconos:", error);
-      set({
-        loading: false,
-        error: 'Error al obtener los íconos.',
-        icons: []
-      });
-    }
-  },
+  // fetchIcons: async () => {
+  //   set({ loading: true, error: null });
+  //   try {
+  //     const response = await getAllIcons();
+  //     set({
+  //       icons: response.data,
+  //       loading: false,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error al obtener los íconos:", error);
+  //     set({
+  //       loading: false,
+  //       error: 'Error al obtener los íconos.',
+  //       icons: []
+  //     });
+  //   }
+  // },
 
   // Operaciones de escritura
   createClasificacion: async (data) => {

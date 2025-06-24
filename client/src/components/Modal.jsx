@@ -25,29 +25,22 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const { 
     createClasificacion, 
     updateClasificacion, 
-    loading, 
     error, 
     clearError,
     fetchParentClasifications,
-    getClasificacion,
     fetchProgramas,
     programas
   } = useClasificacionStore();
 
   const { tienePermiso, isSupervisor } = useAuthStore();
 
-  const [clasificaciones, setClasificaciones] = useState([]);
   const [icons, setIcons] = useState([]);
-  const [parentClasificacion, setParentClasificacion] = useState(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
-  const [nombreClasificacion, setNombreClasificacion] = useState('');
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [selectPosition, setSelectPosition] = useState({ top: 0, left: 0, width: 0 });
   const [permisos, setPermisos] = useState([]);
-  const [selectedPermisos, setSelectedPermisos] = useState([]);
   const [clasificacionesPrincipales, setClasificacionesPrincipales] = useState([]);
-  const [selectedClasificaciones, setSelectedClasificaciones] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [institutos, setInstitutos] = useState([]);
   const [carreras, setCarreras] = useState([]);
@@ -106,14 +99,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     return errors;
   };
 
-  const handlePermisosChange = (permisoId, setFieldValue, currentPermisos) => {
-    const permisosArray = currentPermisos ? currentPermisos.split(',').map(p => p.trim()) : [];
-    const newPermisos = permisosArray.includes(permisoId)
-      ? permisosArray.filter(id => id !== permisoId)
-      : [...permisosArray, permisoId];
-    setFieldValue('permisos', newPermisos.join(','));
-  };
-
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       console.log('Valores en submit:', values);
@@ -160,7 +145,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       if (isSupervisor) {
         try {
           dataToSend.adicional = adicionalRaw ? JSON.parse(adicionalRaw) : null;
-        } catch (e) {
+        } catch {
           toast.error('El campo adicional no es un JSON válido');
           setSubmitting(false);
           return;
@@ -259,13 +244,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
 
   // Función para limpiar el estado del modal
   const clearModalState = useCallback(() => {
-    setClasificaciones([]);
     setIcons([]);
     setPermisos([]);
     setClasificacionesPrincipales([]);
-    setSelectedPermisos([]);
-    setSelectedClasificaciones([]);
-    setNombreClasificacion('');
   }, []);
 
   useEffect(() => {
@@ -288,30 +269,14 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             const iconsResponse = await getAllIcons();
             setIcons(iconsResponse.data);
             
-            // Cargar todas las clasificaciones para otros usos
-            const response = await getAllClasificaciones();
-            setClasificaciones(response.data);
-            
             // Solo cargar permisos y clasificaciones principales si es necesario
             if (parentInfo || editData?.type_id) {
               const permisosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
               setPermisos(permisosResponse.data.data || []);
               
-              // If editing, set the selected permissions
-              if (editData?.adicional?.id_objeto) {
-                const permisosArray = editData.adicional.id_objeto.map(p => p.toString());
-                setSelectedPermisos(permisosArray);
-              }
-              
               const principalesResponse = await getAllClasificaciones();
               const principales = principalesResponse.data.filter(c => c.type_id === null);
               setClasificacionesPrincipales(principales);
-              
-              // If editing, set the selected classifications
-              if (editData?.adicional?.id_clasificacion) {
-                const clasificacionesArray = editData.adicional.id_clasificacion.map(c => c.toString());
-                setSelectedClasificaciones(clasificacionesArray);
-              }
             }
             
             // Si es una clasificación de cursos, obtener los programas
@@ -365,16 +330,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       setDataLoaded(false);
     }
   }, [editData?.id_clasificacion, parentInfo?.type_id]);
-
-  useEffect(() => {
-    // Encontrar el nombre de la clasificación actual basado en el type_id
-    if (clasificaciones.length > 0 && parentInfo?.type_id) {
-      const clasificacionActual = clasificaciones.find(c => c.id_clasificacion === parseInt(parentInfo.type_id));
-      if (clasificacionActual) {
-        setNombreClasificacion(clasificacionActual.nombre);
-      }
-    }
-  }, [clasificaciones, parentInfo?.type_id]);
 
   // Efecto para mostrar el programa seleccionado en la consola
   useEffect(() => {
@@ -430,7 +385,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => {
+            {({ values, errors, touched, handleChange, isSubmitting, setFieldValue }) => {
               console.log('Valores actuales del formulario:', values);
               return (
                 <Form className="p-6 space-y-5">
@@ -443,11 +398,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
                         {field.label}
-                        {field.name === 'parent_id' && parentClasificacion && (
-                          <span className="ml-2 text-sm text-gray-500">
-                            (Actual: {parentClasificacion.nombre})
-                          </span>
-                        )}
                       </label>
                       {field.type === 'textarea' ? (
                         <Field

@@ -244,7 +244,7 @@ class CursoModel {
         p.gmail,
         p.id_status
       FROM personas p
-      CROSS JOIN LATERAL json_array_elements_text(p.id_rol->'id_rol') as roles
+      CROSS JOIN LATERAL json_array_elements_text(p.id_rol) as roles
       WHERE roles = $1
       ORDER BY p.nombre, p.apellido;
     `;

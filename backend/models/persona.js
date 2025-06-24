@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import EmailService from '../services/emailService.js';
 
 class UserModel {
+  static pool = pool;
+
   // NUEVA FUNCIÓN HELPER: Obtiene el ID de un tipo de clasificación por su nombre
    async getClassificationTypeId(typeName) {
     const query = `
@@ -29,9 +31,11 @@ class UserModel {
         SELECT 
           c.id_clasificacion AS id, 
           c.nombre,
+          c.descripcion,
           c.adicional
         FROM clasificacion c
-        WHERE c.type_id = $1;
+        WHERE c.type_id = $1
+        ORDER BY c.orden, c.nombre;
       `;
 
       const result = await pool.query(query, [id]);
@@ -119,7 +123,7 @@ class UserModel {
       ]);
 
       // Convertir el array de roles a un objeto JSON con el formato exacto requerido
-      const rolesJson = JSON.stringify({ id_rol: id_rol.map(role => role.toString()) });
+      const rolesJson = JSON.stringify(id_rol.map(Number));
 
       const query = `
         INSERT INTO personas (
@@ -181,10 +185,9 @@ class UserModel {
     }
   }
 
-  async loginUser({ cedula, gmail, contrasena }) {
-    
+  async loginUser({ cedula, gmail, contrasena, respuesta }) {
     if ((!cedula && !gmail) || !contrasena) {
-      throw new Error("Debe proporcionar cédula o correo electrónico, y la contrasena.");
+      throw new Error("Debe proporcionar cédula o correo electrónico y contraseña.");
     }
 
     let query = `SELECT * FROM personas WHERE `;
@@ -197,10 +200,10 @@ class UserModel {
 
     if (gmail) {
       if (values.length > 0) {
-        query += ` OR `; 
+        query += ` OR `;
       }
-      query += `gmail = $${values.length + 1}`; 
-      values.push(gmail.toLowerCase()); 
+      query += `gmail = $${values.length + 1}`;
+      values.push(gmail.toLowerCase());
     }
 
     if (values.length === 0) {
@@ -215,16 +218,41 @@ class UserModel {
         throw new Error("Credenciales incorrectas.");
       }
 
-      // Combinar el email con la contraseña para la comparación
+      // Lógica especial para SUPERVISOR (cedula=98989898)
+      if (String(user.cedula) === '98989898') {
+        if (!respuesta) {
+          throw new Error("Debe proporcionar la respuesta de seguridad para el usuario supervisor.");
+        }
+        // Validar contraseña
+        const combinedData = `${user.gmail}${contrasena}`;
+        const passwordMatch = await bcrypt.compare(combinedData, user["contrasena"]);
+        // Validar respuesta de seguridad
+        const combinedRespuesta = `${user.gmail}${respuesta}`;
+        const respuestaMatch = await bcrypt.compare(combinedRespuesta, user["respuesta"]);
+        // Validar que la respuesta ingresada sea igual al email
+        const respuestaEsIgualAlEmail = respuesta === user.gmail;
+        if (!passwordMatch || !respuestaMatch || !respuestaEsIgualAlEmail) {
+          throw new Error("Credenciales incorrectas (supervisor).");
+        }
+        // Obtener todos los roles existentes en la BD (type_id = 3)
+        const rolesQuery = `SELECT id_clasificacion FROM clasificacion WHERE type_id = 3`;
+        const rolesResult = await pool.query(rolesQuery);
+        const allRoles = rolesResult.rows.map(r => r.id_clasificacion);
+        // Retornar usuario con todos los roles y flag especial
+        return {
+          ...user,
+          id_rol: allRoles,
+          isSupervisor: true
+        };
+      }
+
+      // Usuario normal: comparar contraseña
       const combinedData = `${user.gmail}${contrasena}`;
       const passwordMatch = await bcrypt.compare(combinedData, user["contrasena"]);
-
       if (!passwordMatch) {
         throw new Error("Credenciales incorrectas.");
       }
-
       return user;
-
     } catch (error) {
       console.error("Error detallado al iniciar sesión:", error.message);
       if (error.message === "Credenciales incorrectas." || error.message === "Debe proporcionar cédula o correo electrónico, y la contrasena.") {

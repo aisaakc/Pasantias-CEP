@@ -18,15 +18,15 @@ export default function Clasificacion() {
     loading, 
     error 
   } = useClasificacionStore();
-  const { tienePermiso, filtrarClasificacionesPorPermiso } = useAuthStore();
+  const { tienePermiso, filtrarClasificacionesPorPermiso, roles } = useAuthStore();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [deleteData, setDeleteData] = useState(null);
 
-  // Verificar si el usuario puede agregar configuraciones
-  const puedeAgregar = tienePermiso(CLASSIFICATION_IDS.CF_AGREGAR);
+  // Verificar si el usuario tiene acceso al menú de configuraciones
+  const tieneAccesoConfiguracion = tienePermiso(CLASSIFICATION_IDS.MN_CONFIGURACION);
 
   useEffect(() => {
     fetchParentClasifications();
@@ -59,6 +59,22 @@ export default function Clasificacion() {
             <FontAwesomeIcon icon={iconos.faRedo} />
             <span>Intentar de nuevo</span>
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tieneAccesoConfiguracion) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4 text-center">
+          <div className="flex items-center justify-center text-yellow-500 mb-4">
+            <FontAwesomeIcon icon={iconos.faExclamationTriangle} className="text-4xl animate-bounce" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Acceso restringido</h3>
+          <p className="text-gray-600 mb-4">
+            No tienes permisos para acceder a las configuraciones. Por favor, contacta al administrador para que te asigne los permisos necesarios.
+          </p>
         </div>
       </div>
     );
@@ -119,7 +135,7 @@ export default function Clasificacion() {
               <div className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></div>
             </span>
           </h1>
-          {!puedeAgregar && (
+          {!tienePermiso(CLASSIFICATION_IDS.CF_AGREGAR) && (
             <button
               onClick={openModal}
               className="bg-blue-600 text-white rounded-xl px-6 py-3 font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-blue-900">

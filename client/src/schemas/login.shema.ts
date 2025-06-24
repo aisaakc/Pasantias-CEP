@@ -7,9 +7,9 @@ export const loginSchema = z.object({
             return z.string().email().safeParse(value).success;
         }
         // Si no contiene @, debe ser una cédula de al menos 8 dígitos
-        return /^\d{8,}$/.test(value);
+        return /^\d{4,}$/.test(value);
     }, {
-        message: "Debe ser un correo electrónico válido o una cédula de al menos 8 dígitos numéricos"
+        message: "Debe ser un correo electrónico válido o una cédula de al menos 4 dígitos numéricos"
     }),
     
 });

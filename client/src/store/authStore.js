@@ -11,28 +11,32 @@ export const useAuthStore = create((set, get) => ({
   generos: [],
   roles: [],
   preguntas: [],
+  prefijosTelefonicos: [],
   loading: false,
   error: null,
   successMessage: null,
   isAuthenticated: !!localStorage.getItem('token'), 
   permisosUsuario: [], 
   clasificacionesUsuario: [], 
+  isSupervisor: !!localStorage.getItem('isSupervisor'),
 
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
     try {
       set({ loading: true });
      
-      const [preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
+      const [preguntasResponse, generosResponse, rolesResponse, prefijosResponse] = await Promise.all([
         getSubclassificationsById(CLASSIFICATION_IDS.PREGUNTAS),
         getSubclassificationsById(CLASSIFICATION_IDS.GENEROS),
-        getSubclassificationsById(CLASSIFICATION_IDS.ROLES)
+        getSubclassificationsById(CLASSIFICATION_IDS.ROLES),
+        getSubclassificationsById(CLASSIFICATION_IDS.PREFIJOS_TLF)
       ]);
 
       set({
         preguntas: preguntasResponse.data.data,
         generos: generosResponse.data.data,
         roles: rolesResponse.data.data,
+        prefijosTelefonicos: prefijosResponse.data.data,
         loading: false,
       });
     } catch (error) {
@@ -66,26 +70,30 @@ export const useAuthStore = create((set, get) => ({
       const response = await login(userAuth);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+      // Guardar el flag de supervisor
+      if (response.data.user.isSupervisor) {
+        localStorage.setItem('isSupervisor', 'true');
+      } else {
+        localStorage.removeItem('isSupervisor');
+      }
       // Guardar los roles del usuario en localStorage
-      const rolesUsuario = response.data.user.id_rol.id_rol;
-      // console.log('Roles del usuario al iniciar sesión:', rolesUsuario);
+      const rolesUsuario = response.data.user.id_rol;
       localStorage.setItem('userRoles', JSON.stringify(rolesUsuario));
-      
       // Cargar automáticamente los permisos del usuario después del login
       const rolesUsuarioFormateados = rolesUsuario.map(rol => rol.toString());
       const permisos = await get().cargarPermisosUsuario(rolesUsuarioFormateados);
-      
       set({
         loading: false,
         successMessage: `¡Bienvenido ${response.data.user.nombre} ${response.data.user.apellido}!`,
         isAuthenticated: true,
+        isSupervisor: !!response.data.user.isSupervisor,
       });
     } catch (error) {
       set({
         loading: false,
         error: error.response?.data?.error || 'Error desconocido al iniciar sesión.',
         isAuthenticated: false,
+        isSupervisor: false,
       });
     }
   },
@@ -94,11 +102,13 @@ export const useAuthStore = create((set, get) => ({
   logoutUser: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('isSupervisor');
     set({
       successMessage: null,
       error: null,
       loading: false,
       isAuthenticated: false,
+      isSupervisor: false,
     });
   },
 

@@ -46,8 +46,11 @@ class UsuarioModel {
                c.nombre rol_nombre,
                c.descripcion rol_desc
              FROM personas p
-             CROSS JOIN LATERAL json_array_elements_text(p.id_rol->'id_rol') AS role_id_text
-             INNER JOIN clasificacion c ON c.id_clasificacion = role_id_text::integer
+             LEFT JOIN LATERAL (
+               SELECT role_id_text
+               FROM json_array_elements_text(p.id_rol) AS role_id_text
+             ) roles ON TRUE
+             LEFT JOIN clasificacion c ON c.id_clasificacion = roles.role_id_text::integer
              LEFT JOIN clasificacion g ON p.id_genero = g.id_clasificacion
           `;
           const result = await pool.query(query);
@@ -117,7 +120,8 @@ class UsuarioModel {
             ]);
 
             // Convertir el array de roles a un objeto JSON con el formato exacto requerido
-            const rolesJson = JSON.stringify({ id_rol: id_rol.map(role => role.toString()) });
+            const cleanRoles = id_rol.filter(r => Number(r) !== 0).map(Number);
+            const rolesJson = JSON.stringify(cleanRoles);
 
             const query = `
                 INSERT INTO personas (
@@ -276,7 +280,8 @@ class UsuarioModel {
                 paramCount++;
             }
             if (id_rol) {
-                const rolesJson = JSON.stringify({ id_rol: id_rol.map(role => role.toString()) });
+                const cleanRoles = id_rol.filter(r => Number(r) !== 0).map(Number);
+                const rolesJson = JSON.stringify(cleanRoles);
                 updateFields.push(`id_rol = $${paramCount}`);
                 values.push(rolesJson);
                 paramCount++;

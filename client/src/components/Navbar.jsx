@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/LOGO1.png';
+import useAuthStore from '../store/authStore';
 
 const links = [
   { name: 'Home', href: '/' },
@@ -10,9 +11,10 @@ const links = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const isSupervisor = useAuthStore(state => state.isSupervisor);
 
   return (
-    <nav className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 shadow-lg fixed w-full z-50 border-b border-gray-200">
+    <nav className={`${isSupervisor ? 'bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 border-4 border-yellow-600 shadow-2xl animate-pulse' : 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 shadow-lg'} fixed w-full z-50 border-b border-gray-200`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
 

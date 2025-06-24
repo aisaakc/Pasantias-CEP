@@ -8,7 +8,9 @@ class clasificacionController {
         } catch (error) {
             console.error("Error en AuthController.getParentsClasificaciones:", error.message);
             res.status(500).json({
-                error: "Error interno del servidor al obtener clasificaciones principales."
+                error: "Error interno del servidor al obtener clasificaciones principales.",
+                dbError: error.message,
+                detail: error.detail || null
             })
         }
     }
@@ -24,10 +26,12 @@ class clasificacionController {
         } catch (error) {
           console.error("Error en clasificacionController.createClasificacion:", error.message);
           if (error.message.includes("Ya existe una clasificación con este nombre.")) {
-            return res.status(409).json({ error: error.message })
+            return res.status(409).json({ error: error.message, dbError: error.message, detail: error.detail || null })
           }
           res.status(500).json({
-            error: "Error interno del servidor al crear la clasificación."
+            error: "Error interno del servidor al crear la clasificación.",
+            dbError: error.message,
+            detail: error.detail || null
           });
         }
     }
@@ -48,7 +52,9 @@ class clasificacionController {
         } catch (error) {
             console.error("Error en clasificacionController.getAllSubclasificaciones:", error.message);
             res.status(500).json({
-                error: "Error interno del servidor al obtener subclasificaciones...."
+                error: "Error interno del servidor al obtener subclasificaciones....",
+                dbError: error.message,
+                detail: error.detail || null
             });
         }
     }
@@ -59,7 +65,7 @@ class clasificacionController {
           res.status(200).json(clasificaciones);
         } catch (error) {
           console.error("Error en clasificacionController.getAllClasificaciones:", error.message);
-          res.status(500).json({ error: "Error interno del servidor al obtener todas las clasificaciones." });
+          res.status(500).json({ error: "Error interno del servidor al obtener todas las clasificaciones.", dbError: error.message, detail: error.detail || null });
         }
     }
 
@@ -69,7 +75,7 @@ class clasificacionController {
             res.status(200).json(icons);
         } catch (error) {
             console.error("Error en clasificacionController.getAllIcons:", error.message);
-            res.status(500).json({ error: "Error interno del servidor al obtener todos los íconos." });
+            res.status(500).json({ error: "Error interno del servidor al obtener todos los íconos.", dbError: error.message, detail: error.detail || null });
         }
     }
       
@@ -101,18 +107,20 @@ class clasificacionController {
             
             // Manejar errores específicos
             if (error.message === "Clasificación no encontrada.") {
-                return res.status(404).json({ error: error.message });
+                return res.status(404).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
             if (error.message === "Ya existe una clasificación con este nombre.") {
-                return res.status(409).json({ error: error.message });
+                return res.status(409).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
-            if (error.message.includes("PGT: Prohibido")) {
-                return res.status(403).json({ error: error.message });
+            if (error.message.includes("PGT:")) {
+                return res.status(403).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
             
             // Error general del servidor
             res.status(500).json({
-                error: "Error interno del servidor al actualizar la clasificación."
+                error: "Error interno del servidor al actualizar la clasificación.",
+                dbError: error.message,
+                detail: error.detail || null
             });
         }
     }
@@ -133,21 +141,23 @@ class clasificacionController {
             
             // Manejar errores específicos
             if (error.name === "NotFoundError") {
-                return res.status(404).json({ error: error.message });
+                return res.status(404).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
             if (error.name === "ProtectedError") {
-                return res.status(403).json({ error: error.message });
+                return res.status(403).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
             if (error.name === "SubclasificacionesError") {
-                return res.status(409).json({ error: error.message });
+                return res.status(409).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
             if (error.name === "ConstraintError") {
-                return res.status(409).json({ error: error.message });
+                return res.status(409).json({ error: error.message, dbError: error.message, detail: error.detail || null });
             }
             
             // Error general del servidor
             res.status(500).json({
-                error: "Error interno del servidor al eliminar la clasificación."
+                error: "Error interno del servidor al eliminar la clasificación.",
+                dbError: error.message,
+                detail: error.detail || null
             });
         }
     }
@@ -180,11 +190,12 @@ class clasificacionController {
             });
             
             if (error.message.includes('Invalid ID format')) {
-                return res.status(400).json({ error: 'Formato de ID inválido' });
+                return res.status(400).json({ error: 'Formato de ID inválido', dbError: error.message, detail: error.detail || null });
             }
             res.status(500).json({ 
                 error: error.message,
-                details: error.detail || 'Error interno del servidor'
+                dbError: error.message,
+                detail: error.detail || 'Error interno del servidor'
             });
         }
     } 

@@ -18,7 +18,8 @@ export default function Sidebar() {
     filtrarClasificacionesPorPermiso,
     obtenerInfoPermisos,
     tienePermisoClasificacion,
-    inicializarPermisos
+    inicializarPermisos,
+    isSupervisor
   } = useAuthStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
@@ -80,7 +81,7 @@ export default function Sidebar() {
   // Función para obtener el icono dinámicamente
   const getIcon = (iconName) => {
     const Icon = iconos[iconName] || iconos.faFile;
-    return <FontAwesomeIcon icon={Icon} className="w-5 h-5" />;
+    return <FontAwesomeIcon icon={Icon} className={`w-5 h-5 ${isSupervisor ? 'text-red-800' : ''}`} />;
   };
 
   // Encontrar las clasificaciones específicas para Cursos, Roles y Documentos
@@ -100,7 +101,7 @@ export default function Sidebar() {
   const puedeAccederDocumentos = tienePermiso(CLASSIFICATION_IDS.MN_DOCUMENTOS);
 
   // Función helper para renderizar enlaces del sidebar
-  const renderSidebarLink = (to, label, icon, canAccess, clasificacion = null) => {
+  const renderSidebarLink = (to, label, icon, canAccess, clasificacion = null, isSupervisor = false) => {
     if (!canAccess) return null;
 
     const isActive = location.pathname === to;
@@ -113,46 +114,41 @@ export default function Sidebar() {
         to={to}
         className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all duration-300 ${
           isActive
-            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-            : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
+            ? (isSupervisor ? 'bg-gradient-to-r from-red-600 to-red-400 text-red-900 shadow-lg shadow-red-500/20' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20')
+            : (isSupervisor ? 'text-red-900 hover:bg-red-200/50 hover:text-red-800 hover:shadow-md' : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md')
         }`}
       >
-        <FontAwesomeIcon icon={iconToUse} className="w-5 h-5" />
-        <span className="font-medium">{label}</span>
+        <FontAwesomeIcon icon={iconToUse} className={`w-5 h-5 ${isSupervisor ? 'text-red-800' : ''}`} />
+        <span className={`font-medium ${isSupervisor ? 'text-red-900' : 'text-white'}`}>{label}</span>
       </Link>
     );
   };
 
   return (
-    <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30">
+    <aside className={`${isSupervisor ? 'bg-gradient-to-br from-red-200 via-red-100 to-red-300 border-4 border-red-500 shadow-2xl animate-pulse' : 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'} w-80 h-full ${isSupervisor ? 'text-red-900' : 'text-white'} flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30`}>
       <div className="mb-16">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent animate-gradient">
-          CEP
-          <br>
-          </br>
-          Coordinacion de Extencion Profesional
-        </h2>
-        <div className="h-1 w-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 mt-3 rounded-full"></div>
+        <h2 className={`text-3xl font-bold ${isSupervisor ? 'bg-gradient-to-r from-red-700 via-red-500 to-red-800 bg-clip-text text-transparent' : 'bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent animate-gradient'}`}>CEP<br></br>Coordinación de Extensión Profesional</h2>
+        <div className={`${isSupervisor ? 'h-1 w-24 bg-gradient-to-r from-red-500 via-red-400 to-red-600' : 'h-1 w-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600'} mt-3 rounded-full`}></div>
       </div>
 
       <nav className="flex flex-col gap-3">
         {puedeAccederCursos && (
-          renderSidebarLink('/dashboard/cursos', 'Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion)
+          renderSidebarLink('/dashboard/cursos', 'Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion, isSupervisor)
         )}
 
         {puedeAccederListaCursos && (
-          renderSidebarLink('/dashboard/listcursos', 'Lista de Cursos', iconos.faClipboardList, puedeAccederListaCursos)
+          renderSidebarLink('/dashboard/listcursos', 'Lista de Cursos', iconos.faClipboardList, puedeAccederListaCursos, null, isSupervisor)
         )}
 
         {puedeAccederDocumentos && (
-          renderSidebarLink('/dashboard/documentos', 'Documentos', iconos.faFileAlt, puedeAccederDocumentos, documentosClasificacion)
+          renderSidebarLink('/dashboard/documentos', 'Documentos', iconos.faFileAlt, puedeAccederDocumentos, documentosClasificacion, isSupervisor)
         )}
 
         {puedeAccederRoles && (
-          renderSidebarLink('/dashboard/roles', 'Roles', iconos.faFile, puedeAccederRoles, rolesClasificacion)
+          renderSidebarLink('/dashboard/roles', 'Roles', iconos.faFile, puedeAccederRoles, rolesClasificacion, isSupervisor)
         )}
 
-        {renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF)}
+        {renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF, null, isSupervisor)}
 
         {puedeAccederConfiguracion && (
           <div className="relative">
@@ -171,7 +167,7 @@ export default function Sidebar() {
             >
               <div className="flex items-center gap-3">
                 {getIcon('faCog')}
-                <span className="font-medium">Configuración</span>
+                <span className={`font-medium ${isSupervisor ? 'text-red-900' : 'text-white'}`}>Configuración</span>
               </div>
               <FontAwesomeIcon 
                 icon={iconos.faChevronDown} 

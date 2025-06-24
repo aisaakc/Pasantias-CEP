@@ -6,7 +6,7 @@ export const CLASSIFICATION_IDS = {
   CURSOS: 5,
   MODALIDAD: 100050,
   STATUS: 100059,
-
+  PREFIJOS_TLF: 100190,
 };
 
 export default {

@@ -106,7 +106,7 @@ class Clasificacion {
     }
   
     async updateClasificacion(id, clasificacionActualizada) {
-        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional } = clasificacionActualizada;
+        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional, protected: protectedValue } = clasificacionActualizada;
         try {
             const query = `
                 UPDATE clasificacion 
@@ -117,9 +117,10 @@ class Clasificacion {
                     type_id = $5, 
                     parent_id = $6, 
                     id_icono = $7,
-                    adicional = $8
-                WHERE id_clasificacion = $9
-                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional;
+                    adicional = $8,
+                    protected = $9
+                WHERE id_clasificacion = $10
+                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional, protected;
             `;
             const values = [
                 nombre, 
@@ -130,6 +131,7 @@ class Clasificacion {
                 parent_id || null, 
                 id_icono || null,
                 adicional || null,
+                protectedValue !== undefined ? protectedValue : 0,
                 id
             ];
             
@@ -144,6 +146,12 @@ class Clasificacion {
             console.error("Error en ClasificacionModel.update:", error.message);
             if (error.code === '23505') {
                 throw new Error("Ya existe una clasificación con este nombre.");
+            }
+            if (error.message && error.message.includes('PGT:')) {
+                throw error;
+            }
+            if (error.message) {
+                throw new Error(error.message);
             }
             throw new Error("Error interno del servidor al actualizar la clasificación.");
         }
@@ -200,7 +208,12 @@ class Clasificacion {
                 constraintError.name = "ConstraintError";
                 throw constraintError;
             }
-        
+            if (error.message && error.message.includes('PGT:')) {
+                throw error;
+            }
+            if (error.message) {
+                throw new Error(error.message);
+            }
             throw new Error("Error interno del servidor al eliminar la clasificación");
         }
     }

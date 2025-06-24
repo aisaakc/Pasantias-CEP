@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { Editor } from '@tinymce/tinymce-react';
 
 function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
-  const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error, roles_facilitador, fetchFacilitadores } = useCursoStore();
+  const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error, roles_facilitador, fetchFacilitadores, resetState } = useCursoStore();
   const [cursoSeleccionado, setCursoSeleccionado] = useState('');
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState('');
   const [statusSeleccionado, setStatusSeleccionado] = useState('');
@@ -44,14 +44,22 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsDataLoaded(false);
+        console.log('Iniciando carga de datos del modal...');
+        
+        // Resetear el estado para asegurar datos frescos
+        resetState();
+        
         await Promise.all([
           fetchOpcionesCurso(),
           fetchFacilitadores()
         ]);
+        console.log('Datos cargados exitosamente');
         setIsDataLoaded(true);
       } catch (error) {
         console.error('Error al cargar las opciones:', error);
         toast.error('Error al cargar las opciones del curso');
+        setIsDataLoaded(true); // Marcar como cargado para evitar loops infinitos
       }
     }; 
     loadData();
@@ -59,7 +67,19 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [fetchOpcionesCurso, fetchFacilitadores]);
+  }, [fetchOpcionesCurso, fetchFacilitadores, resetState]);
+
+  // Debug: Monitorear cuando los datos están disponibles
+  useEffect(() => {
+    if (isDataLoaded) {
+      console.log('Estado de datos cargados:', {
+        cursos: cursos?.length || 0,
+        modalidades: modalidades?.length || 0,
+        status: status?.length || 0,
+        facilitadores: roles_facilitador?.length || 0
+      });
+    }
+  }, [isDataLoaded, cursos, modalidades, status, roles_facilitador]);
 
   // Efecto para cargar datos del curso cuando se está editando
   useEffect(() => {
@@ -108,15 +128,28 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   }, [curso, fecha, isDataLoaded]);
 
   useEffect(() => {
-    if (!fechaInicio || !fechaFin || !feriados || feriados.length === 0) {
+    if (!fechaInicio || !feriados || feriados.length === 0) {
       setHolidayWarning('');
       return;
     }
 
     const start = new Date(fechaInicio);
-    const end = new Date(fechaFin);
+    const end = fechaFin ? new Date(fechaFin) : null;
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+    // Validar que las fechas sean válidas
+    if (isNaN(start.getTime()) || (end && isNaN(end.getTime()))) {
+      setHolidayWarning('');
+      return;
+    }
+
+    // Verificar si la fecha de fin es previa a la fecha de inicio
+    if (end && start >= end) {
+      setHolidayWarning('⚠️ Error: La fecha y hora de fin debe ser posterior a la fecha y hora de inicio.');
+      return;
+    }
+
+    // Si no hay fecha de fin, no mostrar alerta de feriados
+    if (!end) {
       setHolidayWarning('');
       return;
     }
@@ -178,7 +211,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
       const holidayNames = uniqueHolidays
         .map(h => `${h.name} (${h.date.toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })})`)
         .join(', ');
-      setHolidayWarning(`Atención: El período seleccionado incluye los siguientes feriados: ${holidayNames}.`);
+      setHolidayWarning(`⚠️ Atención: El período seleccionado incluye los siguientes feriados: ${holidayNames}.`);
     } else {
       setHolidayWarning('');
     }
@@ -367,7 +400,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                   {`Editar Curso: ${curso.nombre_curso}`}
                 </>
               ) : (
-                'Asignar Curso'
+                'Asignar Cohorte'
               )}
             </h2>
             <button 
@@ -381,10 +414,13 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
 
         {/* Contenido */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Cargando opciones...</span>
+          {loading || !isDataLoaded ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 text-lg">Cargando opciones del curso...</p>
+                <p className="text-gray-500 text-sm mt-2">Por favor espere un momento</p>
+              </div>
             </div>
           ) : (
             <>
@@ -402,7 +438,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                       value: cursoSeleccionado,
                       onChange: (e) => setCursoSeleccionado(e.target.value),
                       options: cursos || [],
-                      disabled: loading || !isDataLoaded || !cursos?.length
+                      disabled: loading || !isDataLoaded
                     },
                     { 
                       name: 'modalidad', 
@@ -411,7 +447,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                       value: modalidadSeleccionada,
                       onChange: (e) => setModalidadSeleccionada(e.target.value),
                       options: modalidades || [],
-                      disabled: loading || !isDataLoaded || !modalidades?.length
+                      disabled: loading || !isDataLoaded
                     },
                     { 
                       name: 'status', 
@@ -420,7 +456,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                       value: statusSeleccionado,
                       onChange: (e) => setStatusSeleccionado(e.target.value),
                       options: status || [],
-                      disabled: loading || !isDataLoaded || !status?.length
+                      disabled: loading || !isDataLoaded
                     },
                     { 
                       name: 'facilitador', 
@@ -437,7 +473,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                         id: f.id_persona,
                         nombre: `${f.nombre} ${f.apellido}`
                       })) || [],
-                      disabled: loading || !isDataLoaded || !roles_facilitador?.length
+                      disabled: loading || !isDataLoaded
                     }
                   ].map((field, index) => (
                     <div 
@@ -463,7 +499,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                           backgroundSize: "1.5em 1.5em"
                         }}
                       >
-                        {field.disabled ? (
+                        {!isDataLoaded || loading ? (
                           <option value="" disabled>Cargando opciones...</option>
                         ) : field.options && field.options.length > 0 ? (
                           [<option key={`${field.name}-default`} value="">-- Selecciona {field.label.toLowerCase()} --</option>,
@@ -479,9 +515,9 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                           <option value="" disabled>No hay opciones disponibles</option>
                         )}
                       </select>
-                      {field.disabled && field.options.length === 0 && (
+                      {(!isDataLoaded || loading) && (
                         <p className="mt-1 text-sm text-gray-500">
-                          {loading ? 'Cargando opciones...' : 'No hay opciones disponibles'}
+                          Cargando opciones...
                         </p>
                       )}
                     </div>
@@ -513,16 +549,82 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                     value={descripcionHtml}
                     onEditorChange={(content) => setDescripcionHtml(content)}
                     init={{
-                      height: 200,
-                      menubar: false,
+                      height: 300,
+                      menubar: true,
                       plugins: [
                         'advlist autolink lists link charmap preview anchor',
                         'searchreplace visualblocks code fullscreen',
-                        'insertdatetime table paste help wordcount'
+                        'insertdatetime table paste help wordcount',
+                        'codesample code',
+                        'emoticons',
+                        'hr',
+                        'image',
+                        'media',
+                        'pagebreak',
+                        'quickbars',
+                        'save',
+                        'template',
+                        'textpattern',
+                        'visualchars'
                       ],
-                      toolbar:
-                        'undo redo | formatselect | bold italic backcolor | \n                        alignleft aligncenter alignright alignjustify | \n                        bullist numlist outdent indent | removeformat | help',
-                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                      toolbar: [
+                        'bullist numlist | outdent indent',
+                        'undo redo | bold italic underline | forecolor',
+                        'alignleft aligncenter alignright alignjustify',
+                        'removeformat',
+                        'link image media table | codesample code',
+                        'preview fullscreen | help'
+                      ].join(' | '),
+                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                      // Configuración para permitir HTML personalizado
+                      extended_valid_elements: 'span[*],div[*],p[*],h1[*],h2[*],h3[*],h4[*],h5[*],h6[*],strong[*],em[*],u[*],s[*],a[*],img[*],table[*],tr[*],td[*],th[*],ul[*],ol[*],li[*],blockquote[*],pre[*],code[*],br,hr',
+                      custom_elements: '~span,~div',
+                      // Permitir atributos personalizados
+                      extended_valid_attributes: 'id,class,style,title,data-*',
+                      // Configuración específica para listas anidadas
+                      lists_indent_on_tab: true,
+                      indent: true,
+                      indent_before: 'ul,ol',
+                      indent_after: 'ul,ol',
+                      // Configuración para el modo de código fuente
+                      codesample_languages: [
+                        { text: 'HTML/XML', value: 'markup' },
+                        { text: 'JavaScript', value: 'javascript' },
+                        { text: 'CSS', value: 'css' },
+                        { text: 'PHP', value: 'php' },
+                        { text: 'Python', value: 'python' },
+                        { text: 'Java', value: 'java' },
+                        { text: 'C', value: 'c' },
+                        { text: 'C++', value: 'cpp' },
+                        { text: 'C#', value: 'csharp' },
+                        { text: 'SQL', value: 'sql' }
+                      ],
+                      // Configuración para el editor de código
+                      code_dialog_width: 800,
+                      code_dialog_height: 600,
+                      // Permitir contenido HTML más flexible
+                      valid_children: '+body[style],+ul[li],+ol[li],+li[ul,ol,li]',
+                      // Configuración de seguridad
+                      entity_encoding: 'raw',
+                      // Configuración de formato
+                      formats: {
+                        alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,table,img', classes: 'left' },
+                        aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,table,img', classes: 'center' },
+                        alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,table,img', classes: 'right' },
+                        bold: { inline: 'span', classes: 'bold' },
+                        italic: { inline: 'span', classes: 'italic' }
+                      },
+                      // Configuración de menú
+                      menu: {
+                        file: { title: 'Archivo', items: 'newdocument restoredraft | preview | export print | deleteallconversations' },
+                        edit: { title: 'Editar', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+                        view: { title: 'Ver', items: 'code | visualaid visualchars visualblocks | spellchecker | preview fullscreen | showcomments' },
+                        insert: { title: 'Insertar', items: 'image link media addcomment pageembed template codesample inserttable | charmap emoticons hr | pagebreak nonbreaking anchor tableofcontents | insertdatetime' },
+                        format: { title: 'Formato', items: 'bold italic underline superscript subscript codeformat | styles blocks fontfamily fontsize align lineheight | numlist bullist outdent indent | forecolor removeformat | pagebreak | ltr rtl' },
+                        tools: { title: 'Herramientas', items: 'spellchecker spellcheckerlanguage | a11ycheck code wordcount' },
+                        table: { title: 'Tabla', items: 'inserttable | cell row column | advtablesort | tableprops deletetable' },
+                        help: { title: 'Ayuda', items: 'help' }
+                      }
                     }}
                   />
                 </div>

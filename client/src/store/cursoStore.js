@@ -24,10 +24,6 @@ export const useCursoStore = create((set, get) => ({
     if (state.loading) {
       return;
     }
-    // Si alguno de los arrays está vacío, forzar recarga
-    if (state.cursos.length > 0 && state.modalidades.length > 0 && state.status.length > 0) {
-      return;
-    }
   
     try {
       set({ loading: true });
@@ -64,6 +60,16 @@ export const useCursoStore = create((set, get) => ({
 
   // Utilidades
   clearError: () => set({ error: null }),
+
+  // Resetear estado para cargar datos frescos
+  resetState: () => set({
+    cursos: [],
+    modalidades: [],
+    status: [],
+    roles_facilitador: [],
+    loading: false,
+    error: null
+  }),
 
   // Operaciones de lectura
   fetchCursos: async () => {

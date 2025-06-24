@@ -1,5 +1,6 @@
 // IDs de Clasificaciones
 export const CLASSIFICATION_IDS = {
+
   PREGUNTAS: 8,
   GENEROS: 1,
   ROLES: 3,
@@ -10,6 +11,7 @@ export const CLASSIFICATION_IDS = {
   MODALIDAD: 100050,
   STATUS: 100059,
   DOCUMENTOS: 100094,
+  PREFIJOS_TLF: 100190,
   
   MN_ROLES: 100066,
   MN_CURSO: 100141,

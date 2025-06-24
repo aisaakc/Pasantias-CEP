@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-23 00:09:07
+-- Started on 2025-06-24 03:43:07
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -175,7 +175,7 @@ $$;
 ALTER FUNCTION public.validar_clasificacion() OWNER TO postgres;
 
 --
--- TOC entry 243 (class 1255 OID 100033)
+-- TOC entry 243 (class 1255 OID 108217)
 -- Name: validar_codigo_cohorte(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -183,15 +183,16 @@ CREATE FUNCTION public.validar_codigo_cohorte() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    -- Verificar si el codigo_cohorte no es nulo y no está vacío
-    IF NEW.codigo_cohorte IS NOT NULL AND TRIM(NEW.codigo_cohorte) != '' THEN
-        -- Verificar si ya existe un curso con el mismo codigo_cohorte (sin espacios y en mayúsculas)
-        IF EXISTS (
-            SELECT 1 FROM public.cursos
-            WHERE UPPER(TRIM(codigo_cohorte)) = UPPER(TRIM(NEW.codigo_cohorte))
-            AND id_nombre = COALESCE(NEW.id_nombre, 0)
-        ) THEN
-            RAISE EXCEPTION 'PGT: Ya existe un código de cohorte (%) para el mismo curso.', NEW.codigo_cohorte;
+    IF NEW.codigo_cohorte IS DISTINCT FROM OLD.codigo_cohorte OR NEW.id_nombre IS DISTINCT FROM OLD.id_nombre THEN
+        IF NEW.codigo_cohorte IS NOT NULL AND TRIM(NEW.codigo_cohorte) != '' THEN
+            IF EXISTS (
+                SELECT 1 FROM public.cursos
+                WHERE UPPER(TRIM(codigo_cohorte)) = UPPER(TRIM(NEW.codigo_cohorte))
+                AND id_nombre = COALESCE(NEW.id_nombre, 0)
+                AND id_curso IS DISTINCT FROM OLD.id_curso 
+            ) THEN
+                RAISE EXCEPTION 'PGT: Ya existe un código de cohorte (%) para el mismo curso (id_nombre: %).', NEW.codigo_cohorte, NEW.id_nombre;
+            END IF;
         END IF;
     END IF;
 
@@ -318,7 +319,8 @@ CREATE TABLE public.cursos (
     partipantes json,
     codigo_cohorte character varying,
     horarios json,
-    propiedades_curso json
+    propiedades_curso json,
+    documentos json
 );
 
 
@@ -525,7 +527,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100128	Navidad	25/12	\N	7	100121	100121	\N	\N	0
 110	Carreras		\N	20	\N	\N	8782	\N	1
 4	Programas		\N	30	\N	\N	9072	\N	1
-100187	Extensión		\N	139	\N	\N	\N	\N	0
 1	Géneros		\N	100	\N	\N	9792	\N	1
 9	¿Cuál es tu Animal favorito?		\N	0	8	8	8882	\N	0
 84	¿Cuál es tu comida favorita?		\N	0	8	8	8698	\N	0
@@ -545,7 +546,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100289	Foto de Perfil del Usuario		\N	0	100094	\N	\N	\N	0
 57	¿Cuál es tu pelicula favorita?		\N	0	8	8	8683	\N	0
 3	Rol	Roles del Sistema	\N	110	\N	\N	9751	\N	1
-100107	Módulo 1: Introduction to Network		\N	0	5	100147	8438	{"id":"CEP-CISCO-01"}	0
+100107	Módulo 1: Introduction to Network		\N	0	5	100147	8438	{"id":"CEP-CISCO-01","costo":100}	0
+100187	Extensión		\N	139	\N	\N	8660	\N	0
 8009	fa9		\N	\N	27	\N	8009	\N	1
 8011	fa500px		\N	\N	27	\N	8011	\N	1
 8012	faA		\N	\N	27	\N	8012	\N	1
@@ -1865,7 +1867,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100271	Contaduria		\N	0	110	\N	\N	\N	0
 100132	Elecciones 2025	25/05/25	\N	9	100121	100121	\N	\N	0
 100150	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		\N	0	5	100147	8438	\N	0
-100191	0412	Digitel	\N	0	100190	\N	9104	\N	0
+100191	0412	Digitel	\N	0	100190	\N	9104	{"mobile":true}	0
 100133	Cisco Academy (Petare)		\N	0	4	100134	\N	\N	0
 100151	Curso Básico de Mantenimiento y Reparación de PC		\N	0	5	100149	9078	\N	0
 100171	Menú de Tipos de Documentos		\N	0	73	\N	\N	\N	0
@@ -1874,6 +1876,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100193	Día de los Reyes Magos	06/01\n	\N	0	100121	\N	\N	\N	0
 100152	Informática		\N	0	110	201	8414	\N	0
 100194	Día de la Divina Pastora	14/01\n	\N	0	100121	\N	\N	\N	0
+100296	nuevo		\N	0	3	\N	\N	\N	0
 100195	Declaración de la Independencia	19/04	\N	0	100121	\N	\N	\N	0
 15	Super Administrador		\N	1	3	\N	9776	{"id_objeto":[100166,100171,100156,100157,100158,100141,100159,100161,100162,100066,100164,100067,100068,100160,100290,100142],"id_clasificacion":[73,110,4,1,123,124,122,100172,100173,100155,100121,5,200,100050,100026,100059,8,27,100094,3,100174,100178,100179,100181,100187,100190,100234]}	0
 100154	Campo ORDEN (Clasificacion)		\N	0	73	\N	\N	\N	0
@@ -1882,17 +1885,16 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100197	Día de la Guardía Nacional	04/08	\N	0	100121	\N	\N	\N	0
 100198	Día de la Resistencia Indígena	12/10\n	\N	0	100121	\N	\N	\N	0
 100140	¿Cuál es tu deporte favorito?		\N	0	8	8	9817	\N	0
-100199	0414	Movistar	\N	0	100190	\N	9104	\N	0
-100201	0416	Movilnet	\N	0	100190	\N	9104	\N	0
+100199	0414	Movistar	\N	0	100190	\N	9104	{"mobile": true}	0
+100201	0416	Movilnet	\N	0	100190	\N	9104	{"mobile": true}	0
 100121	Días Feriados		\N	126	\N	\N	8269	\N	0
 100141	Menú de Cursos		\N	0	73	\N	\N	\N	0
-100200	0424	Movistar	\N	0	100190	\N	9104	\N	0
+100200	0424	Movistar	\N	0	100190	\N	9104	{"mobile": true}	0
 100122	Año Nuevo	01/01	\N	1	100121	100121	\N	\N	0
 100142	Menú de Configuración		\N	0	73	\N	\N	\N	0
-100202	0426	Movilnet	\N	0	100190	\N	9104	\N	0
+100202	0426	Movilnet	\N	0	100190	\N	9104	{"mobile": true}	0
 100123	Batalla de Carabobo	24/06	\N	3	100121	100121	\N	\N	0
 100124	Día Del Trabajador	01/05	\N	2	100121	100121	\N	\N	0
-100204	0212	Distrito Capital (Caracas, El Junquito)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100205	0234	Miranda (Los Teques)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100206	0235	Miranda (Guatire)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100207	0239	Miranda (Guarenas)	\N	\N	100190	\N	9265	{"mobile": false}	0
@@ -1922,6 +1924,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100231	0254	Yaracuy (San Felipe)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100233	0212	La Guaira (La Guaira)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100232	0292	Dependencias Federales	\N	\N	100190	\N	9265	{"mobile": false}	0
+100204	0212	Distrito Capital (Caracas, El Junquito)	\N	0	100190	\N	9265	{"mobile":false}	0
 100125	Día de la Independencia	05/07	\N	4	100121	100121	\N	\N	0
 100066	Menú de Roles		\N	0	73	73	\N	\N	0
 10024	Distrito Capital		\N	0	122	\N	8072	\N	0
@@ -4037,12 +4040,10 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 -- Data for Name: cursos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, fecha_hora_inicio, fecha_hora_fin, color, partipantes, codigo_cohorte, horarios, propiedades_curso) FROM stdin;
-18	100071	\N	100060	20	xddddd	\N	21	12	\N	\N	100052	2025-05-24 21:00:00	2025-05-31 06:56:00	#4b5468	\N	1-2025	\N	\N
-31	100107	\N	100060	111	xddd	\N	111	13	97	\N	100052	2025-06-09 13:00:00	2025-06-13 01:26:00	#0a082b	\N	1-2025	\N	\N
-30	100107	\N	100060	10	xd	\N	12	12	97	\N	100052	2025-06-02 13:00:00	2025-06-05 01:24:00	#4F46E5	\N	2-2025	\N	\N
-32	100169	\N	100060	40		\N	12	12	97	\N	100052	2025-06-16 15:00:00	2025-06-28 00:00:00	#0f7dd2	\N	\N	\N	\N
-33	100072	\N	100060	40	f	\N	12	12	97	\N	100052	2025-06-09 10:00:00	2025-06-16 14:00:00	#4F46E5	\N	\N	\N	\N
+COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, fecha_hora_inicio, fecha_hora_fin, color, partipantes, codigo_cohorte, horarios, propiedades_curso, documentos) FROM stdin;
+1	100107	\N	100060	40	xd	\N	50	12	97	\N	100052	2025-06-23 08:00:00	2025-06-30 12:00:00	#64cd1d	\N	1-2025	\N	\N	\N
+2	100107	\N	100060	\N	xd	\N	0	12	97	\N	100052	2025-06-23 13:00:00	2025-06-26 17:00:00	#4F46E5	\N	2-2025	\N	\N	\N
+3	100150	\N	100060	118	modulo 	<p><strong>CONTENIDO:</strong></p>\n<p>&nbsp;</p>\n<ul class="has-small-font-size wp-block-list">\n<li>Configuraci&oacute;n b&aacute;sica de dispositivos</li>\n<li>Conceptos de Switching</li>\n<li>VLANs, Enrutamiento entre VLAN</li>\n<li>Protocolo Spanning-Tree</li>\n<li>Etherchannel</li>\n<li>DHCPv4, Conceptos SLAAC y DHCPv6</li>\n<li>Conceptos de FHRP</li>\n<li>Conceptos de seguridad de LAN</li>\n<li>Conceptos de seguridad de Switch</li>\n<li>Conceptos de WLAN, Configuraci&oacute;n de WLAN</li>\n<li>Conceptos de enrutamiento</li>\n<li>Rutas IP est&aacute;ticas</li>\n</ul>	10	12	97	\N	100052	2025-06-03 08:00:00	2025-06-17 11:07:00	#4F46E5	\N	3-2025	\N	\N	\N
 \.
 
 
@@ -4075,10 +4076,12 @@ COPY public.documentos (id_documento, id_tipo, fecha_hora, nombre, descripcion, 
 --
 
 COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_genero, id_pregunta, cedula, gmail, id_foto, id_status, respuesta, id_rol) FROM stdin;
-1	Victor	Gainza	04123426726	$2b$10$3reMAACjfCrBSi5MUnNOJubAyKoVPogo.keYJ96y5s2MNiS5KPbLO	6	9	20234123	superadmin@empresa.com	\N	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	{"id_rol":["15"]}
-99	Modesta	Gonzales	04142129875	$2b$10$Feaj0VK5MsFW9Bc2W67iVeQoXG8NTY7poc1d9AjNT6RRrtJEg0BZu	7	84	14123432	Modesta21@gmail.com	\N	\N	$2b$10$M/XsUgsnPKLMhesgG3D9..g87p1Z9VFPy1Y0z6m7btKX9pdQ26BP.	{"id_rol":["98"]}
-100	Fernando	Perez	04143173920	$2b$10$zhvSQQpYIKs.2HNiXnwgvOJVlC7k40j0B6uJew2g2tTR2/NAG2vwG	6	84	9872124	isaac@gmail.com	\N	\N	$2b$10$e9Epi7BQ.DqP6QWFM8ukQO59r4yFTnOyYRjmiG0U2tUs3FFtpQxv.	{"id_rol":["98"]}
-97	Yeferson	Moronta	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	{"id_rol":["96"]}
+98	Victor	Gainza	04123426726	$2b$10$3reMAACjfCrBSi5MUnNOJubAyKoVPogo.keYJ96y5s2MNiS5KPbLO	6	9	20234123	superadmin@empresa.com	\N	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	[98,96,15,11,12,14,13]
+100	Fernando	Perez	04143173920	$2b$10$zhvSQQpYIKs.2HNiXnwgvOJVlC7k40j0B6uJew2g2tTR2/NAG2vwG	6	84	9872124	isaac@gmail.com	\N	\N	$2b$10$e9Epi7BQ.DqP6QWFM8ukQO59r4yFTnOyYRjmiG0U2tUs3FFtpQxv.	[98]
+99	Modesta	Gonzales	04142129875	$2b$10$Feaj0VK5MsFW9Bc2W67iVeQoXG8NTY7poc1d9AjNT6RRrtJEg0BZu	7	84	14123432	Modesta21@gmail.com	\N	\N	$2b$10$M/XsUgsnPKLMhesgG3D9..g87p1Z9VFPy1Y0z6m7btKX9pdQ26BP.	[98,96,13,11,15,14,12]
+97	XXX	xxx	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	[]
+101	Davidshho	Perez	04160986431	$2b$10$tpFw2jY/Pdqb8bl21q198.iOwWkqsTHSkXnOhuYmAxg/rz0Lc.i62	6	9	10234123	12@gmail.com	\N	\N	$2b$10$MjOSJo6buraBeMwV0tRZlOa0FeXxj3ojn/k2fPDaT/.cDOUIVxNKq	[13]
+102	Supervisor	General	02123124321	$2b$10$hgUjZ0LbXB8DhPVbhRff4.oX.oNs/mCTShBHHLfxW85cgf48xGUxu	6	100140	98989898	testing98989898@gmail.com	\N	\N	$2b$10$m50MTt.8JKr1.U9T.qrDAOFacipnbToGCCUd3xtdAHXqfYvDajmAu	[]
 \.
 
 
@@ -4097,7 +4100,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100290, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100296, true);
 
 
 --
@@ -4106,7 +4109,7 @@ SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100290, tr
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 33, true);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 3, true);
 
 
 --
@@ -4124,7 +4127,7 @@ SELECT pg_catalog.setval('public.documentos_id_documento_seq', 33, true);
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 100, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 102, true);
 
 
 --
@@ -4207,7 +4210,7 @@ CREATE TRIGGER trg_validar_clasificacion BEFORE INSERT OR UPDATE ON public.clasi
 
 
 --
--- TOC entry 4706 (class 2620 OID 100034)
+-- TOC entry 4706 (class 2620 OID 108218)
 -- Name: cursos trg_validar_codigo_cohorte; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -4358,7 +4361,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-23 00:09:08
+-- Completed on 2025-06-24 03:43:07
 
 --
 -- PostgreSQL database dump complete

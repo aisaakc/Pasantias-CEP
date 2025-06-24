@@ -2,6 +2,7 @@ import UserModel from "../models/persona.js";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js";
 import EmailService from "../services/emailService.js";
+import pool from "../db.js";
 
 class AuthController {
   async registrarUsuario(req, res) {
@@ -79,35 +80,62 @@ class AuthController {
           error.message.includes("Faltan campos obligatorios")) {
         return res.status(400).json({ 
           success: false,
-          error: error.message 
+          error: error.message,
+          dbError: error.message,
+          detail: error.detail || null
         });
       }
       res.status(500).json({ 
         success: false,
-        error: "Error interno del servidor al registrar el usuario." 
+        error: "Error interno del servidor al registrar el usuario.",
+        dbError: error.message,
+        detail: error.detail || null
       });
     }
   }
 
   async loginUsuario(req, res) {
-    const { cedula, gmail, contrasena } = req.body;
+    const { cedula, gmail, contrasena, respuesta } = req.body;
 
     try {
       console.log('=== INICIO DE LOGIN ===');
       console.log('Credenciales recibidas:', { cedula, gmail });
       
-      const usuario = await UserModel.loginUser({ cedula, gmail, contrasena });
+      const usuario = await UserModel.loginUser({ cedula, gmail, contrasena, respuesta });
       console.log('Usuario encontrado:', {
         id: usuario.id_persona,
         nombre: usuario.nombre,
         roles: usuario.id_rol
       });
 
+      // Obtener info de roles (nombre, icono) desde la tabla clasificacion
+      let rolesInfo = [];
+      if (Array.isArray(usuario.id_rol) && usuario.id_rol.length > 0) {
+        // Consulta todos los roles del usuario
+        const rolesQuery = `SELECT id_clasificacion, nombre, descripcion, id_icono FROM clasificacion WHERE id_clasificacion = ANY($1)`;
+        const { rows } = await pool.query(rolesQuery, [usuario.id_rol]);
+        // Obtener nombre del ícono
+        const iconosQuery = `SELECT id_clasificacion, nombre FROM clasificacion WHERE id_clasificacion = ANY($1)`;
+        const iconoIds = rows.map(r => r.id_icono).filter(Boolean);
+        let iconos = [];
+        if (iconoIds.length > 0) {
+          const iconosResult = await pool.query(iconosQuery, [iconoIds]);
+          iconos = iconosResult.rows;
+        }
+        rolesInfo = rows.map(r => ({
+          id: r.id_clasificacion,
+          nombre: r.nombre,
+          descripcion: r.descripcion,
+          icono: iconos.find(i => i.id_clasificacion === r.id_icono)?.nombre || null
+        }));
+      }
+
       const payload = {
         id_persona: usuario.id_persona,
         nombre: usuario.nombre,
         gmail: usuario.gmail,
         id_rol: usuario.id_rol,
+        isSupervisor: usuario.isSupervisor || false
       };
 
       console.log('Payload del token:', payload);
@@ -123,7 +151,9 @@ class AuthController {
           nombre: usuario.nombre,
           apellido: usuario.apellido,
           gmail: usuario.gmail,
-          id_rol: usuario.id_rol
+          id_rol: usuario.id_rol,
+          isSupervisor: usuario.isSupervisor || false,
+          rolesInfo
         },
       });
     } catch (error) {
@@ -132,12 +162,16 @@ class AuthController {
           error.message === "Debe proporcionar cédula o correo electrónico, y la contrasena.") {
         return res.status(401).json({ 
           success: false,
-          error: error.message 
+          error: error.message,
+          dbError: error.message,
+          detail: error.detail || null
         });
       }
       res.status(500).json({ 
         success: false,
-        error: "Error interno del servidor al iniciar sesión." 
+        error: "Error interno del servidor al iniciar sesión.",
+        dbError: error.message,
+        detail: error.detail || null
       });
     }
   }
@@ -156,7 +190,9 @@ class AuthController {
       console.error('Error en getSubclassificationsById:', error);
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
+        dbError: error.message,
+        detail: error.detail || null
       });
     }
   }

@@ -15,7 +15,8 @@ import {
   faFolder, 
   faImage, 
   faLayerGroup,
-  faChevronDown
+  faChevronDown,
+  faMobile
 } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
@@ -33,7 +34,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     programas
   } = useClasificacionStore();
 
-  const { tienePermiso } = useAuthStore();
+  const { tienePermiso, isSupervisor } = useAuthStore();
 
   const [clasificaciones, setClasificaciones] = useState([]);
   const [icons, setIcons] = useState([]);
@@ -50,6 +51,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [dataLoaded, setDataLoaded] = useState(false);
   const [institutos, setInstitutos] = useState([]);
   const [carreras, setCarreras] = useState([]);
+  const [adicionalRaw, setAdicionalRaw] = useState(editData?.adicional ? JSON.stringify(editData.adicional, null, 2) : '');
+  const [protectedValue, setProtectedValue] = useState(editData?.protected === 1);
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -66,7 +69,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
           : ''),
     orden: editData?.orden || "",
     permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
-    clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : ''
+    clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
+    isMobile: editData?.adicional?.mobile || false
   };
 
   // Determinar si es una clasificación principal o subclasificación
@@ -144,6 +148,26 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         console.log('Objeto adicional final:', dataToSend.adicional);
       }
 
+      // Handle mobile field for PREFIJOS_TLF
+      if (Number(values.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) {
+        dataToSend.adicional = { 
+          mobile: values.isMobile 
+        };
+        console.log('Objeto adicional para PREFIJOS_TLF:', dataToSend.adicional);
+      }
+
+      // Si es supervisor, incluir adicional y protected
+      if (isSupervisor) {
+        try {
+          dataToSend.adicional = adicionalRaw ? JSON.parse(adicionalRaw) : null;
+        } catch (e) {
+          toast.error('El campo adicional no es un JSON válido');
+          setSubmitting(false);
+          return;
+        }
+        dataToSend.protected = protectedValue ? 1 : 0;
+      }
+
       if (editData) {
         await updateClasificacion(editData.id_clasificacion, dataToSend);
         toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`);
@@ -159,10 +183,17 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       await fetchParentClasifications();
     } catch (err) {
       console.error("Error al guardar:", err);
-      const errorMessage = err.response?.data?.error || err.message || 'Ha ocurrido un error al procesar la solicitud';
+      // Extraer los mensajes de error del backend
+      const errorData = err.response?.data;
+      const errorMessage = errorData?.error || err.message || 'Ha ocurrido un error al procesar la solicitud';
+      const dbError = errorData?.dbError;
+      const detail = errorData?.detail;
+      let description = '';
+      if (dbError && dbError !== errorMessage) description += dbError + '\n';
+      if (detail && detail !== dbError && detail !== errorMessage) description += detail;
       toast.error('Error al guardar la subclasificación', {
-        description: errorMessage,
-        duration: 4000,
+        description: description || errorMessage,
+        duration: 6000,
       });
     } finally {
       setSubmitting(false);
@@ -242,6 +273,11 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       setShouldRender(true);
       document.body.style.overflow = 'hidden';
       setTimeout(() => setAnimationClass('animate-modal-in'), 10);
+      // Precargar campos especiales para supervisor
+      if (isSupervisor) {
+        setAdicionalRaw(editData?.adicional ? JSON.stringify(editData.adicional, null, 2) : '');
+        setProtectedValue(editData?.protected === 1);
+      }
       
       // Solo cargar datos una vez cuando se abre el modal
       if (!dataLoaded) {
@@ -618,6 +654,62 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                         component="div"
                         className="mt-1 text-sm text-red-600"
                       />
+                    </div>
+                  )}
+
+                  {/* Campo checkbox para PREFIJOS_TLF */}
+                  {(Number(values.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) && (
+                    <div 
+                      className="transform transition-all duration-300 animate-fade-slide-up"
+                      style={{ animationDelay: '600ms' }}
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faMobile} className="mr-2 text-blue-500" />
+                        Tipo de Teléfono
+                      </label>
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200">
+                        <input
+                          type="checkbox"
+                          name="isMobile"
+                          checked={values.isMobile}
+                          onChange={(e) => setFieldValue('isMobile', e.target.checked)}
+                          className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <span className="text-gray-700 text-sm font-medium">
+                          Es un número móvil
+                        </span>
+                        <span className="text-gray-500 text-xs ml-2">
+                          (Marcar si es un prefijo de telefonía móvil)
+                        </span>
+                      </div>
+                      <ErrorMessage
+                        name="isMobile"
+                        component="div"
+                        className="mt-1 text-sm text-red-600"
+                      />
+                    </div>
+                  )}
+
+                  {/* SOLO SUPERVISOR: Campo JSON adicional y protected */}
+                  {isSupervisor && (
+                    <div className="space-y-4 p-4 border-2 border-red-400 rounded-lg bg-red-50">
+                      <label className="block text-sm font-bold text-red-700 mb-2">JSON adicional (solo supervisor)</label>
+                      <textarea
+                        value={adicionalRaw}
+                        onChange={e => setAdicionalRaw(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-red-900 font-mono"
+                        placeholder={'{\n  "clave": "valor"\n}'}
+                      />
+                      <div className="flex items-center space-x-3 mt-2">
+                        <input
+                          type="checkbox"
+                          checked={protectedValue}
+                          onChange={e => setProtectedValue(e.target.checked)}
+                          className="form-checkbox h-5 w-5 text-red-600"
+                        />
+                        <span className="text-red-700 text-sm font-bold">Protected (solo supervisor)</span>
+                      </div>
                     </div>
                   )}
 

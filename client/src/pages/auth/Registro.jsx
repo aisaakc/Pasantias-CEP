@@ -1,9 +1,10 @@
 import React, { useState , useEffect } from 'react';
 import { Formik, Form, Field } from 'formik'; 
 import { useNavigate, Link } from 'react-router-dom';
-import { registroSchema } from '../../schemas/registro.shema'; 
+import { createRegistroSchema } from '../../schemas/registro.shema'; 
 import { toast } from 'sonner';
 import Section from '../../components/Section'; 
+import PhoneInput from '../../components/PhoneInput';
 import useAuthStore from '../../store/authStore';
 
 export default function Registro() {
@@ -12,6 +13,7 @@ export default function Registro() {
     generos,
     roles,
     preguntas,
+    prefijosTelefonicos,
     getSubclassificationsById,
     loading,
     error,
@@ -42,6 +44,9 @@ export default function Registro() {
     contraseña: '',
     confirmarContraseña: '',
   };
+
+  // Crear esquema dinámico con los prefijos de la BD
+  const registroSchema = createRegistroSchema(prefijosTelefonicos);
 
   const validateWithZod = (values) => {
     try {
@@ -229,12 +234,12 @@ export default function Registro() {
                       <label htmlFor="telefono" className="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
                       <Field name="telefono">
                         {({ field, form }) => (
-                          <input
-                            {...field}
-                            id="telefono"
+                          <PhoneInput
+                            field={field}
+                            form={form}
+                            prefijosTelefonicos={prefijosTelefonicos}
+                            onBlur={handleBlurAndShowToast}
                             placeholder="Tu número de teléfono"
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                            onBlur={(e) => handleBlurAndShowToast(e, field, form)}
                           />
                         )}
                       </Field>

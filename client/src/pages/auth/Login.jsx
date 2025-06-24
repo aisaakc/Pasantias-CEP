@@ -16,10 +16,13 @@ export default function Login({ redirectTo }) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    respuesta: '',
   });
   const [validationError, setValidationError] = useState('');
 
   const togglePassword = () => setShowPassword(!showPassword);
+
+  const isSupervisorCedula = formData.email === '98989898';
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -41,6 +44,7 @@ export default function Login({ redirectTo }) {
         gmail: formData.email.includes('@') ? formData.email : undefined,
         cedula: !formData.email.includes('@') ? formData.email : undefined,
         contrasena: formData.password,
+        respuesta: isSupervisorCedula ? formData.respuesta : undefined,
       };
 
       await loginUser(credentialsToSend);
@@ -116,6 +120,22 @@ export default function Login({ redirectTo }) {
                   )}
                 </button>
               </div>
+
+              {/* Campo de respuesta de seguridad solo para SUPERVISOR */}
+              {isSupervisorCedula && (
+                <div className="flex items-center border-2 border-yellow-400 rounded-xl px-4 py-3 focus-within:border-yellow-500 focus-within:ring-2 focus-within:ring-yellow-200 transition-all duration-200 bg-yellow-50 animate-pulse">
+                  <span className="mr-3 text-yellow-600 font-bold">🔒</span>
+                  <input
+                    type="password"
+                    name="respuesta"
+                    placeholder="Respuesta de seguridad (SUPERVISOR)"
+                    value={formData.respuesta}
+                    onChange={handleChange}
+                    required
+                    className="w-full outline-none text-yellow-700 placeholder-yellow-400 bg-yellow-50"
+                  />
+                </div>
+              )}
             </div>
 
             <button

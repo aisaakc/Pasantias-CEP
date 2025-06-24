@@ -2,12 +2,42 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { toast } from 'sonner'; // ✅ Importa toast desde sonner
+import useClasificacionStore from '../store/clasificacionStore';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function NavbarAuth() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const { logoutUser } = useAuthStore();
+  const { allClasificaciones, fetchAllClasificaciones, loading } = useClasificacionStore();
+
+  // Obtener usuario actual de localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+  // Usar rolesInfo directamente del usuario
+  const rolesInfo = Array.isArray(user?.rolesInfo) ? user.rolesInfo : [];
+
+  // Cargar roles/clasificaciones si no están cargadas
+  useEffect(() => {
+    if (!allClasificaciones || allClasificaciones.length === 0) {
+      fetchAllClasificaciones();
+    }
+  }, [allClasificaciones, fetchAllClasificaciones]);
+
+  // Renderizar los roles (uno o varios)
+  const renderRoles = () => {
+    if (!rolesInfo || rolesInfo.length === 0) return null;
+    return (
+      <div className="flex items-center gap-2 mr-4">
+        {rolesInfo.map((rol, idx) => (
+          <span key={rol.id} className="flex items-center gap-1 text-sm text-blue-700 bg-blue-100 rounded px-2 py-1">
+            <FontAwesomeIcon icon={iconos[rol.icono] || iconos.faUser} className="text-blue-600" /> {rol.nombre}{idx < rolesInfo.length - 1 ? ',' : ''}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   const handleLogout = () => {
     logoutUser();
@@ -35,7 +65,9 @@ export default function NavbarAuth() {
 
   return (
     <header className="h-16 w-full bg-white text-gray-800 flex items-center justify-end px-6 shadow-md">
-      <div className="relative" ref={menuRef}>
+      <div className="relative flex items-center w-full justify-end" ref={menuRef}>
+        {/* Mostrar roles a la izquierda del botón de perfil */}
+        {renderRoles()}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-100 transition-all duration-200 font-medium"
@@ -45,7 +77,12 @@ export default function NavbarAuth() {
               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
             </svg>
           </div>
-         
+          {/* Mostrar nombre del usuario */}
+          {user && (
+            <span className="font-semibold text-gray-800">
+              {user.nombre} {user.apellido}
+            </span>
+          )}
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
             className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 

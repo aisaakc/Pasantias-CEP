@@ -1,0 +1,29 @@
+SCRIPT
+- agregar el prefijo 0422 digitel 
+- mostrar la busqueda con sombreado 
+- mostrar backup/restore onhot
+- mostrar mapa perfiles/seguridad objetos (tener objetos predefinidos?)
+- mostrar DIAS FERIADOS
+
+
+TO DOs
+- proteccion de RUTAS
+- TRIGGERS
+- SPs funcionales
+- simplificar CODE / clonning
+- Limite de archivos (variable GLB), probar limite, ya existe en uploadMiddleware.js
+- Lealeft mostrar donde esta, data geoespacial c/Instituto (proveedores)
+- en JSON adicional (data CONTACTO) de c/Instituto para mostrar Informativo
+- Colocar ALERTA de dia feriado en TITULO MODAL, para INFORMAR sobre estos dias
+- Control texto enriquecido / HTML
+- HOMOLOGAR recursos/interfaces (Look & Feel), iconografia, e iconos en TITULOS
+- Homologar titulos, Facilitador(a), etc
+- Actualizar que APAREZCAN los mensajes de error de BD (TRIGGER, SP) en front
+- AGREGAR tabla prefijos telefonicos/movil de venezuela el CLASIFICACION
+- REVISAR/AJUSTAR al agregar una SUBclasificacion altera paren_id, y no lo deja en NULL???
+- SI TAMOS LADILLAOS agregar en MODAL un checkbox para mobile:true/false
+- BUSCAR POR DESCRIPCION en los MODALES
+- CUALQUIER COSA DE LA IA 
+- Cambiar a POST-CUANTICO
+- COLOCAR ACCESO SUPER SUPER ADMIN, para ver protecteds y adicionales (JSON), cambiar FONDO distintivo
+- MEJORAR Mensajeria de eMAIL (formato), chequear envios

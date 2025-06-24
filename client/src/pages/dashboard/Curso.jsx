@@ -339,7 +339,7 @@ function Curso() {
             <div className="flex justify-between items-center">
               <h1 className="text-xl font-semibold text-gray-900">Calendario Académico</h1>
               <div className="w-200">
-                <select
+              <select
                   className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-700 shadow-sm"
                   onChange={handleCursoSelect}
                   value=""
@@ -359,18 +359,27 @@ function Curso() {
                       <optgroup key={parentName} label={parentName}>
                         {group.map((curso) => {
                           let timeString = '';
+                          let dateString = '';
+                          
                           if (curso.fecha_hora_inicio && curso.fecha_hora_fin) {
                             try {
-                              const startTime = new Date(curso.fecha_hora_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                              const startDate = new Date(curso.fecha_hora_inicio);
+                              const startTime = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                               const endTime = new Date(curso.fecha_hora_fin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                               timeString = ` (${startTime} - ${endTime})`;
+                              
+                              // Formatear fecha en dd/mm/aa
+                              const day = String(startDate.getDate()).padStart(2, '0');
+                              const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                              const year = String(startDate.getFullYear()).slice(-2); // Solo los últimos 2 dígitos del año
+                              dateString = ` [${day}/${month}/${year}]`;
                             } catch (e) {
                               console.error("Error al formatear la fecha para el curso:", curso.id_curso, e);
                             }
                           }
                           return (
                             <option key={curso.id_curso} value={curso.id_curso}>
-                              {`${curso.nombre_curso}${timeString}`}
+                              {`${curso.nombre_curso}${timeString}${dateString}`}
                             </option>
                           );
                         })}

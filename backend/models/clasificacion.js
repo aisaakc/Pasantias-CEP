@@ -52,7 +52,7 @@ class Clasificacion {
            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion                  
            LEFT JOIN clasificacion i ON sc.id_icono = i.id_clasificacion
            LEFT JOIN clasificacion t ON sc.type_id = t.id_clasificacion
-             LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
+           LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
            WHERE `;
             let queryParams = [type_id];
 

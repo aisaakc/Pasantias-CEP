@@ -127,7 +127,10 @@ export default function Sidebar() {
     <aside className="w-80 h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30">
       <div className="mb-16">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent animate-gradient">
-          Control del sistema
+          CEP
+          <br>
+          </br>
+          Coordinacion de Extencion Profesional
         </h2>
         <div className="h-1 w-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 mt-3 rounded-full"></div>
       </div>

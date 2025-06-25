@@ -160,7 +160,6 @@ const Breadcrumb = React.memo(({ items }) => (
 export default function Tipos() {
   const navigate = useNavigate();
   const { id: encodedId, parentId: encodedParentId } = useParams();
-  const initialLogDone = useRef(false);
   const lastSubclasificacionesRef = useRef(null);
   
   // Memoize decoded values to prevent multiple decodings
@@ -173,7 +172,6 @@ export default function Tipos() {
   
   const [busqueda, setBusqueda] = useState('');
   const [ordenAscendente, setOrdenAscendente] = useState(true);
-  const [ordenarPorOrden, setOrdenarPorOrden] = useState(true);
   const [ordenarPorNombre, setOrdenarPorNombre] = useState(false);
   const [ordenarPorDescripcion, setOrdenarPorDescripcion] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -189,7 +187,6 @@ export default function Tipos() {
     loading, 
     error,
     fetchAllClasificaciones,
-    allClasificaciones,
     getClasificacionById
   } = useClasificacionStore();
   const { tienePermiso } = useAuthStore();
@@ -229,14 +226,6 @@ export default function Tipos() {
     // Por defecto, permitir acceso si no hay restricciones específicas
     return true;
   }, [tienePermisoClasificacion, tienePermiso]);
-
-  // Memoize parent classification data
-  const parentClasificacionData = useMemo(() => {
-    if (realParentId && allClasificaciones.length > 0) {
-      return allClasificaciones.find(c => c.id_clasificacion === realParentId) || null;
-    }
-    return null;
-  }, [realParentId, allClasificaciones]);
 
   // Memoize parent name and icon
   const parentInfo = useMemo(() => {
@@ -340,25 +329,15 @@ export default function Tipos() {
 
   // Función para cambiar el orden por nombre
   const cambiarOrden = () => {
-    setOrdenarPorOrden(false);
-    setOrdenarPorDescripcion(false);
     setOrdenarPorNombre(true);
+    setOrdenarPorDescripcion(false);
     setOrdenAscendente(!ordenAscendente);
   };
 
   // Función para cambiar el orden por descripción
   const cambiarOrdenPorDescripcion = () => {
-    setOrdenarPorOrden(false);
     setOrdenarPorNombre(false);
     setOrdenarPorDescripcion(true);
-    setOrdenAscendente(!ordenAscendente);
-  };
-
-  // Función para cambiar el orden por el campo orden
-  const cambiarOrdenPorOrden = () => {
-    setOrdenarPorNombre(false);
-    setOrdenarPorDescripcion(false);
-    setOrdenarPorOrden(true);
     setOrdenAscendente(!ordenAscendente);
   };
 
@@ -445,9 +424,6 @@ export default function Tipos() {
   // Efecto para mostrar información sobre el filtrado por permisos
   useEffect(() => {
     if (subClasificaciones.length > 0) {
-      const totalSubclasificaciones = subClasificaciones.length;
-      const subclasificacionesConPermiso = subClasificaciones.filter(sub => puedeAccederSubclasificacion(sub)).length;
-      
       // Log silencioso para debugging si es necesario
       // console.log(`Total: ${totalSubclasificaciones}, Con permiso: ${subclasificacionesConPermiso}`);
     }
@@ -457,18 +433,16 @@ export default function Tipos() {
   useEffect(() => {
     const fetchParentHierarchy = async () => {
       try {
-        // Si tenemos parent_id, usamos ese, si no, usamos el type_id
-        const idToUse = realParentId || realId;
+        // Siempre usar el id de la clasificación actual para obtener la jerarquía completa
+        let idToUse = realParentId || realId;
         if (!idToUse) {
           return;
         }
-
         const encodedId = encodeId(idToUse);
-        
         const response = await getParentHierarchy(encodedId);
-        
         if (response.data && Array.isArray(response.data)) {
-          // Invertir el orden del array para mostrar desde el más jerárquico
+          // El SP ya retorna la jerarquía en orden correcto (de hijo a raíz)
+          // Solo necesitamos invertir para mostrar de raíz a hijo
           const reversedData = [...response.data].reverse();
           setParentHierarchy(reversedData);
         } else {
@@ -481,7 +455,6 @@ export default function Tipos() {
         toast.error(errorMessage);
       }
     };
-
     fetchParentHierarchy();
   }, [realId, realParentId]);
 
@@ -556,7 +529,11 @@ export default function Tipos() {
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={iconos.faPlus} />
-            <span>Crear {nombreClasificacion || parentInfo.nombre}</span>
+            {/* Icono de la clasificación actual */}
+            {parentInfo.icono && (
+              <FontAwesomeIcon icon={iconos[parentInfo.icono] || iconos.faFile} />
+            )}
+            <span>Agregar {nombreClasificacion || parentInfo.nombre}</span>
           </button>
         </div>
 
@@ -602,7 +579,7 @@ export default function Tipos() {
                   <TableHeader 
                     ordenAscendente={ordenAscendente} 
                     onSort={cambiarOrden} 
-                    onSortOrden={cambiarOrdenPorOrden}
+                    onSortOrden={cambiarOrdenPorDescripcion}
                     onSortDescripcion={cambiarOrdenPorDescripcion}
                     puedeVerOrden={puedeVerOrden}
                   />
@@ -652,11 +629,14 @@ export default function Tipos() {
           isOpen={isModalOpen}
           onClose={handleModalClose}
           editData={selectedClasificacion}
-          parentId={realId}
+          parentId={realParentId || realId}
           parentInfo={{
-            type_id: Number(realId) === CLASSIFICATION_IDS.ROLES ? CLASSIFICATION_IDS.ROLES : (selectedClasificacion?.type_id || realId),
+            type_id: realId, // Siempre el tipo de clasificación que estamos viendo
             nombre: parentInfo.nombre,
-            icono: parentInfo.icono
+            icono: parentInfo.icono,
+            nicono: parentInfo.icono,
+            id_icono: parentInfo.id_icono,
+            parent_id: realParentId // La clasificación padre donde estamos agregando
           }}
         />
 

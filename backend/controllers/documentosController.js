@@ -74,10 +74,10 @@ class DocumentosController {
             const { id_tipo, fecha_hora, originalFileName, url, descripcion } = req.body;
 
             // Validaciones básicas
-            if (!id_tipo || !fecha_hora || !descripcion) {
+            if (!id_tipo || !fecha_hora) {
                 return res.status(400).json({
                     success: false,
-                    message: "Los campos id_tipo, fecha_hora y descripcion son obligatorios"
+                    message: "Los campos id_tipo y fecha_hora son obligatorios"
                 });
             }
 
@@ -287,10 +287,10 @@ class DocumentosController {
             }
 
             // Validaciones básicas
-            if (!id_tipo || !fecha_hora || !descripcion) {
+            if (!id_tipo || !fecha_hora) {
                 return res.status(400).json({
                     success: false,
-                    message: "Los campos id_tipo, fecha_hora y descripcion son obligatorios"
+                    message: "Los campos id_tipo y fecha_hora son obligatorios"
                 });
             }
 
@@ -546,10 +546,10 @@ class DocumentosController {
             const { id_tipo, fecha_hora, descripcion, nombre } = req.body;
 
             // Validaciones básicas
-            if (!id_tipo || !fecha_hora || !descripcion) {
+            if (!id_tipo || !fecha_hora) {
                 return res.status(400).json({
                     success: false,
-                    message: "Los campos id_tipo, fecha_hora y descripcion son obligatorios"
+                    message: "Los campos id_tipo y fecha_hora son obligatorios"
                 });
             }
 
@@ -619,10 +619,10 @@ class DocumentosController {
             const { id_tipo, fecha_hora, descripcion } = req.body;
 
             // Validaciones básicas
-            if (!id_tipo || !fecha_hora || !descripcion) {
+            if (!id_tipo || !fecha_hora) {
                 return res.status(400).json({
                     success: false,
-                    message: "Los campos id_tipo, fecha_hora y descripcion son obligatorios"
+                    message: "Los campos id_tipo y fecha_hora son obligatorios"
                 });
             }
 
@@ -726,10 +726,10 @@ class DocumentosController {
             }
 
             // Validaciones básicas
-            if (!id_tipo || !fecha_hora || !descripcion) {
+            if (!id_tipo || !fecha_hora) {
                 return res.status(400).json({
                     success: false,
-                    message: "Los campos id_tipo, fecha_hora y descripcion son obligatorios"
+                    message: "Los campos id_tipo y fecha_hora son obligatorios"
                 });
             }
 

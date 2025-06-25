@@ -53,13 +53,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     descripcion: editData?.descripcion || '',
     id_icono: editData?.id_icono || '',
     type_id: editData?.type_id || parentInfo?.type_id || '',
-    parent_id: (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS
-      ? (editData?.parent_id || parentId || '')
-      : Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(editData?.type_id) === CLASSIFICATION_IDS.CARRERAS
-        ? (editData?.parent_id || parentId || '')
-        : Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(editData?.type_id) === CLASSIFICATION_IDS.PROGRAMAS
-          ? (editData?.parent_id || parentId || '')
-          : ''),
+    parent_id: editData?.parent_id || parentInfo?.parent_id || parentId || '',
     orden: editData?.orden || "",
     permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
     clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
@@ -79,17 +73,17 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
     
     // Validar que se seleccione un programa para cursos
-    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS && !values.parent_id) {
+    if (Number(values.type_id) === CLASSIFICATION_IDS.CURSOS && !values.parent_id) {
       errors.parent_id = 'Debe seleccionar un programa';
     }
     
     // Validar que se seleccione un instituto para carreras
-    if ((Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(values.type_id) === CLASSIFICATION_IDS.CARRERAS) && !values.parent_id) {
+    if (Number(values.type_id) === CLASSIFICATION_IDS.CARRERAS && !values.parent_id) {
       errors.parent_id = 'Debe seleccionar un instituto';
     }
 
     // Validar que se seleccione una carrera para programas
-    if ((Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(values.type_id) === CLASSIFICATION_IDS.PROGRAMAS) && !values.parent_id) {
+    if (Number(values.type_id) === CLASSIFICATION_IDS.PROGRAMAS && !values.parent_id) {
       errors.parent_id = 'Debe seleccionar una carrera';
     }
     
@@ -102,9 +96,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       console.log('Valores en submit:', values);
-      const isCursos = Number(values.type_id) === CLASSIFICATION_IDS.CURSOS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS;
-      const isCarrera = Number(values.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS;
-      const isPrograma = Number(values.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
+      const isCursos = Number(values.type_id) === CLASSIFICATION_IDS.CURSOS;
+      const isCarrera = Number(values.type_id) === CLASSIFICATION_IDS.CARRERAS;
+      const isPrograma = Number(values.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
       let parentIdValue = null;
       if (isCursos || isCarrera || isPrograma) {
         parentIdValue = values.parent_id && values.parent_id !== '' ? Number(values.parent_id) : null;
@@ -134,7 +128,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       }
 
       // Handle mobile field for PREFIJOS_TLF
-      if (Number(values.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) {
+      if (Number(values.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) {
         dataToSend.adicional = { 
           mobile: values.isMobile 
         };
@@ -204,6 +198,17 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
   ];
 
+  // Agregar campo type_id si no es una edición o si no tiene type_id
+  if (!editData && !parentInfo?.type_id) {
+    formFields.push({
+      name: 'type_id',
+      icon: faFolder,
+      label: 'Tipo',
+      type: 'select',
+      options: clasificacionesPrincipales.map(c => ({ value: c.id_clasificacion, label: c.nombre }))
+    });
+  }
+
   // Solo uno de los dos: programa para cursos, instituto para carreras
   if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS || Number(editData?.type_id) === CLASSIFICATION_IDS.CURSOS) {
     formFields.push({
@@ -269,14 +274,15 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             const iconsResponse = await getAllIcons();
             setIcons(iconsResponse.data);
             
-            // Solo cargar permisos y clasificaciones principales si es necesario
+            // Cargar clasificaciones principales siempre (necesarias para el campo type_id)
+            const principalesResponse = await getAllClasificaciones();
+            const principales = principalesResponse.data.filter(c => c.type_id === null);
+            setClasificacionesPrincipales(principales);
+            
+            // Solo cargar permisos si es necesario
             if (parentInfo || editData?.type_id) {
               const permisosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
               setPermisos(permisosResponse.data.data || []);
-              
-              const principalesResponse = await getAllClasificaciones();
-              const principales = principalesResponse.data.filter(c => c.type_id === null);
-              setClasificacionesPrincipales(principales);
             }
             
             // Si es una clasificación de cursos, obtener los programas
@@ -294,6 +300,20 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(editData?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) {
               const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
               setCarreras(carrerasResponse.data.data || []);
+            }
+            
+            // Cargar opciones de parent_id basadas en el type_id
+            if (parentInfo?.type_id) {
+              if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CURSOS) {
+                // Para cursos, cargar programas que pertenezcan al instituto padre
+                fetchProgramas();
+              } else if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS) {
+                const institutosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.INSTITUTOS);
+                setInstitutos(institutosResponse.data.data || []);
+              } else if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS) {
+                const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
+                setCarreras(carrerasResponse.data.data || []);
+              }
             }
             
             setDataLoaded(true);
@@ -358,15 +378,43 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         <div className="relative overflow-hidden p-6 border-b border-gray-100 flex-shrink-0">
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {editData ? `Editar ${editData.nombre}` : isMainClassification ? 'Crear Clasificación Principal' : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
-              {editData?.nicono && (
-                <FontAwesomeIcon
-                  icon={iconos[editData.nicono] || iconos.faFile}
-                  className="inline-block ml-2 text-blue-600"
-                  size="lg"
-                />
-              )}
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-3">
+              {/* Icono a la izquierda del título */}
+              {(() => {
+                if (editData?.nicono) {
+                  return (
+                    <FontAwesomeIcon
+                      icon={iconos[editData.nicono] || iconos.faFile}
+                      className="text-blue-600"
+                      size="lg"
+                    />
+                  );
+                } else if (parentInfo) {
+                  // Buscar el nombre del icono por nicono o por id_icono en icons
+                  let iconName = parentInfo.nicono;
+                  if (!iconName && parentInfo.id_icono && icons && icons.length > 0) {
+                    const foundIcon = icons.find(i => i.id_clasificacion === parentInfo.id_icono);
+                    iconName = foundIcon?.nombre;
+                  }
+                  return (
+                    <FontAwesomeIcon
+                      icon={iconos[iconName] || iconos.faFile}
+                      className="text-blue-600"
+                      size="lg"
+                    />
+                  );
+                } else {
+                  return (
+                    <FontAwesomeIcon
+                      icon={iconos.faFile}
+                      className="text-blue-600"
+                      size="lg"
+                    />
+                  );
+                }
+              })()}
+              {/* Título */}
+              {editData ? `Editar ${editData.nombre}` : isMainClassification ? 'Crear Clasificación' : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
             </h2>
             <button 
               onClick={onClose}

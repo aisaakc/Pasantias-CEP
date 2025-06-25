@@ -7,7 +7,7 @@ import { faCheckCircle, faTimesCircle, faInfoCircle } from '@fortawesome/free-so
 
 export default function PermissionTest() {
   const { permisosUsuario, clasificacionesUsuario, obtenerInfoPermisos } = useAuthStore();
-  const routePermissions = useRoutePermissions();
+  useRoutePermissions();
   const { canAccess: canAccessCursos } = useCanAccessRoute('/dashboard/cursos');
   const { canAccess: canAccessRoles } = useCanAccessRoute('/dashboard/roles');
   const { canAccess: canAccessDocumentos } = useCanAccessRoute('/dashboard/documentos');

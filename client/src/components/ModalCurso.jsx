@@ -833,7 +833,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faSave} className="mr-2" />
-                        <span>{curso ? 'Actualizar Curso' : 'Guardar Curso'}</span>
+                        <span>{curso ? 'Actualizar Cohorte' : 'Guardar Cohorte'}</span>
                       </>
                     )}
                   </button>

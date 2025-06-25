@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-24 17:50:54
+-- Started on 2025-06-24 22:16:05
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -164,7 +164,7 @@ BEGIN
         AND LOWER((adicional->>'id')) = LOWER((NEW.adicional->>'id'))
         AND id_clasificacion <> NEW.id_clasificacion
     ) THEN
-        RAISE EXCEPTION 'PGT: Ya existe un curso con el mismo parent_id y el mismo ID dentro de adicional (%).', NEW.adicional->>'id';
+        RAISE EXCEPTION 'Ya existe un curso con el mismo parent_id y el mismo ID dentro de adicional (%).', NEW.adicional->>'id';
     END IF;
 
     RETURN NEW;
@@ -361,7 +361,7 @@ CREATE TABLE public.documentos (
     id_tipo bigint NOT NULL,
     fecha_hora timestamp without time zone NOT NULL,
     nombre character varying,
-    descripcion character varying NOT NULL,
+    descripcion character varying,
     ext character varying,
     tamano bigint DEFAULT 0
 );
@@ -547,7 +547,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 3	Rol	Roles del Sistema	\N	110	\N	\N	9751	\N	1
 100107	Módulo 1: Introduction to Network		\N	0	5	100147	8438	{"id":"CEP-CISCO-01","costo":100}	0
 100187	Extensión		\N	139	\N	\N	8660	\N	0
-4	Programas		\N	30	\N	5	9072	\N	0
+4	Programas		\N	30	\N	\N	9072	\N	0
 8009	fa9		\N	\N	27	\N	8009	\N	1
 8011	fa500px		\N	\N	27	\N	8011	\N	1
 8012	faA		\N	\N	27	\N	8012	\N	1
@@ -1876,8 +1876,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100193	Día de los Reyes Magos	06/01\n	\N	0	100121	\N	\N	\N	0
 100152	Informática		\N	0	110	201	8414	\N	0
 100194	Día de la Divina Pastora	14/01\n	\N	0	100121	\N	\N	\N	0
+15	Super Administrador		\N	1	3	\N	9769	{"id_objeto":[100166,100156,100157,100158,100159,100161,100162,100067,100068,100160,100142,100164,100171,100066,100141,100290],"id_clasificacion":[100172,100173,100174,100178,100179,100181,100234,100300,100301,200,110,4,122,100050,5,123,124,27,1,73,100190,3,100094,100121,100187,100026,100155,8,100059]}	0
 100195	Declaración de la Independencia	19/04	\N	0	100121	\N	\N	\N	0
-15	Super Administrador		\N	1	3	\N	9769	{"id_objeto":[100166,100171,100156,100157,100158,100141,100159,100161,100162,100066,100164,100067,100068,100160,100290,100142],"id_clasificacion":[73,110,4,1,123,124,122,100172,100173,100155,100121,5,200,100050,100026,100059,8,27,100094,3,100174,100178,100179,100181,100187,100190,100234]}	0
 100154	Campo ORDEN (Clasificacion)		\N	0	73	\N	\N	\N	0
 100196	Día de la Bandera	03/08\n	\N	0	100121	\N	\N	\N	0
 100155	Bancos		\N	129	\N	\N	8244	\N	1
@@ -1893,6 +1893,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100142	Menú de Configuración		\N	0	73	\N	\N	\N	0
 100202	0426	Movilnet	\N	0	100190	\N	9104	{"mobile": true}	0
 100123	Batalla de Carabobo	24/06	\N	3	100121	100121	\N	\N	0
+100307	Foto del Curso		\N	0	100094	\N	\N	\N	0
 100124	Día Del Trabajador	01/05	\N	2	100121	100121	\N	\N	0
 100205	0234	Miranda (Los Teques)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100206	0235	Miranda (Guatire)	\N	\N	100190	\N	9265	{"mobile": false}	0
@@ -1923,14 +1924,17 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 100231	0254	Yaracuy (San Felipe)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100233	0212	La Guaira (La Guaira)	\N	\N	100190	\N	9265	{"mobile": false}	0
 100232	0292	Dependencias Federales	\N	\N	100190	\N	9265	{"mobile": false}	0
-100204	0212	Distrito Capital (Caracas, El Junquito)	\N	0	100190	\N	9265	{"mobile":false}	0
+100204	0212	Distrito Capital (Caracas, El Junquito)	\N	0	100190	\N	9265	{"mobile":true}	0
 100125	Día de la Independencia	05/07	\N	4	100121	100121	\N	\N	0
-100066	Menú de Roles		\N	0	73	73	\N	\N	0
+100071	Primeros pasos con Office		\N	0	5	100149	8660	{"id":"CEP-01"}	0
 10024	Distrito Capital		\N	0	122	\N	8072	\N	0
 100126	Víspera de Navidad	24/12	\N	6	100121	100121	\N	\N	0
+5	Cursos		\N	40	\N	4	9019	\N	0
 100164	Menú de PDF		\N	0	73	\N	\N	\N	0
 203	IUJO (Barquisimeto)		\N	30	200	200	8241	\N	0
 204	IUSF	Instituto Universitario San Francisco	\N	40	200	200	8249	\N	0
+100072	Nómina y Prestaciones Sociales		\N	0	5	100148	8364	{"id":"CEP-01"}	0
+100066	Menú de Roles		\N	0	73	\N	\N	\N	0
 6	Masculino	sexo masculino	\N	1	1	\N	9053	\N	1
 12	Estudiante IUJO		\N	6	3	11	9772	{"id_objeto":[]}	0
 100052	Presencial / Sabatino		\N	\N	100050	\N	\N	\N	0
@@ -1959,10 +1963,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 9323	faQuoteLeft		\N	\N	27	\N	9323	\N	1
 9324	faQuoteRight		\N	\N	27	\N	9324	\N	1
 9325	faR		\N	\N	27	\N	9325	\N	1
-100072	Nómina y Prestaciones Sociales		\N	0	5	100148	8364	\N	0
 7	Femenino	sexo femenino	\N	\N	1	\N	9790	\N	1
 8	Preguntas		\N	140	\N	\N	9320	\N	1
-100071	Primeros pasos con Office		\N	0	5	100149	8660	\N	0
 100062	Cancelado		\N	0	100059	100059	8075	\N	0
 100061	Inactivo		\N	1	100059	100059	\N	\N	0
 9326	faRProject		\N	\N	27	\N	9326	\N	1
@@ -1970,7 +1972,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, imagen, orden,
 200	Institutos	Institutos asociados a Fe y Alegría 	\N	10	\N	\N	9404	\N	0
 202	IUJO (Petare)		\N	20	200	200	8240	\N	0
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	\N	10	200	200	8245	\N	0
-5	Cursos		\N	40	\N	\N	9019	\N	0
 27	Íconos		\N	80	\N	\N	8926	\N	1
 100094	Tipo de Documento	Listado de Tipos de Documentos	\N	120	\N	\N	8678	\N	0
 100095	Informativo		\N	0	100094	\N	\N	\N	0
@@ -4065,6 +4066,11 @@ COPY public.documentos (id_documento, id_tipo, fecha_hora, nombre, descripcion, 
 32	100095	2025-06-20 04:28:32.016	musica de ia	xd xd xd\n\n	mp3	3718004
 31	100099	2025-06-20 04:28:43.349	base de datos de tesis	base de datos de tesis	mp4	452096
 33	100099	2025-06-21 06:18:43.87	sadas	asdas	pdf	490704
+34	100307	2025-06-24 23:13:13.347	Portada de Cisco Modulo 1	Portada de Cisco Modulo 1	png	175096
+35	100096	2025-06-24 23:20:24.726	pupu	xd	jpg	175096
+36	100099	2025-06-24 23:20:49.97	Super Administrador	x	docx	260507
+37	100101	2025-06-24 23:35:12.209	xdddd	hola	jpg	82763
+38	100097	2025-06-25 01:31:02.598	pepa	 xdd	pdf	2300
 \.
 
 
@@ -4077,8 +4083,8 @@ COPY public.documentos (id_documento, id_tipo, fecha_hora, nombre, descripcion, 
 COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_genero, id_pregunta, cedula, gmail, id_foto, id_status, respuesta, id_rol) FROM stdin;
 98	Victor	Gainza	04123426726	$2b$10$3reMAACjfCrBSi5MUnNOJubAyKoVPogo.keYJ96y5s2MNiS5KPbLO	6	9	20234123	superadmin@empresa.com	\N	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	[15]
 99	Modesta	Gonzales	04142129875	$2b$10$Feaj0VK5MsFW9Bc2W67iVeQoXG8NTY7poc1d9AjNT6RRrtJEg0BZu	7	84	14123432	Modesta21@gmail.com	\N	\N	$2b$10$M/XsUgsnPKLMhesgG3D9..g87p1Z9VFPy1Y0z6m7btKX9pdQ26BP.	[98]
+97	Yeferson	Moronta	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	[96]
 100	Fernando	Perez	04143173920	$2b$10$zhvSQQpYIKs.2HNiXnwgvOJVlC7k40j0B6uJew2g2tTR2/NAG2vwG	6	84	9872124	isaac@gmail.com	\N	\N	$2b$10$e9Epi7BQ.DqP6QWFM8ukQO59r4yFTnOyYRjmiG0U2tUs3FFtpQxv.	[98]
-97	XXX	xxx	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	[]
 101	Davidshho	Perez	04160986431	$2b$10$tpFw2jY/Pdqb8bl21q198.iOwWkqsTHSkXnOhuYmAxg/rz0Lc.i62	6	9	10234123	12@gmail.com	\N	\N	$2b$10$MjOSJo6buraBeMwV0tRZlOa0FeXxj3ojn/k2fPDaT/.cDOUIVxNKq	[13]
 102	Supervisor	General	02123124321	$2b$10$hgUjZ0LbXB8DhPVbhRff4.oX.oNs/mCTShBHHLfxW85cgf48xGUxu	6	100140	98989898	testing98989898@gmail.com	\N	\N	$2b$10$m50MTt.8JKr1.U9T.qrDAOFacipnbToGCCUd3xtdAHXqfYvDajmAu	[]
 \.
@@ -4099,7 +4105,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100296, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100307, true);
 
 
 --
@@ -4117,7 +4123,7 @@ SELECT pg_catalog.setval('public.cursos_id_curso_seq', 3, true);
 -- Name: documentos_id_documento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.documentos_id_documento_seq', 33, true);
+SELECT pg_catalog.setval('public.documentos_id_documento_seq', 38, true);
 
 
 --
@@ -4360,7 +4366,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-24 17:50:54
+-- Completed on 2025-06-24 22:16:06
 
 --
 -- PostgreSQL database dump complete

@@ -24,14 +24,55 @@ import React from 'react';
 
 // Componente para proteger rutas básicas (solo autenticación)
 const BasicProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, inicializarPermisos, loading } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isInitializing, setIsInitializing] = React.useState(true);
 
   React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true });
+    const initializeAuth = async () => {
+      // Si hay un token en localStorage, intentar inicializar permisos
+      if (localStorage.getItem('token')) {
+        try {
+          await inicializarPermisos();
+        } catch (error) {
+          console.error('Error al inicializar permisos:', error);
+          // Si hay error, limpiar localStorage y redirigir
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('isSupervisor');
+          localStorage.removeItem('userRoles');
+        }
+      }
+      setIsInitializing(false);
+    };
+
+    initializeAuth();
+  }, [inicializarPermisos]);
+
+  React.useEffect(() => {
+    // Solo redirigir después de que se complete la inicialización
+    if (!isInitializing && !isAuthenticated) {
+      // Guardar la URL actual para redirigir después del login
+      const currentPath = location.pathname + location.search;
+      navigate('/login', { 
+        replace: true,
+        state: { from: currentPath }
+      });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location, isInitializing]);
+
+  // Mostrar loading mientras se inicializa
+  if (isInitializing || loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return null;
@@ -52,7 +93,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/lista" element={<Lista />} />
         <Route path="/contacto" element={<Contacto />} />
-        <Route path="/login" element={<Login redirectTo="/dashboard/clasificacion" />} /> 
+        <Route path="/login" element={<Login />} /> 
         <Route path="/registro" element={<Registro />} />
         <Route path="/dashboard" element={
           <BasicProtectedRoute>

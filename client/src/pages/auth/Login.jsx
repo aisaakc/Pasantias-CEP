@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Section from '../../components/Section';
 import useAuthStore from '../../store/authStore';
 import { toast } from 'sonner';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { loginSchema } from '../../schemas/login.shema';
 
-export default function Login({ redirectTo }) {
+export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { loginUser, loading, error, successMessage, clearMessages } = useAuthStore();
   
+  // Obtener la URL de redirección desde el estado de navegación o usar /dashboard por defecto
+  const redirectTo = location.state?.from || '/dashboard';
 
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,7 +65,7 @@ export default function Login({ redirectTo }) {
       toast.success(successMessage); // ✅ Mostrar mensaje de éxito
       setTimeout(() => {
         clearMessages();
-        navigate(redirectTo || '/dashboard');
+        navigate(redirectTo);
       }, 1200);
     }
 

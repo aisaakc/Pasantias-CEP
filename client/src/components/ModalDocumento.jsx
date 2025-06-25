@@ -94,7 +94,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
               const documentoData = {
                 id_tipo: values.tipo,
                 fecha_hora,
-                descripcion: values.descripcion || values.nombre,
+                descripcion: values.descripcion || '',
                 nombre: values.nombre
               };
               if (isEdit) {
@@ -112,6 +112,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
               onClose();
               if (onSuccess) onSuccess();
             } catch (error) {
+              console.error('Error al guardar el documento:', error);
               toast.error('Error al guardar el documento');
             } finally {
               setSubmitting(false);
@@ -182,7 +183,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                     disabled={isSubmitting}
                   >
                     <FaSave className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} />
-                    {isSubmitting ? 'Guardando...' : 'Guardar'}
+                    {isSubmitting ? 'Guardando...' : isEdit ? 'Editar Documente' : 'Guardar Documento' }
                   </button>
                 </div>
               </div>

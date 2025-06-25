@@ -7,7 +7,6 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import esLocale from '@fullcalendar/core/locales/es';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faBook, faChalkboardTeacher, faUser, faMoneyBill } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { useCursoStore } from '../../store/cursoStore';
 import { useClasificacionStore } from '../../store/clasificacionStore';
@@ -16,7 +15,7 @@ import { encodeId } from '../../utils/hashUtils';
 
 function Curso() {
   const navigate = useNavigate();
-  const { fetchCursos, loading, error, modalidades, fetchOpcionesCurso, cursos } = useCursoStore();
+  const { fetchCursos, loading, error,  fetchOpcionesCurso } = useCursoStore();
   const { fetchSubClasificaciones } = useClasificacionStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -201,14 +200,13 @@ function Curso() {
       });
 
     return [...eventosCursos, ...eventosFeriados];
-  }, [cursosCalendario, feriados, selectedYear]);
+  }, [cursosCalendario, feriados]);
 
   const renderEventContent = (eventInfo) => {
     const icon = eventInfo.event.extendedProps.icon;
     const status = eventInfo.event.extendedProps.estado;
     const modalidad = eventInfo.event.extendedProps.modalidad;
     const instructor = eventInfo.event.extendedProps.instructor;
-    const costo = eventInfo.event.extendedProps.costo;
     const esFeriado = eventInfo.event.extendedProps.esFeriado;
     const descripcion = eventInfo.event.extendedProps.descripcion;
     const esHorario = eventInfo.event.extendedProps.esHorario;

@@ -13,62 +13,24 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { parentClasifications, fetchParentClasifications } = useClasificacionStore();
   const { 
-    permisosUsuario, 
     tienePermiso, 
     filtrarClasificacionesPorPermiso,
-    obtenerInfoPermisos,
-    tienePermisoClasificacion,
-    inicializarPermisos,
     isSupervisor
   } = useAuthStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   useEffect(() => {
     fetchParentClasifications();
-    // Inicializar permisos del usuario al montar el componente
-   
-    inicializarPermisos().then(permisos => {
-      console.log('Permisos inicializados desde Sidebar:', permisos);
-      console.log('Clasificaciones cargadas:', permisos.clasificaciones);
-    });
-    
-    console.log('Permisos cargados (desde estado):', permisosUsuario);
-    console.log('IDs de clasificación:', {
-      MN_CONFIGURACION: CLASSIFICATION_IDS.MN_CONFIGURACION,
-      MN_CURSO: CLASSIFICATION_IDS.MN_CURSO,
-      MN_ROLES: CLASSIFICATION_IDS.MN_ROLES,
-      MN_DOCUMENTOS: CLASSIFICATION_IDS.MN_DOCUMENTOS
-    });
-  }, [fetchParentClasifications, inicializarPermisos]);
+    // Los permisos ya se inicializan en BasicProtectedRoute, no es necesario hacerlo aquí
+  }, [fetchParentClasifications]);
 
   // Efecto separado para el filtrado que se ejecuta cuando las clasificaciones están disponibles
   useEffect(() => {
     if (parentClasifications.length > 0) {
-      // console.log('=== CLASIFICACIONES CARGADAS, EJECUTANDO FILTRADO ===');
-      // console.log('Total de clasificaciones padre cargadas:', parentClasifications.length);
-      console.log('Clasificaciones padre:', parentClasifications.map(c => ({
-        id: c.id_clasificacion,
-        nombre: c.nombre,
-        icono: c.nicono,
-        type_id: c.type_id
-      })));
-      
-      // Verificar que los permisos estén cargados antes de filtrar
-      const infoPermisos = obtenerInfoPermisos();
-      // console.log('Información de permisos antes del filtrado:', infoPermisos);
-      
-      if (infoPermisos.tieneClasificaciones) {
-        const clasificacionesFiltradas = filtrarClasificacionesPorPermiso(parentClasifications);
-        // console.log('=== RESULTADO DEL FILTRADO ===');
-        console.log('Clasificaciones filtradas:', clasificacionesFiltradas.length);
-        console.log('Clasificaciones filtradas:', clasificacionesFiltradas.map(c => c.nombre));
-      } else {
-        console.log('⚠️ No hay clasificaciones cargadas en los permisos, mostrando todas');
-      }
-    // } else {
-    //   console.log('⚠️ No hay clasificaciones padre cargadas aún');
+      // Las clasificaciones se filtran automáticamente según los permisos
+      // No es necesario hacer nada adicional aquí
     }
-  }, [parentClasifications, filtrarClasificacionesPorPermiso, obtenerInfoPermisos]);
+  }, [parentClasifications]);
 
   const isActive = (id) => {
     const encodedId = encodeId(id);
@@ -88,9 +50,6 @@ export default function Sidebar() {
   const cursosClasificacion = parentClasifications.find(c => c.nombre === 'Cursos');
   const rolesClasificacion = parentClasifications.find(c => c.nombre === 'Rol');
   const documentosClasificacion = parentClasifications.find(c => c.nombre === 'Tipo de Documento');
-
-  // Obtener información de permisos del contexto del authStore
-  const infoPermisos = obtenerInfoPermisos();
 
   // Verificar permisos usando el contexto interno del authStore
   const puedeAccederConfiguracion = tienePermiso(CLASSIFICATION_IDS.MN_CONFIGURACION);

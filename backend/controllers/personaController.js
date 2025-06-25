@@ -119,6 +119,37 @@ class PersonaController {
         }
     }
 
+    async deleteUser(req, res) {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    message: "ID de usuario no proporcionado"
+                });
+            }
+            const deletedId = await UsuarioModel.deleteUser(id);
+            res.status(200).json({
+                success: true,
+                data: { id_persona: deletedId },
+                message: "Usuario eliminado exitosamente"
+            });
+        } catch (error) {
+            console.error("Error en deleteUser controller:", error.message);
+            if (error.message.includes("no encontrado")) {
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+            res.status(500).json({
+                success: false,
+                message: "Error al eliminar el usuario",
+                error: error.message
+            });
+        }
+    }
+
 };
 
 export default new PersonaController();

@@ -3,12 +3,15 @@ import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import usePersonaStore from '../../store/personaStore';
 import ModalUser from '../../components/ModalUser';
+import DeleteModal from '../../components/DeleteModal';
 
 function Roles() {
-  const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios } = usePersonaStore();
+  const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios, deleteUser } = usePersonaStore();
   const [selectedRole, setSelectedRole] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
     fetchRoles();
@@ -71,6 +74,27 @@ function Roles() {
         user.roles.some(role => role.id === selectedRole.id)
       )
     : Object.values(groupedUsers);
+
+  // Handler para abrir el modal de eliminar
+  const handleDeleteClick = (usuario) => {
+    setUserToDelete(usuario);
+    setDeleteModalOpen(true);
+  };
+
+  // Handler para confirmar eliminación
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await deleteUser(userToDelete.id_persona);
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+      // Puedes mostrar un toast aquí si usas alguna librería de notificaciones
+    } catch {
+      // Manejar error si lo deseas
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
@@ -257,8 +281,9 @@ function Roles() {
                           <FontAwesomeIcon icon={iconos.faPen} size="lg" />
                         </button>
                         <button 
-                          title="Eliminar usuario"
+                          title={`Eliminar usuario: ${usuario.persona_nombre} ${usuario.apellido}`}
                           className="text-red-600 hover:text-red-800 transform hover:scale-110 transition-all duration-300"
+                          onClick={() => handleDeleteClick(usuario)}
                         >
                           <FontAwesomeIcon icon={iconos.faTrash} size="lg" />
                         </button>
@@ -276,6 +301,16 @@ function Roles() {
         isOpen={isModalOpen} 
         onClose={handleModalClose}
         editData={editData}
+      />
+
+      {/* Modal de eliminar usuario */}
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => { setDeleteModalOpen(false); setUserToDelete(null); }}
+        onConfirm={handleConfirmDelete}
+        itemName={userToDelete ? `${userToDelete.persona_nombre} ${userToDelete.apellido}` : ''}
+        itemType="usuario"
+        itemIcon={iconos.faUser}
       />
 
       <style>{`

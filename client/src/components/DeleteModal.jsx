@@ -19,7 +19,7 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, itemName, item
             Confirmar Eliminación
           </h3>
           <p className="text-gray-600 text-lg mb-2">
-            ¿Estás seguro  eliminar la {itemType}?
+            ¿Estás seguro  eliminar  {itemType}?
           </p>
           <p className="text-gray-800 font-medium flex items-center justify-center gap-2">
             {itemIcon && <FontAwesomeIcon icon={itemIcon} className="text-xl" />}

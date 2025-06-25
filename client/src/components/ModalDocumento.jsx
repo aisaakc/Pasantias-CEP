@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { FaFileAlt, FaTimes, FaSave } from 'react-icons/fa';
-import { uploadDocumento, updateDocumento, updateDocumentoWithFile } from '../api/documento.api';
+import useDocumentoStore from '../store/documentoStrore';
 import { getAllSubclasificaciones } from '../api/clasificacion.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import { toast } from 'sonner';
@@ -12,6 +12,13 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
   const [animationClass, setAnimationClass] = useState('');
   const [tipos, setTipos] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(false);
+
+  // Usar el store Zustand
+  const {
+    uploadDocumento,
+    updateDocumento,
+    updateDocumentoWithFile
+  } = useDocumentoStore();
 
   // Determinar si es edición
   const isEdit = !!editData;
@@ -183,7 +190,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                     disabled={isSubmitting}
                   >
                     <FaSave className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} />
-                    {isSubmitting ? 'Guardando...' : isEdit ? 'Editar Documente' : 'Guardar Documento' }
+                    {isSubmitting ? 'Guardando...' : isEdit ? 'Editar Documento' : 'Guardar Documento' }
                   </button>
                 </div>
               </div>

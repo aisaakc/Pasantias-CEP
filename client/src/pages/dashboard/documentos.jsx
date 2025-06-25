@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react'
 import { FaPlus, FaEdit, FaTrash, FaDownload, FaEye, FaFilter, FaFileAlt, FaFilePdf, FaFileWord, FaDatabase } from 'react-icons/fa'
 import ModalDocumento from '../../components/ModalDocumento'
-import { getAllDocumentos } from '../../api/documento.api'
+import useDocumentoStore from '../../store/documentoStrore'
 import { hashDeterministaPorId } from '../../utils/hashUtils'
+import DeleteModal from '../../components/DeleteModal'
+import { toast } from 'sonner'
 
 const BACKEND_URL = 'http://localhost:3001'
 
 function Documentos() {
-  const [documentos, setDocumentos] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const {
+    documentos,
+    loading: isLoading,
+    fetchDocumentos,
+    downloadDocumento,
+    deleteDocumento
+  } = useDocumentoStore();
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTipo, setSelectedTipo] = useState('')
@@ -19,20 +26,11 @@ function Documentos() {
   const [showFilters, setShowFilters] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState(null)
   const [showModalDocumento, setShowModalDocumento] = useState(false)
-
-  const fetchDocumentos = () => {
-    setIsLoading(true)
-    getAllDocumentos()
-      .then(res => {
-        setDocumentos(res.data.data || [])
-      })
-      .catch(() => setDocumentos([]))
-      .finally(() => setIsLoading(false))
-  }
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   useEffect(() => {
     fetchDocumentos()
-  }, [])
+  }, [fetchDocumentos])
 
   const formatExt = (ext) => (ext || '').replace('.', '').toUpperCase();
 
@@ -116,10 +114,31 @@ function Documentos() {
     }
   };
 
-  const handleAction = (action, documento) => {
+  const handleAction = async (action, documento) => {
     setSelectedDocument(documento)
     if (action === 'editar') {
       setShowModalDocumento(true)
+    }
+    if (action === 'descargar') {
+      const hash = hashDeterministaPorId(documento.id_documento)
+      const ext = documento.ext.startsWith('.') ? documento.ext : '.' + documento.ext
+      const filename = `${hash}${ext}`
+      try {
+        const blob = await downloadDocumento(filename)
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = documento.nombre + ext
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      } catch {
+        alert('Error al descargar el documento')
+      }
+    }
+    if (action === 'eliminar') {
+      setShowDeleteModal(true)
     }
     console.log(`${action} documento:`, documento.nombre)
   }
@@ -128,6 +147,18 @@ function Documentos() {
     fetchDocumentos()
     setShowModalDocumento(false)
     setSelectedDocument(null)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedDocument) return;
+    try {
+      await deleteDocumento(selectedDocument.id_documento)
+      setShowDeleteModal(false)
+      setSelectedDocument(null)
+      toast.success('Documento eliminado correctamente')
+    } catch {
+      alert('Error al eliminar el documento')
+    }
   }
 
   const countByExt = (ext) => documentos.filter(d => formatExt(d.ext) === ext).length;
@@ -370,11 +401,13 @@ function Documentos() {
                                 <FaDownload className="h-4 w-4" />
                               </button>
                               <button 
+                                 title={'Editar: '+documento.nombre}
                                 onClick={() => handleAction('editar', documento)}
                                 className="text-yellow-600 hover:text-yellow-900 p-1.5 rounded-lg hover:bg-yellow-100 transition-all duration-200 transform hover:scale-110">
                                 <FaEdit className="h-4 w-4" />
                               </button>
                               <button 
+                              title={'Eliminar: ' +documento.nombre}
                                 onClick={() => handleAction('eliminar', documento)}
                                 className="text-red-600 hover:text-red-900 p-1.5 rounded-lg hover:bg-red-100 transition-all duration-200 transform hover:scale-110">
                                 <FaTrash className="h-4 w-4" />
@@ -454,6 +487,14 @@ function Documentos() {
         )}
 
         <ModalDocumento isOpen={showModalDocumento} onClose={() => { setShowModalDocumento(false); setSelectedDocument(null); }} onSuccess={handleDocumentoGuardado} editData={selectedDocument} />
+        <DeleteModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+          itemName={selectedDocument?.nombre || ''}
+          itemType="documento"
+          itemIcon={null}
+        />
       </div>
 
       <style jsx>{`

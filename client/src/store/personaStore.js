@@ -4,7 +4,8 @@ import {
   getUsuarios,
   getRoles,
   CreateUsers,
-  updateUser
+  updateUser,
+  deleteUser
 } from '../api/persona.api';
 import { getSubclassificationsById } from '../api/auth.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
@@ -68,6 +69,27 @@ const usePersonaStore = create((set, get) => ({
     try {
       const response = await updateUser(id, userData);
       // Actualizar la lista de usuarios después de actualizar uno
+      const usuariosResponse = await getUsuarios();
+      set({ 
+        usuarios: usuariosResponse.data.data, 
+        loading: false 
+      });
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || error.message, 
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  // Eliminar usuario
+  deleteUser: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await deleteUser(id);
+      // Actualizar la lista de usuarios después de eliminar uno
       const usuariosResponse = await getUsuarios();
       set({ 
         usuarios: usuariosResponse.data.data, 

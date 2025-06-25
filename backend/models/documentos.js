@@ -29,17 +29,6 @@ class Documentos {
         }
     }
 
-    // Obtener documento por ID
-    async findById(id_documento) {
-        try {
-            const query = "SELECT * FROM documentos WHERE id_documento = $1";
-            const result = await pool.query(query, [id_documento]);
-            return result.rows[0];
-        } catch (error) {
-            throw new Error(`Error al obtener documento: ${error.message}`);
-        }
-    }
-
     // Obtener documentos por tipo
     async findByTipo(id_tipo) {
         try {
@@ -88,6 +77,17 @@ class Documentos {
             return parseInt(result.rows[0].total);
         } catch (error) {
             throw new Error(`Error al contar documentos: ${error.message}`);
+        }
+    }
+
+    // Obtener documento por ID
+    async findById(id_documento) {
+        try {
+            const query = "SELECT * FROM documentos WHERE id_documento = $1";
+            const result = await pool.query(query, [id_documento]);
+            return result.rows[0];
+        } catch (error) {
+            throw new Error(`Error al obtener documento: ${error.message}`);
         }
     }
 }

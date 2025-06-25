@@ -4,69 +4,7 @@ import { getFileUrl, getFilePath } from "../middleware/uploadMiddleware.js";
 import fs from 'fs';
 import path from 'path';
 
-/*
-EJEMPLO DE USO DEL CONTROLADOR DE DOCUMENTOS:
 
-1. CREAR DOCUMENTO:
-POST /api/documentos
-Body: {
-    "id_tipo": 1,
-    "fecha_hora": "2024-01-15T10:30:00Z",
-    "url": "https://ejemplo.com/documento.pdf",
-    "descripcion": "Documento de trabajo"
-}
-
-2. SUBIR ARCHIVO FÍSICO:
-POST /api/documentos/upload
-FormData: {
-    "file": [archivo],
-    "id_tipo": 1,
-    "fecha_hora": "2024-01-15T10:30:00Z",
-    "descripcion": "Documento subido"
-}
-
-3. OBTENER TODOS LOS DOCUMENTOS:
-GET /api/documentos
-
-4. OBTENER DOCUMENTO POR ID:
-GET /api/documentos/1
-
-5. OBTENER DOCUMENTOS POR TIPO:
-GET /api/documentos/tipo/1
-
-6. DESCARGAR ARCHIVO:
-GET /api/documentos/download/nombre_archivo.pdf
-
-7. ACTUALIZAR DOCUMENTO:
-PUT /api/documentos/1
-Body: {
-    "id_tipo": 2,
-    "fecha_hora": "2024-01-15T11:00:00Z",
-    "url": "https://ejemplo.com/documento_actualizado.pdf",
-    "descripcion": "Documento actualizado"
-}
-
-8. ACTUALIZAR CON ARCHIVO:
-PUT /api/documentos/1/upload
-FormData: {
-    "file": [archivo],
-    "id_tipo": 2,
-    "fecha_hora": "2024-01-15T11:00:00Z",
-    "descripcion": "Documento actualizado"
-}
-
-9. ELIMINAR DOCUMENTO:
-DELETE /api/documentos/1
-
-10. CONTAR DOCUMENTOS:
-GET /api/documentos/count
-
-11. DOCUMENTOS CON PAGINACIÓN:
-GET /api/documentos/paginated?page=1&limit=10
-
-12. BUSCAR DOCUMENTOS:
-GET /api/documentos/search?search=trabajo
-*/
 
 class DocumentosController {
     async createDocumento(req, res) {
@@ -213,33 +151,6 @@ class DocumentosController {
             res.status(500).json({
                 success: false,
                 message: "Error al obtener los documentos",
-                error: error.message
-            });
-        }
-    }
-
-    async getDocumentoById(req, res) {
-        try {
-            const { id } = req.params;
-            const documento = await documentosModel.findById(id);
-
-            if (!documento) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Documento no encontrado"
-                });
-            }
-
-            res.status(200).json({
-                success: true,
-                data: documento,
-                message: "Documento obtenido exitosamente"
-            });
-        } catch (error) {
-            console.error("Error en getDocumentoById controller:", error.message);
-            res.status(500).json({
-                success: false,
-                message: "Error al obtener el documento",
                 error: error.message
             });
         }
@@ -436,6 +347,20 @@ class DocumentosController {
                 });
             }
 
+            // Eliminar archivo físico si existe
+            if (documentoExistente.url && documentoExistente.url.startsWith('/docs/')) {
+                const filename = documentoExistente.url.split('/').pop();
+                const filePath = getFilePath(filename);
+                try {
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                } catch (err) {
+                    console.error('Error al eliminar el archivo físico:', err.message);
+                    // No retornamos error, solo lo registramos
+                }
+            }
+
             const documentoEliminado = await documentosModel.delete(id);
 
             res.status(200).json({
@@ -472,73 +397,7 @@ class DocumentosController {
         }
     }
 
-    async getDocumentosPaginated(req, res) {
-        try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
-            const offset = (page - 1) * limit;
-
-            // Obtener todos los documentos para el conteo
-            const todosDocumentos = await documentosModel.findAll();
-            const total = todosDocumentos.length;
-
-            // Aplicar paginación
-            const documentos = todosDocumentos.slice(offset, offset + limit);
-
-            res.status(200).json({
-                success: true,
-                data: documentos,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit),
-                    hasNext: page < Math.ceil(total / limit),
-                    hasPrev: page > 1
-                },
-                message: "Documentos obtenidos exitosamente"
-            });
-        } catch (error) {
-            console.error("Error en getDocumentosPaginated controller:", error.message);
-            res.status(500).json({
-                success: false,
-                message: "Error al obtener los documentos paginados",
-                error: error.message
-            });
-        }
-    }
-
-    async searchDocumentos(req, res) {
-        try {
-            const { search } = req.query;
-
-            if (!search) {
-                return res.status(400).json({
-                    success: false,
-                    message: "El parámetro de búsqueda es requerido"
-                });
-            }
-
-            // Obtener todos los documentos y filtrar por descripción
-            const todosDocumentos = await documentosModel.findAll();
-            const documentosFiltrados = todosDocumentos.filter(doc => 
-                doc.descripcion.toLowerCase().includes(search.toLowerCase())
-            );
-
-            res.status(200).json({
-                success: true,
-                data: documentosFiltrados,
-                message: "Búsqueda realizada exitosamente"
-            });
-        } catch (error) {
-            console.error("Error en searchDocumentos controller:", error.message);
-            res.status(500).json({
-                success: false,
-                message: "Error al buscar documentos",
-                error: error.message
-            });
-        }
-    }
+   
 
     // Subir archivo físico
     async uploadDocumento(req, res) {

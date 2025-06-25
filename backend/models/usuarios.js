@@ -326,6 +326,25 @@ class UsuarioModel {
             throw error;
         }
     }
+
+    
+    async deleteUser(id_persona) {
+        try {
+            // Verificar si el usuario existe
+            const checkUserQuery = `SELECT id_persona FROM personas WHERE id_persona = $1;`;
+            const userResult = await pool.query(checkUserQuery, [id_persona]);
+            if (userResult.rows.length === 0) {
+                throw new Error("Usuario no encontrado");
+            }
+            // Eliminar usuario
+            const deleteQuery = `DELETE FROM personas WHERE id_persona = $1 RETURNING id_persona;`;
+            const result = await pool.query(deleteQuery, [id_persona]);
+            return result.rows[0].id_persona;
+        } catch (error) {
+            console.error("Error en deleteUser:", error.message);
+            throw error;
+        }
+    }
 }
 
 export default new UsuarioModel();

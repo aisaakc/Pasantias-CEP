@@ -16,6 +16,7 @@ const usePersonaStore = create((set, get) => ({
   preguntas: [],
   generos: [],
   rolesClasificacion: [],
+  prefijosTelefonicos: [],
   loading: false,
   error: null,
   dataLoaded: false,
@@ -110,22 +111,28 @@ const usePersonaStore = create((set, get) => ({
     // Si los datos ya están cargados, no hacer nada
     if (get().dataLoaded) return;
 
+    console.log('Ejecutando fetchSubclasificaciones...');
     set({ loading: true, error: null });
     try {
-      const [preguntasResponse, generosResponse, rolesResponse] = await Promise.all([
+      const [preguntasResponse, generosResponse, rolesResponse, prefijosResponse] = await Promise.all([
         getSubclassificationsById(CLASSIFICATION_IDS.PREGUNTAS),
         getSubclassificationsById(CLASSIFICATION_IDS.GENEROS),
-        getSubclassificationsById(CLASSIFICATION_IDS.ROLES)
+        getSubclassificationsById(CLASSIFICATION_IDS.ROLES),
+        getSubclassificationsById(CLASSIFICATION_IDS.PREFIJOS_TLF)
       ]);
+
+      console.log('Prefijos obtenidos:', prefijosResponse.data.data);
 
       set({
         preguntas: preguntasResponse.data.data,
         generos: generosResponse.data.data,
         rolesClasificacion: rolesResponse.data.data,
+        prefijosTelefonicos: prefijosResponse.data.data,
         loading: false,
         dataLoaded: true
       });
     } catch (error) {
+      console.error('Error en fetchSubclasificaciones:', error);
       set({ 
         error: error.response?.data?.message || error.message, 
         loading: false 

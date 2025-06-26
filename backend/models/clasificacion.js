@@ -1,4 +1,5 @@
 import pool from "../db.js";
+import { CLASSIFICATION_IDS } from "../../client/src/config/classificationIds.js";
 class Clasificacion {
     
     async getParentClassifications() {
@@ -19,14 +20,14 @@ class Clasificacion {
     }
 
     async create(nuevaClasificacion) {
-        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional } = nuevaClasificacion;
+        const { nombre, descripcion, orden, type_id, parent_id, id_icono, adicional } = nuevaClasificacion;
         try {
             const query = `
-                INSERT INTO clasificacion (nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional)
-                VALUES (TRIM($1), TRIM($2), $3, $4, $5, $6, $7, $8)
-                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional;
+                INSERT INTO clasificacion (nombre, descripcion, orden, type_id, parent_id, id_icono, adicional)
+                VALUES (TRIM($1), TRIM($2), $3, $4, $5, $6, $7)
+                RETURNING id_clasificacion AS id, nombre, descripcion, orden, type_id, parent_id, id_icono, adicional;
             `;
-            const values = [nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional || null];  
+            const values = [nombre, descripcion, orden, type_id, parent_id, id_icono, adicional || null];  
             const result = await pool.query(query, values);
             return result.rows[0];
         } catch (error) {
@@ -42,11 +43,11 @@ class Clasificacion {
         try {          
             let query = `
            SELECT sc.*, i.nombre AS nicono, 
-                  sc.parent_id as parentID, 
-                  c.nombre AS parent_nombre, 
-                  c2.nombre as parent_icono,
-                  t.nombre AS type_nombre,
-                  ti.nombre AS type_icono
+           sc.parent_id as parentID, 
+           c.nombre AS parent_nombre, 
+           c2.nombre as parent_icono,
+           t.nombre AS type_nombre,
+           ti.nombre AS type_icono
            FROM clasificacion sc            
            LEFT JOIN clasificacion c ON sc.type_id = c.id_clasificacion
            LEFT JOIN clasificacion c2 ON c.id_icono = c2.id_clasificacion                  
@@ -95,9 +96,9 @@ class Clasificacion {
            SELECT c_iconos.* 
            FROM public.clasificacion AS c_iconos
            INNER JOIN public.clasificacion AS c_tipos ON c_iconos.type_id = c_tipos.id_clasificacion
-           WHERE c_tipos.nombre = 'Íconos';
+           WHERE c_tipos.id_clasificacion = $1;
             `;
-            const result = await pool.query(query);
+            const result = await pool.query(query, [CLASSIFICATION_IDS.ICONOS.toString()]);
             return result.rows;
           } catch (error) {
             console.error("Error en getAllClasificaciones (pg):", error.message);

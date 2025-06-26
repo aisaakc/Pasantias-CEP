@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield, FaFilePdf, FaFileAlt } from 'react-icons/fa';
+import { FaClipboardList, FaHome, FaCog, FaGraduationCap, FaUserShield, FaFilePdf, FaFileAlt, FaChartBar, FaUsers } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import useClasificacionStore from '../store/clasificacionStore';
 import useAuthStore from '../store/authStore';
@@ -108,6 +108,10 @@ export default function Sidebar() {
         )}
 
         {renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF, null, isSupervisor)}
+
+        {renderSidebarLink('/dashboard/estadisticas', 'Estadísticas', iconos.faChartBar, true, null, isSupervisor)}
+
+        {renderSidebarLink('/dashboard/cohorte', 'Cohorte', iconos.faUsers, true, null, isSupervisor)}
 
         {puedeAccederConfiguracion && (
           <div className="relative">

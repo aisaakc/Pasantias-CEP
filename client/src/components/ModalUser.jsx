@@ -18,6 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 import usePersonaStore from '../store/personaStore';
+import PhoneInput from './PhoneInput';
 
 const ModalUser = ({ isOpen, onClose, editData = null }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -31,6 +32,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     preguntas,
     generos,
     rolesClasificacion,
+    prefijosTelefonicos,
     dataLoaded
   } = usePersonaStore();
 
@@ -57,6 +59,12 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     }
   }, [isOpen, dataLoaded]);
 
+  // Debug: verificar si los prefijos se están cargando
+  useEffect(() => {
+    console.log('Prefijos telefónicos cargados:', prefijosTelefonicos);
+    console.log('Data loaded:', dataLoaded);
+  }, [prefijosTelefonicos, dataLoaded]);
+
   // Función para validar que solo se ingresen letras y espacios
   const handleOnlyLetters = (e, setFieldValue) => {
     const value = e.target.value;
@@ -76,6 +84,17 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
       // Para cédula, solo números
       const sanitizedValue = value.replace(/\D/g, '');
       setFieldValue(e.target.name, sanitizedValue);
+    }
+  };
+
+  // Función para manejar el blur del teléfono
+  const handlePhoneBlur = (e, field, form) => {
+    if (form.touched[field.name] && form.errors[field.name]) {
+      const fieldLabelMap = {
+        telefono: 'Teléfono',
+      };
+      const label = fieldLabelMap[field.name] || field.name;
+      toast.error(`Error en ${label}: ${form.errors[field.name]}`);
     }
   };
 
@@ -164,7 +183,9 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
           <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {editData ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}
+              {editData 
+                ? `Editar Usuario: ${editData.nombre || ''} ${editData.apellido || ''}` 
+                : 'Agregar Nuevo Usuario'}
               <FontAwesomeIcon
                 icon={faUser}
                 className="inline-block ml-2 text-blue-600"
@@ -232,8 +253,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                     name: 'telefono', 
                     icon: faPhone, 
                     label: 'Teléfono', 
-                    type: 'tel', 
-                    onInput: (e) => handleOnlyNumbers(e, setFieldValue),
+                    type: 'phone',
                     required: true
                   },
                   { 
@@ -314,6 +334,21 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                             ))}
                           </>
                         )}
+                      </Field>
+                    ) : field.type === 'phone' ? (
+                      <Field name={field.name}>
+                        {({ field: formField, form }) => {
+                          console.log('Renderizando PhoneInput con prefijos:', prefijosTelefonicos);
+                          return (
+                            <PhoneInput
+                              field={formField}
+                              form={form}
+                              prefijosTelefonicos={prefijosTelefonicos}
+                              onBlur={handlePhoneBlur}
+                              placeholder="Tu número de teléfono"
+                            />
+                          );
+                        }}
                       </Field>
                     ) : (
                       <Field

@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-26 00:05:19
+-- Started on 2025-06-26 10:53:37
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -523,7 +523,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 8080	faArrowUp		\N	27	\N	8080	\N	1	\N
 8081	faArrowUp19		\N	27	\N	8081	\N	1	\N
 8082	faArrowUp91		\N	27	\N	8082	\N	1	\N
-73	Objetos		90	\N	\N	9768	\N	1	\N
 100128	Navidad	25/12	7	100121	100121	\N	\N	0	\N
 110	Carreras		20	\N	\N	8782	\N	1	\N
 1	Géneros		100	\N	\N	9792	\N	1	\N
@@ -546,8 +545,9 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 57	¿Cuál es tu pelicula favorita?		0	8	8	8683	\N	0	\N
 3	Rol	Roles del Sistema	110	\N	\N	9751	\N	1	\N
 100107	Módulo 1: Introduction to Network		0	5	100147	8438	{"id":"CEP-CISCO-01","costo":100}	0	\N
-100187	Extensión		139	\N	\N	8660	\N	0	\N
 4	Programas		30	\N	\N	9072	\N	0	\N
+73	Objetos		90	\N	\N	9768	\N	0	\N
+100310	hola		0	\N	\N	\N	\N	0	\N
 8009	fa9		\N	27	\N	8009	\N	1	\N
 8011	fa500px		\N	27	\N	8011	\N	1	\N
 8012	faA		\N	27	\N	8012	\N	1	\N
@@ -1852,26 +1852,25 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 8008	fa8		\N	27	\N	8008	\N	1	\N
 100129	Fin de Año	31/12	8	100121	100121	\N	\N	0	\N
 100167	Agregar Configuraciones		0	73	\N	\N	\N	0	\N
-100188	PDF	FaFilePdf className="h-5 w-5 text-red-500"	0	100187	\N	\N	\N	0	\N
 100290	Menú de Lista de Cursos		0	73	\N	\N	\N	0	\N
+100311	asdsadsa		0	\N	\N	\N	\N	0	\N
 100028	Divisas en efectivo ( directamente en caja principal)		\N	100026	100026	\N	\N	0	\N
 100130	Halloween	31/10	10	100121	100121	\N	\N	0	\N
 100147	Cisco Academy		0	4	100152	\N	\N	0	\N
-100189	DOC	FaFileWord className="h-5 w-5 text-blue-500"	0	100187	\N	\N	\N	0	\N
 100270	Administración  de Empresas		0	110	201	\N	\N	0	\N
 100131	Carnaval  2025	03/03/25 , 04/03/25	11	100121	100121	\N	\N	0	\N
 100149	Oficio Tecnológico emergente		0	4	100152	\N	\N	0	\N
-100190	Prefijos Telefónicos (Venezuela)		81	\N	\N	9104	\N	0	\N
 100148	Diplomado		0	4	100270	\N	\N	0	\N
 100271	Contaduria		0	110	\N	\N	\N	0	\N
-100169	Manejo de Bases de Datos con PostgreSQL		0	5	100149	8488	\N	0	\N
+100190	Prefijos Telefónicos (Venezuela)		81	\N	\N	9104	\N	1	\N
+100169	Manejo de Bases de Datos con PostgreSQL		0	5	100149	8488	{"id":"CEP-03","costo":20}	0	\N
 100132	Elecciones 2025	25/05/25	9	100121	100121	\N	\N	0	\N
-100150	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		0	5	100147	8438	\N	0	\N
 100191	0412	Digitel	0	100190	\N	9104	{"mobile":true}	0	\N
+100150	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		0	5	100147	8438	{"id":"CEP-CISCO-02","costo":100}	0	\N
 100133	Cisco Academy (Petare)		0	4	100134	\N	\N	0	\N
 100171	Menú de Tipos de Documentos		0	73	\N	\N	\N	0	\N
 100192	Día de Todos los Santos	01/11\n	0	100121	\N	\N	\N	0	\N
-100151	Curso Básico de Mantenimiento y Reparación de PC		0	5	100149	9078	\N	0	\N
+100151	Curso Básico de Mantenimiento y Reparación de PC		0	5	100149	9078	{"id":"CEP-02","costo":20}	0	\N
 100134	Informática (Sede Petare)		0	110	202	\N	\N	0	\N
 100193	Día de los Reyes Magos	06/01\n	0	100121	\N	\N	\N	0	\N
 100152	Informática		0	110	201	8414	\N	0	\N
@@ -1894,7 +1893,11 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100202	0426	Movilnet	0	100190	\N	9104	{"mobile": true}	0	\N
 100123	Batalla de Carabobo	24/06	3	100121	100121	\N	\N	0	\N
 100307	Foto del Curso		0	100094	\N	\N	\N	0	\N
+300	 BANCO DE VENEZUELA	0102	0	100155	\N	\N	\N	0	\N
+301	BANCO VENEZOLANO DE CREDITO	0104	0	100155	\N	\N	\N	0	\N
 100124	Día Del Trabajador	01/05	2	100121	100121	\N	\N	0	\N
+302	BANCO MERCANTIL	0105	0	100155	\N	\N	\N	0	\N
+303	 BBVA PROVINCIAL	0108	0	100155	\N	\N	\N	0	\N
 100205	0234	Miranda (Los Teques)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100206	0235	Miranda (Guatire)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100207	0239	Miranda (Guarenas)	\N	100190	\N	9265	{"mobile": false}	0	\N
@@ -1922,17 +1925,38 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100229	0247	Apure (San Fernando de Apure)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100230	0273	Barinas (Barinas)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100231	0254	Yaracuy (San Felipe)	\N	100190	\N	9265	{"mobile": false}	0	\N
+304	 BANCARIBE	0114	0	100155	\N	\N	\N	0	\N
 100233	0212	La Guaira (La Guaira)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100232	0292	Dependencias Federales	\N	100190	\N	9265	{"mobile": false}	0	\N
+305	 BANCO EXTERIOR	0115	0	100155	\N	\N	\N	0	\N
+306	 BANCO CARONI	0128	0	100155	\N	\N	\N	0	\N
+307	 BANESCO	0134	0	100155	\N	\N	\N	0	\N
+309	 BANCO PLAZA	0138	0	100155	\N	\N	\N	0	\N
+308	 BANCO SOFITASA	0137	0	100155	\N	\N	\N	0	\N
+312	100% BANCO	0156	0	100155	\N	\N	\N	0	\N
+313	DELSUR BANCO UNIVERSAL	0157	0	100155	\N	\N	\N	0	\N
+314	BANCO DEL TESORO	0163	0	100155	\N	\N	\N	0	\N
+315	 BANCRECER	0168	0	100155	\N	\N	\N	0	\N
+316	 R4 BANCO MICROFINANCIERO C.A.	0169	0	100155	\N	\N	\N	0	\N
+317	 BANCO ACTIVO	0171	0	100155	\N	\N	\N	0	\N
+318	 BANCAMIGA BANCO UNIVERSAL, C.A.	0172	0	100155	\N	\N	\N	0	\N
+319	 BANCO INTERNACIONAL DE DESARROLLO	0173	0	100155	\N	\N	\N	0	\N
+320	 BANPLUS	0174	0	100155	\N	\N	\N	0	\N
 100204	0212	Distrito Capital (Caracas, El Junquito)	0	100190	\N	9265	{"mobile":true}	0	\N
+311	BANCO FONDO COMUN	0151	0	100155	\N	\N	\N	0	\N
+310	 BANGENTE	0146	0	100155	\N	\N	\N	0	\N
 100125	Día de la Independencia	05/07	4	100121	100121	\N	\N	0	\N
-100071	Primeros pasos con Office		0	5	100149	8660	{"id":"CEP-01"}	0	\N
+321	 BANCO DIGITAL DE LOS TRABAJADORES, BANCO UNIVERSAL	0175	0	100155	\N	\N	\N	0	\N
+322	 BANFANB	0177	0	100155	\N	\N	\N	0	\N
+323	N58 BANCO DIGITAL BANCO MICROFINANCIERO S A	0178	0	100155	\N	\N	\N	0	\N
+324	 BANCO NACIONAL DE CREDITO	0191	0	100155	\N	\N	\N	0	\N
 10024	Distrito Capital		0	122	\N	8072	\N	0	\N
 100126	Víspera de Navidad	24/12	6	100121	100121	\N	\N	0	\N
 5	Cursos		40	\N	4	9019	\N	0	\N
 100164	Menú de PDF		0	73	\N	\N	\N	0	\N
 203	IUJO (Barquisimeto)		30	200	200	8241	\N	0	\N
 204	IUSF	Instituto Universitario San Francisco	40	200	200	8249	\N	0	\N
+100072	Nómina y Prestaciones Sociales		0	5	100148	8364	{"id":"CEP-04","costo":20}	0	\N
 100066	Menú de Roles		0	73	\N	\N	\N	0	\N
 6	Masculino	sexo masculino	1	1	\N	9053	\N	1	\N
 12	Estudiante IUJO		6	3	11	9772	{"id_objeto":[]}	0	\N
@@ -1962,7 +1986,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 9323	faQuoteLeft		\N	27	\N	9323	\N	1	\N
 9324	faQuoteRight		\N	27	\N	9324	\N	1	\N
 9325	faR		\N	27	\N	9325	\N	1	\N
-100072	Nómina y Prestaciones Sociales		0	5	100148	8364	{"id":"CEP-01"}	0	\N
 7	Femenino	sexo femenino	\N	1	\N	9790	\N	1	\N
 8	Preguntas		140	\N	\N	9320	\N	1	\N
 100062	Cancelado		0	100059	100059	8075	\N	0	\N
@@ -1971,6 +1994,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 9327	faRadiation		\N	27	\N	9327	\N	1	\N
 200	Institutos	Institutos asociados a Fe y Alegría 	10	\N	\N	9404	\N	0	\N
 202	IUJO (Petare)		20	200	200	8240	\N	0	\N
+100071	Primeros pasos con Office		0	5	100149	8660	{"id":"CEP-01","costo":20}	0	\N
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	10	200	200	8245	\N	0	\N
 27	Íconos		80	\N	\N	8926	\N	1	\N
 100094	Tipo de Documento	Listado de Tipos de Documentos	120	\N	\N	8678	\N	0	\N
@@ -4083,6 +4107,7 @@ COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_gen
 98	Victor	Gainza	04123426726	$2b$10$3reMAACjfCrBSi5MUnNOJubAyKoVPogo.keYJ96y5s2MNiS5KPbLO	6	9	20234123	superadmin@empresa.com	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	[15]	\N
 99	Modesta	Gonzales	04142129875	$2b$10$Feaj0VK5MsFW9Bc2W67iVeQoXG8NTY7poc1d9AjNT6RRrtJEg0BZu	7	84	14123432	Modesta21@gmail.com	\N	$2b$10$M/XsUgsnPKLMhesgG3D9..g87p1Z9VFPy1Y0z6m7btKX9pdQ26BP.	[98]	\N
 97	Yeferson	Moronta	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	[96]	\N
+104	esmirna	Cattoni	04142109294	$2b$10$Ni2hKguJsVcIo4fGHKSwIOWZyHN1G8PKfw100dSB8CFn4hn2i6vae	7	9	686211	isaac1@gmail.com	\N	$2b$10$HlKmWyRBhX6tCRT72sFN1eeAsA3KrGlPK8tFvKEJkh2wuMBuSsGze	[96]	\N
 102	Supervisor	General	02123124321	$2b$10$hgUjZ0LbXB8DhPVbhRff4.oX.oNs/mCTShBHHLfxW85cgf48xGUxu	6	100140	98989898	testing98989898@gmail.com	\N	$2b$10$m50MTt.8JKr1.U9T.qrDAOFacipnbToGCCUd3xtdAHXqfYvDajmAu	[]	\N
 \.
 
@@ -4102,7 +4127,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100307, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100312, true);
 
 
 --
@@ -4129,7 +4154,7 @@ SELECT pg_catalog.setval('public.documentos_id_documento_seq', 40, true);
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 103, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 104, true);
 
 
 --
@@ -4354,7 +4379,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-26 00:05:19
+-- Completed on 2025-06-26 10:53:37
 
 --
 -- PostgreSQL database dump complete

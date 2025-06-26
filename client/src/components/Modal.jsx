@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import useClasificacionStore from '../store/clasificacionStore';
-import { getAllClasificaciones, getAllIcons } from '../api/clasificacion.api';
+import { getAllClasificaciones, getAllIcons, getAllSubclasificaciones } from '../api/clasificacion.api';
 import { getSubclassificationsById } from '../api/auth.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import useAuthStore from '../store/authStore';
@@ -15,7 +15,6 @@ import {
   faFolder, 
   faImage, 
   faLayerGroup,
-  faChevronDown,
   faMobile
 } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
@@ -37,8 +36,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [icons, setIcons] = useState([]);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const [selectPosition, setSelectPosition] = useState({ top: 0, left: 0, width: 0 });
   const [permisos, setPermisos] = useState([]);
   const [clasificacionesPrincipales, setClasificacionesPrincipales] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -46,6 +43,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [carreras, setCarreras] = useState([]);
   const [adicionalRaw, setAdicionalRaw] = useState(editData?.adicional ? JSON.stringify(editData.adicional, null, 2) : '');
   const [protectedValue, setProtectedValue] = useState(editData?.protected === 1);
+  // const [setAutoCodigo] = useState(() => () => {}); // Dummy setter para mantener la función generarCodigoCurso igual
+  const [formikSetFieldValue, setFormikSetFieldValue] = useState(null);
+  const [formikValues, setFormikValues] = useState(null);
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -57,7 +57,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     orden: editData?.orden || "",
     permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
     clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
-    isMobile: editData?.adicional?.mobile || false
+    isMobile: editData?.adicional?.mobile || false,
+    codigo: (editData?.adicional && typeof editData.adicional === 'object' && 'id' in editData.adicional) ? editData.adicional.id : '',
+    costo: (editData?.adicional && typeof editData.adicional === 'object' && 'costo' in editData.adicional) ? editData.adicional.costo : ''
   };
 
   // Determinar si es una clasificación principal o subclasificación
@@ -112,12 +114,18 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       };
       console.log('Objeto enviado:', dataToSend);
 
+      // Guardar código y costo en adicional si es curso
+      if (isCursos) {
+        dataToSend.adicional = {
+          id: values.codigo || '',
+          costo: values.costo !== '' ? Number(values.costo) : null
+        };
+      }
+
       // Format permissions as an object with id_objeto array and id_clasificacion array for roles
       if (Number(values.type_id) === CLASSIFICATION_IDS.ROLES) {
         const permisosArray = values.permisos ? values.permisos.split(',').map(p => parseInt(p.trim())) : [];
         const clasificacionesArray = values.clasificaciones ? values.clasificaciones.split(',').map(c => parseInt(c.trim())) : [];
-        
-       
         
         dataToSend.adicional = { 
           id_objeto: permisosArray,
@@ -179,15 +187,35 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   };
 
-  const handleSelectClick = (e, field) => {
-    if (!field.disabled) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setSelectPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
+  // Función para autogenerar el código del curso
+  const generarCodigoCurso = async (parentId, setFieldValue) => {
+    if (!parentId) return;
+    try {
+      // Obtener todos los cursos de ese programa
+      const response = await getAllSubclasificaciones(CLASSIFICATION_IDS.CURSOS, parentId);
+      const cursos = response.data;
+      // Buscar el mayor código existente
+      let maxNum = 0;
+      let prefijo = 'CEP';
+      // Detectar prefijo especial para Cisco
+      const programa = programas.find(p => p.id === Number(parentId));
+      if (programa && programa.nombre && programa.nombre.toLowerCase().includes('cisco')) {
+        prefijo = 'CEP-CISCO';
+      }
+      cursos.forEach(curso => {
+        if (curso.adicional && typeof curso.adicional === 'object' && curso.adicional.id) {
+          const match = curso.adicional.id.match(/(CEP(?:-CISCO)?)-(\d+)/i);
+          if (match && match[1] === prefijo) {
+            const num = parseInt(match[2], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
       });
-      setIsSelectOpen(!isSelectOpen);
+      const nuevoNum = (maxNum + 1).toString().padStart(2, '0');
+      const nuevoCodigo = `${prefijo}-${nuevoNum}`;
+      setFieldValue('codigo', nuevoCodigo);
+    } catch {
+      setFieldValue('codigo', '');
     }
   };
 
@@ -233,6 +261,30 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       label: 'Carrera',
       type: 'select',
       options: carreras.map(c => ({ value: c.id, label: c.nombre }))
+    });
+  }
+
+  // Agregar inputs de código y costo si es para agregar o editar curso
+  if (
+    Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS ||
+    Number(initialValues.type_id) === CLASSIFICATION_IDS.CURSOS ||
+    Number(editData?.type_id) === CLASSIFICATION_IDS.CURSOS
+  ) {
+    formFields.push({
+      name: 'codigo',
+      icon: faLayerGroup,
+      label: 'Código',
+      type: 'text',
+      placeholder: 'Ingrese el código del curso'
+    });
+    formFields.push({
+      name: 'costo',
+      icon: faLayerGroup,
+      label: 'Costo',
+      type: 'number',
+      placeholder: 'Ingrese el costo del curso',
+      step: '0.01',
+      min: '0'
     });
   }
 
@@ -358,6 +410,19 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   }, [editData, programas, parentInfo?.type_id]);
 
+  // useEffect para autoincrementar el código cuando cambie el programa
+  useEffect(() => {
+    if (
+      formikSetFieldValue &&
+      formikValues &&
+      (Number(formikValues.type_id) === CLASSIFICATION_IDS.CURSOS || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) &&
+      formikValues.parent_id && !editData
+    ) {
+      generarCodigoCurso(formikValues.parent_id, formikSetFieldValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formikValues?.parent_id, formikValues?.type_id]);
+
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
@@ -434,6 +499,15 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             enableReinitialize
           >
             {({ values, errors, touched, handleChange, isSubmitting, setFieldValue }) => {
+              // En vez de useEffect, actualizamos los estados en los onChange de los campos relevantes
+              const customHandleChange = (e) => {
+                handleChange(e);
+                const { name, value } = e.target;
+                if (name === 'type_id' || name === 'parent_id') {
+                  setFormikSetFieldValue(() => setFieldValue);
+                  setFormikValues({ ...values, [name]: value });
+                }
+              };
               console.log('Valores actuales del formulario:', values);
               return (
                 <Form className="p-6 space-y-5">
@@ -459,103 +533,30 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                           } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
                         />
                       ) : field.type === 'select' ? (
-                        field.name === 'id_icono' ? (
-                          <div className="relative">
-                            <div 
-                              className={`w-full px-4 py-3 rounded-lg border ${
-                                touched[field.name] && errors[field.name] 
-                                  ? 'border-red-300 focus:ring-red-500' 
-                                  : 'border-gray-200 focus:ring-blue-500'
-                              } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white cursor-pointer flex items-center justify-between`}
-                              onClick={(e) => handleSelectClick(e, field)}
-                            >
-                              <span className="flex items-center">
-                                {values[field.name] && icons && (
-                                  <FontAwesomeIcon 
-                                    icon={iconos[icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre] || iconos.faFile} 
-                                    className="text-blue-600 mr-2"
-                                  />
-                                )}
-                                <span>
-                                  {values[field.name] && icons
-                                    ? icons.find(i => i.id_clasificacion === parseInt(values[field.name]))?.nombre 
-                                    : 'Seleccionar ícono'}
-                                </span>
-                              </span>
-                              <FontAwesomeIcon 
-                                icon={faChevronDown} 
-                                className={`text-gray-400 transition-transform duration-200 ${isSelectOpen ? 'transform rotate-180' : ''}`}
-                              />
-                            </div>
-                            <Field
-                              as="select"
-                              name={field.name}
-                              className="hidden"
-                            >
-                              <option value="">Seleccionar ícono</option>
-                              {icons && icons.map((i) => (
-                                <option key={i.id_clasificacion} value={i.id_clasificacion}>
-                                  {i.nombre}
-                                </option>
-                              ))}
-                            </Field>
-                            {isSelectOpen && icons && ReactDOM.createPortal(
-                              <div 
-                                className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
-                                style={{
-                                  top: `${selectPosition.top}px`,
-                                  left: `${selectPosition.left}px`,
-                                  width: `${selectPosition.width}px`
-                                }}
-                              >
-                                <div className="max-h-60 overflow-y-auto">
-                                  {[...icons]
-                                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                                    .map((i) => (
-                                      <div
-                                        key={i.id_clasificacion}
-                                        className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          const event = { target: { name: field.name, value: i.id_clasificacion } };
-                                          handleChange(event);
-                                          setIsSelectOpen(false);
-                                        }}
-                                      >
-                                        <FontAwesomeIcon 
-                                          icon={iconos[i.nombre] || iconos.faFile} 
-                                          className="text-blue-600 mr-2"
-                                        />
-                                        <span>{i.nombre}</span>
-                                      </div>
-                                    ))}
-                                </div>
-                              </div>,
-                              document.body
-                            )}
-                          </div>
-                        ) : (
-                          <Field
-                            as="select"
-                            name={field.name}
-                            className={`w-full px-4 py-3 rounded-lg border ${
-                              touched[field.name] && errors[field.name] 
-                                ? 'border-red-300 focus:ring-red-500' 
-                                : 'border-gray-200 focus:ring-blue-500'
-                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                          >
-                            <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                            {field.options && field.options.map((opt) => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </Field>
-                        )
+                        <Field
+                          as="select"
+                          name={field.name}
+                          onChange={customHandleChange}
+                          className={`w-full px-4 py-3 rounded-lg border ${
+                            touched[field.name] && errors[field.name] 
+                              ? 'border-red-300 focus:ring-red-500' 
+                              : 'border-gray-200 focus:ring-blue-500'
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                        >
+                          <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                          {field.options && field.options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </Field>
                       ) : (
                         <Field
                           type={field.type}
                           name={field.name}
-                          placeholder={`${field.label}...`}
+                          placeholder={field.placeholder || `${field.label}...`}
                           disabled={field.disabled}
+                          step={field.step}
+                          min={field.min}
+                          onChange={customHandleChange}
                           className={`w-full px-4 py-3 rounded-lg border ${
                             touched[field.name] && errors[field.name] 
                               ? 'border-red-300 focus:ring-red-500' 

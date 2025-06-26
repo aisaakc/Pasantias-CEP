@@ -19,13 +19,13 @@ const SubclasificacionRow = React.memo(({ sub, onEdit, onDelete, onNavigate, sea
   // Función para resaltar el texto coincidente
   const highlightText = (text, searchText) => {
     if (!searchText || !text) return text;
-    
-    const regex = new RegExp(`(${searchText})`, 'gi');
+    // Escapar caracteres especiales para evitar errores en la expresión regular
+    const escapedSearch = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedSearch})`, 'gi');
     const parts = text.split(regex);
-    
-    return parts.map((part, i) => 
+    return parts.map((part, i) =>
       regex.test(part) ? (
-        <span key={i} className="bg-red-200 font-bold">{part}</span>
+        <span key={i} className="bg-red-400/40 border-b-2 border-red-500 font-bold rounded px-1">{part}</span>
       ) : part
     );
   };
@@ -293,9 +293,10 @@ export default function Tipos() {
       puedeAccederSubclasificacion(sub)
     );
 
-    // Luego filtramos por búsqueda
+    // Ahora filtramos por búsqueda en nombre o descripción
     const filtradas = filtradasPorPermisos.filter(sub => 
-      sub.nombre.toLowerCase().includes(busqueda.toLowerCase())
+      sub.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      (sub.descripcion || '').toLowerCase().includes(busqueda.toLowerCase())
     );
 
     // Ordenamos según el campo seleccionado

@@ -12,6 +12,7 @@ function Roles() {
   const [editData, setEditData] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetchRoles();
@@ -74,6 +75,27 @@ function Roles() {
         user.roles.some(role => role.id === selectedRole.id)
       )
     : Object.values(groupedUsers);
+
+  // Filtrar por nombre, apellido o email si hay búsqueda
+  const filteredAndSearchedUsers = filteredUsers.filter(user => {
+    const fullName = `${user.persona_nombre} ${user.apellido}`.toLowerCase();
+    const email = (user.gmail || '').toLowerCase();
+    const searchLower = search.toLowerCase();
+    return fullName.includes(searchLower) || email.includes(searchLower);
+  });
+
+  // Función para resaltar el texto buscado en nombre, apellido o email
+  const highlightText = (text, search) => {
+    if (!search || !text) return text;
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedSearch})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? (
+        <span key={i} className="bg-red-400/40 border-b-2 border-red-500 font-bold rounded px-1">{part}</span>
+      ) : part
+    );
+  };
 
   // Handler para abrir el modal de eliminar
   const handleDeleteClick = (usuario) => {
@@ -193,6 +215,20 @@ function Roles() {
           ))}
         </div>
 
+        {/* Campo de búsqueda de usuarios (ahora justo encima de la tabla) */}
+        <div className="mb-4 flex justify-end">
+          <div className="relative w-full max-w-xs">
+            <input
+              type="text"
+              placeholder="Buscar usuario por nombre, apellido o email..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <FontAwesomeIcon icon={iconos.faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+        </div>
+
         {/* Tabla de Usuarios */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in">
           <div className="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -223,12 +259,12 @@ function Roles() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredUsers.map((usuario) => (
+                {filteredAndSearchedUsers.map((usuario) => (
                   <tr key={usuario.id_persona} className="transform hover:scale-[1.01] hover:bg-blue-50 transition-all duration-300">
                     <td className="py-4 px-6 font-medium text-gray-800 truncate">
-                      {`${usuario.persona_nombre} ${usuario.apellido}`}
+                      {highlightText(`${usuario.persona_nombre} ${usuario.apellido}`, search)}
                     </td>
-                    <td className="py-4 px-6 text-gray-600 truncate">{usuario.gmail}</td>
+                    <td className="py-4 px-6 text-gray-600 truncate">{highlightText(usuario.gmail, search)}</td>
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         usuario.genero_nombre === 'Masculino' 

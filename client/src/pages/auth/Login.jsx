@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Section from '../../components/Section';
 import useAuthStore from '../../store/authStore';
 import { toast } from 'sonner';
@@ -8,12 +8,11 @@ import { loginSchema } from '../../schemas/login.shema';
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const { loginUser, loading, error, successMessage, clearMessages } = useAuthStore();
   
-  // Obtener la URL de redirección desde el estado de navegación o usar /dashboard por defecto
-  const redirectTo = location.state?.from || '/dashboard';
+  // Siempre redirigir a Clasificación después del login
+  const redirectTo = '/dashboard/clasificacion';
 
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,7 +20,6 @@ export default function Login() {
     password: '',
     respuesta: '',
   });
-  const [validationError, setValidationError] = useState('');
 
   const togglePassword = () => setShowPassword(!showPassword);
 
@@ -32,12 +30,10 @@ export default function Login() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    setValidationError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setValidationError('');
 
     try {
       // Validar el formulario
@@ -53,7 +49,6 @@ export default function Login() {
       await loginUser(credentialsToSend);
     } catch (error) {
       if (error.errors) {
-        setValidationError(error.errors[0].message);
         toast.error(error.errors[0].message);
       }
       return;

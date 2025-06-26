@@ -19,6 +19,8 @@ import Documentos from "./pages/dashboard/documentos";
 import Perfil from "./pages/dashboard/profile/perfil";
 import ListCursos from "./pages/dashboard/ListCursos";
 import PermissionTest from "./pages/dashboard/PermissionTest";
+import Estadisticas from "./pages/dashboard/Estadisticas";
+import Cohorte from "./pages/dashboard/Cohorte";
 import { Toaster } from 'sonner';
 import React from 'react';
 
@@ -132,6 +134,16 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="permission-test" element={<PermissionTest />} />
+          <Route path="estadisticas" element={
+            <ProtectedRoute>
+              <Estadisticas />
+            </ProtectedRoute>
+          } />
+          <Route path="cohorte" element={
+            <ProtectedRoute>
+              <Cohorte />
+            </ProtectedRoute>
+          } />
         </Route>
       </Routes>
     </main>

@@ -171,7 +171,7 @@ export default function Clasificacion() {
                       {clasificacion.nombre}
                     </h2>
                     <p className="text-gray-600 text-center mb-6 line-clamp-2">
-                      {(clasificacion.descripcion) ? clasificacion.descripcion : <span className="text-gray-300">&lt; sin descripción &gt;</span> // Si no tiene valor, muestra el texto fijo con color gris tenue (usando text-gray-500)
+                    {(clasificacion.descripcion) ? clasificacion.descripcion : <span className="text-gray-300">&lt; sin descripción &gt;</span> 
     }
                     </p>
                     <div className="flex justify-center space-x-3">

@@ -106,26 +106,24 @@ class Clasificacion {
     }
   
     async updateClasificacion(id, clasificacionActualizada) {
-        const { nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional, protected: protectedValue } = clasificacionActualizada;
+        const { nombre, descripcion, orden, type_id, parent_id, id_icono, adicional, protected: protectedValue } = clasificacionActualizada;
         try {
             const query = `
                 UPDATE clasificacion 
                 SET nombre = $1, 
                     descripcion = $2, 
-                    imagen = $3, 
-                    orden = $4, 
-                    type_id = $5, 
-                    parent_id = $6, 
-                    id_icono = $7,
-                    adicional = $8,
-                    protected = $9
-                WHERE id_clasificacion = $10
-                RETURNING id_clasificacion AS id, nombre, descripcion, imagen, orden, type_id, parent_id, id_icono, adicional, protected;
+                    orden = $3, 
+                    type_id = $4, 
+                    parent_id = $5, 
+                    id_icono = $6,
+                    adicional = $7,
+                    protected = $8
+                WHERE id_clasificacion = $9
+                RETURNING id_clasificacion AS id, nombre, descripcion, orden, type_id, parent_id, id_icono, adicional, protected;
             `;
             const values = [
                 nombre, 
                 descripcion, 
-                imagen, 
                 orden, 
                 type_id || null, 
                 parent_id || null, 

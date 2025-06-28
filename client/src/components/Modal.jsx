@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import useClasificacionStore from '../store/clasificacionStore';
-import { getAllClasificaciones, getAllIcons, getAllSubclasificaciones } from '../api/clasificacion.api';
+import { getAllClasificaciones, getAllSubclasificaciones } from '../api/clasificacion.api';
 import { getSubclassificationsById } from '../api/auth.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import useAuthStore from '../store/authStore';
+import useIcons from '../hooks/useIcons';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -19,6 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
+import IconSelector from './IconSelector';
 
 const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo = null }) => {
   const { 
@@ -32,8 +34,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   } = useClasificacionStore();
 
   const { tienePermiso, isSupervisor } = useAuthStore();
+  const { icons } = useIcons();
 
-  const [icons, setIcons] = useState([]);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
   const [permisos, setPermisos] = useState([]);
@@ -223,7 +225,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const formFields = [
     { name: 'nombre', icon: faFolder, label: 'Nombre', type: 'text' },
     { name: 'descripcion', icon: faLayerGroup, label: 'Descripción', type: 'textarea' },
-    { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select' },
+    { name: 'id_icono', icon: faImage, label: 'Ícono', type: 'select', options: icons.map(i => ({ value: i.id_clasificacion, label: i.nombre })) },
   ];
 
   // Agregar campo type_id si no es una edición o si no tiene type_id
@@ -301,7 +303,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
 
   // Función para limpiar el estado del modal
   const clearModalState = useCallback(() => {
-    setIcons([]);
     setPermisos([]);
     setClasificacionesPrincipales([]);
   }, []);
@@ -322,10 +323,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         // Cargar datos de forma asíncrona
         const loadData = async () => {
           try {
-            // Cargar íconos directamente desde la API
-            const iconsResponse = await getAllIcons();
-            setIcons(iconsResponse.data);
-            
             // Cargar clasificaciones principales siempre (necesarias para el campo type_id)
             const principalesResponse = await getAllClasificaciones();
             const principales = principalesResponse.data.filter(c => c.type_id === null);
@@ -533,21 +530,29 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                           } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
                         />
                       ) : field.type === 'select' ? (
-                        <Field
-                          as="select"
-                          name={field.name}
-                          onChange={customHandleChange}
-                          className={`w-full px-4 py-3 rounded-lg border ${
-                            touched[field.name] && errors[field.name] 
-                              ? 'border-red-300 focus:ring-red-500' 
-                              : 'border-gray-200 focus:ring-blue-500'
-                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                        >
-                          <option value="">Seleccionar {field.label.toLowerCase()}</option>
-                          {field.options && field.options.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </Field>
+                        field.name === 'id_icono' ? (
+                          <IconSelector
+                            value={values.id_icono}
+                            onChange={(e) => setFieldValue(e.target.name, e.target.value)}
+                            name="id_icono"
+                          />
+                        ) : (
+                          <Field
+                            as="select"
+                            name={field.name}
+                            onChange={customHandleChange}
+                            className={`w-full px-4 py-3 rounded-lg border ${
+                              touched[field.name] && errors[field.name] 
+                                ? 'border-red-300 focus:ring-red-500' 
+                                : 'border-gray-200 focus:ring-blue-500'
+                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                          >
+                            <option value="">Seleccionar {field.label.toLowerCase()}</option>
+                            {field.options && field.options.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </Field>
+                        )
                       ) : (
                         <Field
                           type={field.type}

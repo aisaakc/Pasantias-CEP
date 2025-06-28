@@ -230,6 +230,7 @@ export default function Clasificacion() {
         onConfirm={handleDelete}
         itemName={deleteData?.nombre}
         itemType="clasificación"
+        itemIcon={deleteData?.nicono ? iconos[deleteData.nicono] : iconos.faFile}
       />
 
       <style>{`

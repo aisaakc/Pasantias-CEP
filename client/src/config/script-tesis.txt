@@ -28,3 +28,9 @@ TO DOs
 - COLOCAR ACCESO SUPER SUPER ADMIN, para ver protecteds y adicionales (JSON), cambiar FONDO distintivo
 - MEJORAR Mensajeria de eMAIL (formato), chequear envios
 - REVISAR LA CASCADA DE LOS TITULOS, parece haber ERROR en los DOS ULTIMOS (intercambiados)
+- OPTIMIZAR CARGA DE ICONOS / POSTERIOR: actualizar esa CARGA cuando Insert/Delete/Update
+- REVISAR BOTON X (cierre) de ventana que NO DISPARE las validaciones
+- select de roles a iniciar session
+- Chequear MENSAJERIA (todas en Ud)
+
+- EN LO POSIBLE, REVISAR RENDIMIENTO/OPTIMIZACION de VISTAS (optimizar tiempo)

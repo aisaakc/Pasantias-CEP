@@ -1,5 +1,5 @@
 import pool from "../db.js";
-import { CLASSIFICATION_IDS } from "../../client/src/config/classificationIds.js";
+import { CLASSIFICATION_IDS } from "../config/classificationIds.js";
 class Clasificacion {
     
     async getParentClassifications() {
@@ -98,11 +98,11 @@ class Clasificacion {
            INNER JOIN public.clasificacion AS c_tipos ON c_iconos.type_id = c_tipos.id_clasificacion
            WHERE c_tipos.id_clasificacion = $1;
             `;
-            const result = await pool.query(query, [CLASSIFICATION_IDS.ICONOS.toString()]);
+            const result = await pool.query(query, [CLASSIFICATION_IDS.ICONOS]);
             return result.rows;
           } catch (error) {
-            console.error("Error en getAllClasificaciones (pg):", error.message);
-            throw new Error("Error interno del servidor al obtener todas las clasificaciones.");
+            console.error("Error en getAllIcons (pg):", error.message);
+            throw new Error("Error interno del servidor al obtener todos los iconos.");
           }
     }
   

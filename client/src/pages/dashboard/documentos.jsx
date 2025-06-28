@@ -493,7 +493,7 @@ function Documentos() {
           onConfirm={handleConfirmDelete}
           itemName={selectedDocument?.nombre || ''}
           itemType="documento"
-          itemIcon={null}
+          itemIcon={selectedDocument?.ext ? getFileIcon(selectedDocument.ext) : null}
         />
       </div>
 

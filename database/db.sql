@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-26 10:53:37
+-- Started on 2025-06-28 00:53:25
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1853,7 +1853,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100129	Fin de Año	31/12	8	100121	100121	\N	\N	0	\N
 100167	Agregar Configuraciones		0	73	\N	\N	\N	0	\N
 100290	Menú de Lista de Cursos		0	73	\N	\N	\N	0	\N
-100311	asdsadsa		0	\N	\N	\N	\N	0	\N
 100028	Divisas en efectivo ( directamente en caja principal)		\N	100026	100026	\N	\N	0	\N
 100130	Halloween	31/10	10	100121	100121	\N	\N	0	\N
 100147	Cisco Academy		0	4	100152	\N	\N	0	\N
@@ -1867,6 +1866,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100132	Elecciones 2025	25/05/25	9	100121	100121	\N	\N	0	\N
 100191	0412	Digitel	0	100190	\N	9104	{"mobile":true}	0	\N
 100150	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		0	5	100147	8438	{"id":"CEP-CISCO-02","costo":100}	0	\N
+100314	Admin		0	3	\N	9769	{"id_objeto":[100290,100141,100142],"id_clasificacion":[110,200,122,5,1,4,100310]}	0	\N
 100133	Cisco Academy (Petare)		0	4	100134	\N	\N	0	\N
 100171	Menú de Tipos de Documentos		0	73	\N	\N	\N	0	\N
 100192	Día de Todos los Santos	01/11\n	0	100121	\N	\N	\N	0	\N
@@ -1875,8 +1875,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100193	Día de los Reyes Magos	06/01\n	0	100121	\N	\N	\N	0	\N
 100152	Informática		0	110	201	8414	\N	0	\N
 100194	Día de la Divina Pastora	14/01\n	0	100121	\N	\N	\N	0	\N
-15	Super Administrador		1	3	\N	9769	{"id_objeto":[100166,100156,100157,100158,100159,100161,100162,100067,100068,100160,100142,100164,100171,100066,100290,100141],"id_clasificacion":[100172,100173,100174,100178,100179,100181,100234,100300,100301,200,110,4,122,100050,5,123,124,27,1,73,100190,3,100094,100121,100187,100026,100155,8,100059]}	0	\N
 100195	Declaración de la Independencia	19/04	0	100121	\N	\N	\N	0	\N
+15	Super Administrador		1	3	\N	9769	{"id_objeto":[100166,100156,100157,100158,100159,100161,100162,100067,100068,100160,100142,100164,100171,100066,100290,100141],"id_clasificacion":[100172,100173,100174,100178,100179,100181,100234,100300,100301,200,110,4,122,100050,5,123,124,27,1,73,100190,3,100094,100121,100187,100026,100155,8,100059,100311,100315]}	0	\N
 100154	Campo ORDEN (Clasificacion)		0	73	\N	\N	\N	0	\N
 100196	Día de la Bandera	03/08\n	0	100121	\N	\N	\N	0	\N
 100155	Bancos		129	\N	\N	8244	\N	1	\N
@@ -1950,11 +1950,11 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 322	 BANFANB	0177	0	100155	\N	\N	\N	0	\N
 323	N58 BANCO DIGITAL BANCO MICROFINANCIERO S A	0178	0	100155	\N	\N	\N	0	\N
 324	 BANCO NACIONAL DE CREDITO	0191	0	100155	\N	\N	\N	0	\N
+203	IUJO (Barquisimeto)	Instituto Universitario Jesús Obrero (Barquisimeto)	30	200	\N	8241	\N	0	\N
 10024	Distrito Capital		0	122	\N	8072	\N	0	\N
 100126	Víspera de Navidad	24/12	6	100121	100121	\N	\N	0	\N
 5	Cursos		40	\N	4	9019	\N	0	\N
 100164	Menú de PDF		0	73	\N	\N	\N	0	\N
-203	IUJO (Barquisimeto)		30	200	200	8241	\N	0	\N
 204	IUSF	Instituto Universitario San Francisco	40	200	200	8249	\N	0	\N
 100072	Nómina y Prestaciones Sociales		0	5	100148	8364	{"id":"CEP-04","costo":20}	0	\N
 100066	Menú de Roles		0	73	\N	\N	\N	0	\N
@@ -1979,6 +1979,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100098	Fotografía Grupal		0	100094	\N	\N	\N	0	\N
 100099	Certificado Docente		0	100094	\N	\N	\N	0	\N
 100100	Flyer de Presentación		0	100094	\N	\N	\N	0	\N
+202	IUJO (Petare)	El Instituto Universitario Jesús Obrero Ampliación Petare	20	200	\N	8240	\N	0	\N
 100101	Láminas de Ejercicios		0	100094	\N	\N	\N	0	\N
 100102	Imagen de Carrusel		0	100094	\N	\N	\N	0	\N
 9321	faQuinscape		\N	27	\N	9321	\N	1	\N
@@ -1993,7 +1994,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 9326	faRProject		\N	27	\N	9326	\N	1	\N
 9327	faRadiation		\N	27	\N	9327	\N	1	\N
 200	Institutos	Institutos asociados a Fe y Alegría 	10	\N	\N	9404	\N	0	\N
-202	IUJO (Petare)		20	200	200	8240	\N	0	\N
 100071	Primeros pasos con Office		0	5	100149	8660	{"id":"CEP-01","costo":20}	0	\N
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	10	200	200	8245	\N	0	\N
 27	Íconos		80	\N	\N	8926	\N	1	\N
@@ -4107,7 +4107,8 @@ COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_gen
 98	Victor	Gainza	04123426726	$2b$10$3reMAACjfCrBSi5MUnNOJubAyKoVPogo.keYJ96y5s2MNiS5KPbLO	6	9	20234123	superadmin@empresa.com	\N	$2b$10$zhsw9kAZbVtOfk40DbyIneyr6xahazAuKjuD86iIeQBAI8UVY4ylK	[15]	\N
 99	Modesta	Gonzales	04142129875	$2b$10$Feaj0VK5MsFW9Bc2W67iVeQoXG8NTY7poc1d9AjNT6RRrtJEg0BZu	7	84	14123432	Modesta21@gmail.com	\N	$2b$10$M/XsUgsnPKLMhesgG3D9..g87p1Z9VFPy1Y0z6m7btKX9pdQ26BP.	[98]	\N
 97	Yeferson	Moronta	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	[96]	\N
-104	esmirna	Cattoni	04142109294	$2b$10$Ni2hKguJsVcIo4fGHKSwIOWZyHN1G8PKfw100dSB8CFn4hn2i6vae	7	9	686211	isaac1@gmail.com	\N	$2b$10$HlKmWyRBhX6tCRT72sFN1eeAsA3KrGlPK8tFvKEJkh2wuMBuSsGze	[96]	\N
+105	SUPER 	ADMINSTRADOR	04143173929	$2b$10$ktNZcmRKiAW1txh1owyo8OKLDK5khuP7IYKxYVb3CfXNVuNV23qYq	6	84	12345678	isaacattonibarca10111@gmail.com	\N	$2b$10$.WOgUWeUnlUu2azBWY8.1ePXV0X6h4v.0c5OH7VO1VhK5kOcxoduC	[100314]	\N
+106	xd	xd	02121111111	$2b$10$ymnc2BYKtFKXs/QfzCGjfuZUIwxm7yTA/QJ6eCujtBL/Yh/alxaYq	6	9	1	isaacattonibarca1011@gmail.com	\N	$2b$10$87e785NvQogX6eNzxRTq7eF359w.tFNSZXSRDYrjkvqNt8OgtKFXu	[100314]	\N
 102	Supervisor	General	02123124321	$2b$10$hgUjZ0LbXB8DhPVbhRff4.oX.oNs/mCTShBHHLfxW85cgf48xGUxu	6	100140	98989898	testing98989898@gmail.com	\N	$2b$10$m50MTt.8JKr1.U9T.qrDAOFacipnbToGCCUd3xtdAHXqfYvDajmAu	[]	\N
 \.
 
@@ -4127,7 +4128,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100312, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100315, true);
 
 
 --
@@ -4154,7 +4155,7 @@ SELECT pg_catalog.setval('public.documentos_id_documento_seq', 40, true);
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 104, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 106, true);
 
 
 --
@@ -4379,7 +4380,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-26 10:53:37
+-- Completed on 2025-06-28 00:53:29
 
 --
 -- PostgreSQL database dump complete

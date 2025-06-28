@@ -7,6 +7,7 @@ import {
    getSubclassificationsById
    } from '../api/auth.api';
 import { getRoles } from '../api/persona.api';
+import useClasificacionStore from './clasificacionStore';
 
 export const useAuthStore = create((set, get) => ({ 
   generos: [],
@@ -81,9 +82,15 @@ export const useAuthStore = create((set, get) => ({
       // Guardar los roles del usuario en localStorage
       const rolesUsuario = response.data.user.id_rol;
       localStorage.setItem('userRoles', JSON.stringify(rolesUsuario));
+      
       // Cargar automáticamente los permisos del usuario después del login
       const rolesUsuarioFormateados = rolesUsuario.map(rol => rol.toString());
       await get().cargarPermisosUsuario(rolesUsuarioFormateados);
+      
+      // Precargar iconos para optimizar el rendimiento
+      const clasificacionStore = useClasificacionStore.getState();
+      await clasificacionStore.preloadIcons();
+      
       set({
         loading: false,
         successMessage: `¡Bienvenido ${response.data.user.nombre} ${response.data.user.apellido}!`,
@@ -105,6 +112,11 @@ export const useAuthStore = create((set, get) => ({
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('isSupervisor');
+    
+    // Limpiar caché de iconos al cerrar sesión
+    const clasificacionStore = useClasificacionStore.getState();
+    clasificacionStore.clearIconsCache();
+    
     set({
       successMessage: null,
       error: null,

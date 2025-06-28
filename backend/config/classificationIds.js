@@ -7,6 +7,7 @@ export const CLASSIFICATION_IDS = {
   MODALIDAD: 100050,
   STATUS: 100059,
   PREFIJOS_TLF: 100190,
+  ICONOS: 27,
 };
 
 export default {

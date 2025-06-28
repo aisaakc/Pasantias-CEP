@@ -12,6 +12,7 @@ import HorarioCurso from "./pages/dashboard/HorarioCurso";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useAuthStore from "./store/authStore";
+import useClasificacionStore from "./store/clasificacionStore";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Prueba from "./pages/dashboard/prueba";
@@ -27,6 +28,7 @@ import React from 'react';
 // Componente para proteger rutas básicas (solo autenticación)
 const BasicProtectedRoute = ({ children }) => {
   const { isAuthenticated, inicializarPermisos, loading } = useAuthStore();
+  const { preloadIcons } = useClasificacionStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isInitializing, setIsInitializing] = React.useState(true);
@@ -37,6 +39,8 @@ const BasicProtectedRoute = ({ children }) => {
       if (localStorage.getItem('token')) {
         try {
           await inicializarPermisos();
+          // Precargar iconos después de inicializar permisos
+          await preloadIcons();
         } catch (error) {
           console.error('Error al inicializar permisos:', error);
           // Si hay error, limpiar localStorage y redirigir
@@ -50,7 +54,7 @@ const BasicProtectedRoute = ({ children }) => {
     };
 
     initializeAuth();
-  }, [inicializarPermisos]);
+  }, [inicializarPermisos, preloadIcons]);
 
   React.useEffect(() => {
     // Solo redirigir después de que se complete la inicialización

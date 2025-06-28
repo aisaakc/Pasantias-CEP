@@ -1,14 +1,12 @@
 import { create } from 'zustand';  
 import {
-
     getParentClassifications,
     create as createClasificacionAPI,
     update as updateClasificacionAPI,
     getAllClasificaciones,
     deleteClasificacion,
     getAllSubclasificaciones,
-
-
+    getAllIcons as getAllIconsAPI
     } from '../api/clasificacion.api';
 import { getAllCursosById } from '../api/curso.api';
 
@@ -24,6 +22,11 @@ export const useClasificacionStore = create((set, get) => ({
   loading: false,              
   error: null,                 
   currentClasificacion: null,  // Nuevo estado para almacenar la clasificación actual
+
+  // Nuevo estado global para iconos
+  icons: [],
+  iconsLoaded: false,
+  iconsLoading: false,
 
   // Utilidades
   clearError: () => set({ error: null }),
@@ -60,27 +63,19 @@ export const useClasificacionStore = create((set, get) => ({
 
   // Operaciones de lectura
   fetchParentClasifications: async () => {
-   
     set({ loading: true, error: null });
     try {
-      
       const response = await getParentClassifications();
- 
       
-      // Filtrar solo las clasificaciones principales (type_id === null)
-      const parentClasifications = response.data.filter(c => c.type_id === null);
-     
-      
-      set({
-        parentClasifications: parentClasifications,
-        loading: false,
+      set({ 
+        parentClasifications: response.data,
+        loading: false 
       });
-     
     } catch (error) {
       console.error("Error en fetchParentClasifications:", error);
-      set({
-        loading: false,
-        error: 'Error al obtener las clasificaciones principales.',
+      set({ 
+        loading: false, 
+        error: 'Error al obtener las clasificaciones principales.' 
       });
     }
   },
@@ -248,6 +243,58 @@ export const useClasificacionStore = create((set, get) => ({
       handleError(set, error, 'Error al eliminar la clasificación.');
       throw error;
     }
+  },
+
+  // Nuevos métodos para iconos
+  setIconsLoading: (loading) => set({ iconsLoading: loading }),
+  
+  // Precargar iconos una sola vez
+  preloadIcons: async () => {
+    const { iconsLoaded, iconsLoading } = get();
+    
+    // Si ya están cargados o se están cargando, no hacer nada
+    if (iconsLoaded || iconsLoading) {
+      return;
+    }
+
+    set({ iconsLoading: true });
+    
+    try {
+      const response = await getAllIconsAPI();
+      set({ 
+        icons: response.data, 
+        iconsLoaded: true, 
+        iconsLoading: false 
+      });
+      console.log('Iconos precargados exitosamente:', response.data.length, 'iconos');
+    } catch (error) {
+      console.error('Error al precargar iconos:', error);
+      set({ 
+        icons: [], 
+        iconsLoaded: false, 
+        iconsLoading: false 
+      });
+    }
+  },
+
+  // Obtener iconos (usa caché si está disponible)
+  getIcons: () => {
+    const { icons, iconsLoaded } = get();
+    return iconsLoaded ? icons : [];
+  },
+
+  // Verificar si los iconos están cargados
+  areIconsLoaded: () => {
+    return get().iconsLoaded;
+  },
+
+  // Limpiar caché de iconos (útil para logout)
+  clearIconsCache: () => {
+    set({ 
+      icons: [], 
+      iconsLoaded: false, 
+      iconsLoading: false 
+    });
   },
 }));
 

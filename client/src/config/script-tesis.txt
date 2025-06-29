@@ -34,4 +34,5 @@ TO DOs
 - Chequear MENSAJERIA (todas en Ud)
 - qr y link (certificado), con token de autenticacion/verificacion
 
+
 - EN LO POSIBLE, REVISAR RENDIMIENTO/OPTIMIZACION de VISTAS (optimizar tiempo)

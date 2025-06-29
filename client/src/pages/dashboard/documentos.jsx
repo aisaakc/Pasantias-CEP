@@ -5,6 +5,7 @@ import useDocumentoStore from '../../store/documentoStrore'
 import { hashDeterministaPorId } from '../../utils/hashUtils'
 import DeleteModal from '../../components/DeleteModal'
 import { toast } from 'sonner'
+import * as iconos from '@fortawesome/free-solid-svg-icons'
 
 const BACKEND_URL = 'http://localhost:3001'
 
@@ -493,7 +494,7 @@ function Documentos() {
           onConfirm={handleConfirmDelete}
           itemName={selectedDocument?.nombre || ''}
           itemType="documento"
-          itemIcon={selectedDocument?.ext ? getFileIcon(selectedDocument.ext) : null}
+          itemIcon={iconos.faFileAlt}
         />
       </div>
 

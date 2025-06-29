@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 
-export default function DeleteModal({ isOpen, onClose, onConfirm, itemName, itemType = "clasificación", itemIcon }) {
+export default function DeleteModal({ isOpen, onClose, onConfirm, itemName,  itemIcon }) {
   if (!isOpen) return null;
 
   return (

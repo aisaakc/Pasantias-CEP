@@ -3,9 +3,19 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { hashFileName, isValidFileType } from '../utils/hashUtils.js';
+import express from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Middleware para configurar límites de tamaño para subida de archivos
+export const configureUploadLimits = (req, res, next) => {
+    // Configurar límites específicos para esta ruta
+    express.json({ limit: '100mb' })(req, res, (err) => {
+        if (err) return next(err);
+        express.urlencoded({ limit: '100mb', extended: true })(req, res, next);
+    });
+};
 
 // Configurar el almacenamiento
 const storage = multer.diskStorage({

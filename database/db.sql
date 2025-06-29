@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-28 00:53:25
+-- Started on 2025-06-28 23:06:15
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -4065,9 +4065,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 --
 
 COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, fecha_hora_inicio, fecha_hora_fin, color, partipantes, codigo_cohorte, horarios, propiedades_curso, documentos) FROM stdin;
-1	100107	\N	100060	40	xd	\N	50	12	97	\N	100052	2025-06-23 08:00:00	2025-06-30 12:00:00	#64cd1d	\N	1-2025	\N	\N	\N
-2	100107	\N	100060	\N	xd	\N	0	12	97	\N	100052	2025-06-23 13:00:00	2025-06-26 17:00:00	#4F46E5	\N	2-2025	\N	\N	\N
-3	100150	\N	100060	118	modulo 	<p><strong>CONTENIDO:</strong></p>\n<p>&nbsp;</p>\n<ul class="has-small-font-size wp-block-list">\n<li>Configuraci&oacute;n b&aacute;sica de dispositivos</li>\n<li>Conceptos de Switching</li>\n<li>VLANs, Enrutamiento entre VLAN</li>\n<li>Protocolo Spanning-Tree</li>\n<li>Etherchannel</li>\n<li>DHCPv4, Conceptos SLAAC y DHCPv6</li>\n<li>Conceptos de FHRP</li>\n<li>Conceptos de seguridad de LAN</li>\n<li>Conceptos de seguridad de Switch</li>\n<li>Conceptos de WLAN, Configuraci&oacute;n de WLAN</li>\n<li>Conceptos de enrutamiento</li>\n<li>Rutas IP est&aacute;ticas</li>\n</ul>	10	12	97	\N	100052	2025-06-03 08:00:00	2025-06-17 11:07:00	#4F46E5	\N	3-2025	\N	\N	\N
 \.
 
 
@@ -4108,7 +4105,7 @@ COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_gen
 99	Modesta	Gonzales	04142129875	$2b$10$Feaj0VK5MsFW9Bc2W67iVeQoXG8NTY7poc1d9AjNT6RRrtJEg0BZu	7	84	14123432	Modesta21@gmail.com	\N	$2b$10$M/XsUgsnPKLMhesgG3D9..g87p1Z9VFPy1Y0z6m7btKX9pdQ26BP.	[98]	\N
 97	Yeferson	Moronta	04143173920	$2b$10$3EKu78bP0gn81KuKsUcw2eYlDRqVlwtDqNzziiOrrV.Bu4KbNhUeC	6	9	20212313	yeferson@gmail.com	\N	$2b$10$X4U3F18CncEi6vQSP7CYZ.CbQRtl5LsSMlNReFbPxyaXoCdL3nrXC	[96]	\N
 105	SUPER 	ADMINSTRADOR	04143173929	$2b$10$ktNZcmRKiAW1txh1owyo8OKLDK5khuP7IYKxYVb3CfXNVuNV23qYq	6	84	12345678	isaacattonibarca10111@gmail.com	\N	$2b$10$.WOgUWeUnlUu2azBWY8.1ePXV0X6h4v.0c5OH7VO1VhK5kOcxoduC	[100314]	\N
-106	xd	xd	02121111111	$2b$10$ymnc2BYKtFKXs/QfzCGjfuZUIwxm7yTA/QJ6eCujtBL/Yh/alxaYq	6	9	1	isaacattonibarca1011@gmail.com	\N	$2b$10$87e785NvQogX6eNzxRTq7eF359w.tFNSZXSRDYrjkvqNt8OgtKFXu	[100314]	\N
+107	Alexis	Ramírez 	04161344554	$2b$10$yFqsSXzAk8bZ8HpZl7G2kOtHKwDeHjwCOs8.FlAsln00wDQDsORai	6	84	6722311	alexisramirez@gmail.com	\N	$2b$10$t9XJx2DDyfsXSBpCnrNLYeuzh/UXXEGKp74nvSywCc/G//nZwvNt2	[96]	\N
 102	Supervisor	General	02123124321	$2b$10$hgUjZ0LbXB8DhPVbhRff4.oX.oNs/mCTShBHHLfxW85cgf48xGUxu	6	100140	98989898	testing98989898@gmail.com	\N	$2b$10$m50MTt.8JKr1.U9T.qrDAOFacipnbToGCCUd3xtdAHXqfYvDajmAu	[]	\N
 \.
 
@@ -4137,7 +4134,7 @@ SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100315, tr
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 3, true);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 1, false);
 
 
 --
@@ -4155,7 +4152,7 @@ SELECT pg_catalog.setval('public.documentos_id_documento_seq', 40, true);
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 106, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 107, true);
 
 
 --
@@ -4380,7 +4377,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-28 00:53:29
+-- Completed on 2025-06-28 23:06:15
 
 --
 -- PostgreSQL database dump complete

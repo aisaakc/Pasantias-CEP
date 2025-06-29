@@ -32,5 +32,6 @@ TO DOs
 - REVISAR BOTON X (cierre) de ventana que NO DISPARE las validaciones
 - select de roles a iniciar session
 - Chequear MENSAJERIA (todas en Ud)
+- qr y link (certificado), con token de autenticacion/verificacion
 
 - EN LO POSIBLE, REVISAR RENDIMIENTO/OPTIMIZACION de VISTAS (optimizar tiempo)

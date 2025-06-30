@@ -8,6 +8,7 @@ import {
   getFacilitadores
 } from '../api/curso.api';
 
+
 export const useCursoStore = create((set, get) => ({
   // Estado inicial
   cursos: [],
@@ -17,6 +18,9 @@ export const useCursoStore = create((set, get) => ({
   cursoActual: null,
   loading: false,
   error: null,
+  participantes: [],
+  formasPago: [],
+  bancos: [],
 
   // Cargar opciones del formulario
   fetchOpcionesCurso: async () => {
@@ -176,5 +180,40 @@ export const useCursoStore = create((set, get) => ({
       throw error;
     }
   },
+
+  // Obtener formas de pago y bancos
+  fetchFormasPagoYBancos: async () => {
+    set({ loading: true, error: null });
+    try {
+      const [formasPagoRes, bancosRes, cursosRes] = await Promise.all([
+        getAllCursosById(CLASSIFICATION_IDS.FORMA_PAGO),
+        getAllCursosById(CLASSIFICATION_IDS.BANCOS),
+        getAllCursos(),
+      ]);
+      const formasPago = Array.isArray(formasPagoRes?.data?.data) ? formasPagoRes.data.data : [];
+      const bancos = Array.isArray(bancosRes?.data?.data) ? bancosRes.data.data : [];
+      const cursos = Array.isArray(cursosRes?.data?.data) ? cursosRes.data.data : [];
+      set({
+        formasPago,
+        bancos,
+        cursos,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error al cargar formas de pago, bancos y cursos:', error);
+      set({
+        formasPago: [],
+        bancos: [],
+        cursos: [],
+        loading: false,
+        error: 'Error al cargar formas de pago, bancos y cursos.'
+      });
+    }
+  },
+
+  // Agregar participante al array global
+  addParticipante: (participante) => set((state) => ({
+    participantes: [...state.participantes, participante]
+  })),
 
 }));

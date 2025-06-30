@@ -24,6 +24,7 @@ import Estadisticas from "./pages/dashboard/Estadisticas";
 import Cohorte from "./pages/dashboard/Cohorte";
 import { Toaster } from 'sonner';
 import React from 'react';
+import { CLASSIFICATION_IDS } from "./config/classificationIds";
 
 // Componente para proteger rutas básicas (solo autenticación)
 const BasicProtectedRoute = ({ children }) => {
@@ -139,12 +140,12 @@ export default function App() {
           } />
           <Route path="permission-test" element={<PermissionTest />} />
           <Route path="estadisticas" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission={CLASSIFICATION_IDS.MN_ESTADISTICAS}>
               <Estadisticas />
             </ProtectedRoute>
           } />
           <Route path="cohorte" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission={CLASSIFICATION_IDS.MN_COHORTE}>
               <Cohorte />
             </ProtectedRoute>
           } />

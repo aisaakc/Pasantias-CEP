@@ -1,71 +1,47 @@
-import React, { useRef, useState } from 'react'
-import { toast } from 'sonner';
+import React, { useRef, useState, useEffect } from 'react'
+import { useCursoStore } from '../../store/cursoStore';
+import ModalParticipante from '../../components/ModalParticipante';
 
-const cursos = [
-  {
-    id: 1,
-    nombre: 'React desde Cero',
-    descripcion: 'Aprende React y crea aplicaciones web modernas.',
-    detalles: 'Curso completo de React, hooks, context, router y mejores prácticas. Incluye proyecto final.',
-    imagen: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: 2,
-    nombre: 'Node.js Profesional',
-    descripcion: 'Domina el backend con Node.js y Express.',
-    detalles: 'Aprende a crear APIs, manejar bases de datos y autenticar usuarios con Node.js.',
-    imagen: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: 3,
-    nombre: 'Diseño UI/UX',
-    descripcion: 'Crea interfaces atractivas y funcionales.',
-    detalles: 'Principios de diseño, wireframes, prototipos y herramientas modernas de UI/UX.',
-    imagen: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: 4,
-    nombre: 'Python para Todos',
-    descripcion: 'Iníciate en la programación con Python.',
-    detalles: 'Sintaxis básica, estructuras de datos, scripts y automatización con Python.',
-    imagen: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: 5,
-    nombre: 'Machine Learning',
-    descripcion: 'Descubre el mundo de la inteligencia artificial.',
-    detalles: 'Fundamentos de ML, algoritmos, librerías y casos prácticos con Python.',
-    imagen: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80',
-  },
-];
+const IMAGEN_DEFECTO = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80';
 
 function ModalCursoDetalle({ open, onClose, curso }) {
   if (!open || !curso) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative animate-fadeInUp">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
-        >
-          <span className="text-2xl">&times;</span>
-        </button>
-        <img src={curso.imagen} alt={curso.nombre} className="w-full h-48 object-cover rounded-xl mb-6" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">{curso.nombre}</h2>
-        <p className="text-gray-600 mb-4">{curso.descripcion}</p>
-        <p className="text-gray-700 mb-6">{curso.detalles}</p>
-        <div className="flex gap-4">
+      <div className="bg-white border-2 border-blue-200 shadow-xl w-full max-w-5xl md:max-w-4xl sm:max-w-lg p-0 relative animate-fadeInUp mx-2 max-h-[90vh] flex flex-col rounded-3xl focus-within:ring-2 focus-within:ring-blue-100">
+        <div className="sticky top-0 z-10 bg-white/95 rounded-t-3xl p-6 flex items-center justify-between border-b border-blue-100 shadow-sm">
+          <h2 className="text-2xl font-bold text-blue-600 mb-0 tracking-tight">{curso.nombre_curso}</h2>
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-lg bg-white border border-blue-500 text-blue-600 font-semibold shadow-md hover:bg-blue-50 transition-all duration-300"
+            className="text-blue-300 hover:text-blue-500 p-2 rounded-full hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors text-2xl shadow"
+            aria-label="Cerrar"
+          >
+            &times;
+          </button>
+        </div>
+        <div className="overflow-y-auto px-8 pb-6 pt-2" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+          <img src={curso.imagen || IMAGEN_DEFECTO} alt={curso.nombre_curso} className="w-full h-40 sm:h-28 object-cover rounded-2xl mb-8 shadow border border-blue-100" />
+          {curso.descripcion_html && (
+            <div className="text-gray-800 mb-8 prose max-w-none prose-blue prose-lg" dangerouslySetInnerHTML={{ __html: curso.descripcion_html }} />
+          )}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 shadow-sm">
+            <h3 className="font-bold text-blue-600 mb-2 text-base">FORMA DE PAGO:</h3>
+            <ul className="text-gray-700 text-base list-disc pl-5 space-y-1">
+              <li>Transferencia Bancaria (tasa de cambio oficial de Banco Central de Venezuela):</li>
+              <li><b>Banco Mercantil</b></li>
+              <li>Cuenta Corriente Nro. 0105-0083-44-1083100815</li>
+              <li>Titular: IUJO, A.C</li>
+              <li>Rif: J-30576524-3</li>
+              <li>Efectivo en Divisas y punto de ventas (en la caja principal de la sede)</li>
+            </ul>
+          </div>
+        </div>
+        <div className="sticky bottom-0 z-10 bg-white/95 rounded-b-3xl p-6 flex gap-4 flex-col sm:flex-row border-t border-blue-100 shadow-sm">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-lg bg-white border border-blue-300 text-blue-600 font-semibold shadow-md hover:bg-blue-50 hover:text-blue-700 transition-all duration-300 text-base focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
             Cerrar
-          </button>
-          <button
-            onClick={() => { toast.success('¡Inscripción exitosa!'); onClose(); }}
-            className="flex-1 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-md hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 animate-pulse hover:animate-none"
-          >
-            Inscribirse
           </button>
         </div>
       </div>
@@ -77,21 +53,26 @@ function ListCursos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [cursoSeleccionado, setCursoSeleccionado] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [modalParticipanteOpen, setModalParticipanteOpen] = useState(false);
   const carruselRef = useRef(null);
+
+  const { cursos, fetchCursos, loading } = useCursoStore();
+
+  useEffect(() => {
+    fetchCursos();
+  }, [fetchCursos]);
 
   const scroll = (dir) => {
     const node = carruselRef.current;
     if (!node) return;
     const cardWidth = node.firstChild ? node.firstChild.offsetWidth : 300;
     node.scrollBy({ left: dir * (cardWidth + 24), behavior: 'smooth' });
-    // Calcular el nuevo índice activo
     let newIndex = activeIndex + dir;
     if (newIndex < 0) newIndex = 0;
     if (newIndex > cursos.length - 1) newIndex = cursos.length - 1;
     setActiveIndex(newIndex);
   };
 
-  // Actualizar el índice activo al hacer scroll manual
   const handleScroll = () => {
     const node = carruselRef.current;
     if (!node) return;
@@ -107,6 +88,13 @@ function ListCursos() {
         <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center animate-fadeInUp">
           Biblioteca de Cursos
         </h1>
+        <button
+          className="block mx-auto mt-6 mb-8 bg-white border border-blue-400 text-blue-600 font-semibold py-3 px-8 rounded-full shadow-md transition-all duration-300 flex items-center gap-3 text-lg hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          onClick={() => setModalParticipanteOpen(true)}
+        >
+          <svg xmlns='http://www.w3.org/2000/svg' className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z' /><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 11a3 3 0 11-6 0 3 3 0 016 0z' /></svg>
+          Participa en un curso
+        </button>
         <div className="relative">
           {/* Flechas glass */}
           <button
@@ -132,48 +120,59 @@ function ListCursos() {
             className="flex gap-8 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x snap-mandatory"
             style={{ scrollBehavior: 'smooth' }}
           >
-            {cursos.map((curso, idx) => (
-              <div
-                key={curso.id}
-                className={`relative min-w-[300px] max-w-xs w-full bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-500 group border border-gray-200 hover:border-blue-400 snap-center
-                  ${activeIndex === idx ? 'scale-105 z-10' : 'scale-95 opacity-80'} animate-slideIn`}
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={curso.imagen}
-                    alt={curso.nombre}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Etiqueta "Nuevo" más discreta */}
-                  <div className="absolute top-2 right-2 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full shadow font-semibold opacity-90">
-                    Nuevo
+            {loading ? (
+              <div className="text-center w-full py-10 text-gray-500">Cargando cursos...</div>
+            ) : cursos.length === 0 ? (
+              <div className="text-center w-full py-10 text-gray-500">No hay cursos disponibles.</div>
+            ) : (
+              cursos.map((curso, idx) => (
+                <div
+                  key={curso.id_curso || curso.id || idx}
+                  className={`relative min-w-[300px] max-w-xs w-full bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-500 group border border-gray-200 hover:border-blue-400 snap-center
+                    ${activeIndex === idx ? 'scale-105 z-10' : 'scale-95 opacity-80'} animate-slideIn`}
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
+                  <div className="relative h-52 overflow-hidden">
+                    <img
+                      src={curso.imagen || IMAGEN_DEFECTO}
+                      alt={curso.nombre_curso}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-2 right-2 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full shadow font-semibold opacity-90">
+                      Nuevo
+                    </div>
+                  </div>
+                  <div className="p-6 flex flex-col gap-3">
+                    <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
+                      {curso.nombre_curso}
+                    </h2>
+                   
+                    <p className="text-gray-700 text-sm">
+                      <b>Horario:</b> {curso.fecha_hora_inicio ? `${new Date(curso.fecha_hora_inicio).toLocaleDateString()} ` : ''}
+                      {curso.fecha_hora_inicio ? new Date(curso.fecha_hora_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No definido'}
+                      - {curso.fecha_hora_fin ? new Date(curso.fecha_hora_fin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No definido'}
+                    </p>
+                    <p className="text-gray-700 text-sm">
+                      <b>Modalidad:</b> {curso.modalidad || 'No definida'}
+                    </p>
+                    <p className="text-gray-700 text-sm">
+                      <b>Facilitador:</b> {curso.nombre_completo_facilitador || 'No definido'}
+                    </p>
+                    <p className="text-gray-700 text-sm mb-2">
+                      <b>Costo:</b> {curso.costo !== undefined && curso.costo !== null ? `${curso.costo} $` : 'No definido'}
+                    </p>
+                    <div className="flex gap-3 mt-2">
+                      <button
+                        onClick={() => { setCursoSeleccionado(curso); setModalOpen(true); }}
+                        className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all duration-300 hover:scale-105"
+                      >
+                        Ver más
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="p-6 flex flex-col gap-3">
-                  <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
-                    {curso.nombre}
-                  </h2>
-                  <p className="text-gray-600 text-sm flex-1">
-                    {curso.descripcion}
-                  </p>
-                  <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={() => { setCursoSeleccionado(curso); setModalOpen(true); }}
-                      className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all duration-300 hover:scale-105"
-                    >
-                      Ver más
-                    </button>
-                    <button
-                      onClick={() => toast.success('¡Inscripción exitosa!')}
-                      className="flex-1 py-2 rounded-lg bg-white border border-blue-500 text-blue-600 font-semibold shadow hover:bg-blue-50 hover:scale-105 transition-all duration-300"
-                    >
-                      Inscribirse
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
           {/* Dots de posición */}
           <div className="flex justify-center mt-6 gap-2">
@@ -186,6 +185,9 @@ function ListCursos() {
           </div>
         </div>
         <ModalCursoDetalle open={modalOpen} onClose={() => setModalOpen(false)} curso={cursoSeleccionado} />
+        {modalParticipanteOpen && (
+          <ModalParticipante onClose={() => setModalParticipanteOpen(false)} />
+        )}
       </div>
     </div>
   )

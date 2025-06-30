@@ -58,6 +58,8 @@ export default function Sidebar() {
   const puedeAccederRoles = tienePermiso(CLASSIFICATION_IDS.MN_ROLES);
   const puedeAccederPDF = tienePermiso(CLASSIFICATION_IDS.MN_PDF);
   const puedeAccederDocumentos = tienePermiso(CLASSIFICATION_IDS.MN_DOCUMENTOS);
+  const puedeAccederEstadisticas = tienePermiso(CLASSIFICATION_IDS.MN_ESTADISTICAS);
+  const puedeAccederCohorte = tienePermiso(CLASSIFICATION_IDS.MN_COHORTE);
 
   // Función helper para renderizar enlaces del sidebar
   const renderSidebarLink = (to, label, icon, canAccess, clasificacion = null, isSupervisor = false) => {
@@ -107,11 +109,14 @@ export default function Sidebar() {
           renderSidebarLink('/dashboard/roles', 'Roles', iconos.faFile, puedeAccederRoles, rolesClasificacion, isSupervisor)
         )}
 
-        {renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF, null, isSupervisor)}
+        {puedeAccederPDF &&
+          renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF, null, isSupervisor)}
 
-        {renderSidebarLink('/dashboard/estadisticas', 'Estadísticas', iconos.faChartBar, true, null, isSupervisor)}
+        {puedeAccederEstadisticas &&
+          renderSidebarLink('/dashboard/estadisticas', 'Estadísticas', iconos.faChartBar, true, null, isSupervisor)}
 
-        {renderSidebarLink('/dashboard/cohorte', 'Cohorte', iconos.faUsers, true, null, isSupervisor)}
+        {puedeAccederCohorte &&
+          renderSidebarLink('/dashboard/cohorte', 'Cohorte', iconos.faUsers, true, null, isSupervisor)}
 
         {puedeAccederConfiguracion && (
           <div className="relative">

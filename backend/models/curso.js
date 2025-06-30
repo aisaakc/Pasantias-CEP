@@ -152,7 +152,8 @@ class CursoModel {
       codigo,
       color,
       duracion,
-      horarios
+      horarios,
+      codigo_cohorte
     } = cursoData;
 
     console.log('Datos recibidos en modelo updateCurso:', cursoData);
@@ -171,8 +172,9 @@ class CursoModel {
         codigo = $9,
         color = $10,
         duracion = $11,
-        horarios = $12
-      WHERE id_curso = $13
+        horarios = $12,
+        codigo_cohorte = $13
+      WHERE id_curso = $14
       RETURNING *;
     `;
 
@@ -190,6 +192,7 @@ class CursoModel {
         color,
         duracion,
         horarios ? JSON.stringify(horarios) : null,
+        codigo_cohorte || null,
         id
       ];
 

@@ -372,12 +372,29 @@ function HorarioCurso() {
 
   const handleHorarioChange = (index, field, value) => {
     console.log('handleHorarioChange - Parámetros:', { index, field, value });
-    
     const newHorarios = [...horarios];
     newHorarios[index][field] = value;
     // Si se cambia la fecha de inicio y la de fin está vacía, copiar el valor
     if (field === 'fechaHoraInicio' && !newHorarios[index].fechaHoraFin) {
       newHorarios[index].fechaHoraFin = value;
+    }
+    // Advertencia si la fecha de inicio es feriado
+    if (field === 'fechaHoraInicio') {
+      const fechaSeleccionada = value.slice(0, 10); // YYYY-MM-DD
+      const esFeriado = feriados.some(feriado => {
+        if (!feriado.descripcion) return false;
+        return feriado.descripcion.split(',').some(fechaFeriado => {
+          const partes = fechaFeriado.trim().split('/');
+          if (partes.length < 2) return false;
+          const dia = partes[0].padStart(2, '0');
+          const mes = partes[1].padStart(2, '0');
+          // El año puede estar o no, así que solo comparamos día y mes
+          return fechaSeleccionada.slice(8, 10) === dia && fechaSeleccionada.slice(5, 7) === mes;
+        });
+      });
+      if (esFeriado) {
+        toast.warning('¡Advertencia! El día seleccionado es feriado.');
+      }
     }
     setHorarios(newHorarios);
     console.log('Horarios actualizados en el estado:', newHorarios);
@@ -566,12 +583,17 @@ function HorarioCurso() {
         {/* Información del curso */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {curso.codigo && (
                 <span className="text-indigo-600 font-normal">({curso.codigo}) </span>
               )}
               {curso.nombre_curso}
             </h1>
+            {curso.codigo_cohorte && (
+              <div className="text-sm text-indigo-600 font-medium mb-4">
+                Cohorte: {curso.codigo_cohorte}
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="flex items-center space-x-3">

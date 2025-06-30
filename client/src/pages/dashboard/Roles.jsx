@@ -1,23 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { toast } from 'sonner';
 import usePersonaStore from '../../store/personaStore';
 import ModalUser from '../../components/ModalUser';
 import DeleteModal from '../../components/DeleteModal';
 
 function Roles() {
-  const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios, deleteUser } = usePersonaStore();
+  const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios, deleteUserStore } = usePersonaStore();
   const [selectedRole, setSelectedRole] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [search, setSearch] = useState('');
+  const [ordenAscendente, setOrdenAscendente] = useState(true);
+  const [ordenarPorNombre, setOrdenarPorNombre] = useState(true);
+  const [ordenarPorEmail, setOrdenarPorEmail] = useState(false);
 
   useEffect(() => {
     fetchRoles();
     fetchUsuarios();
   }, []);
+
+  // Efecto para actualizar automáticamente cuando cambien los usuarios
+  useEffect(() => {
+    // Este efecto se ejecutará cada vez que cambien los usuarios en el store
+    // No necesitamos hacer nada aquí porque el store ya actualiza automáticamente
+    // Solo necesitamos que el componente se re-renderice cuando cambien los datos
+    console.log('Usuarios actualizados en el componente:', usuarios.length);
+    console.log('Usuarios:', usuarios);
+  }, [usuarios]);
 
   const handleRoleClick = (role) => {
     setSelectedRole(selectedRole?.id === role.id ? null : role);
@@ -47,6 +60,7 @@ function Roles() {
   const handleModalClose = () => {
     setIsModalOpen(false);
     setEditData(null);
+    // Los datos se actualizarán automáticamente gracias al store
   };
 
   // Agrupar usuarios por id_persona
@@ -82,6 +96,23 @@ function Roles() {
     const email = (user.gmail || '').toLowerCase();
     const searchLower = search.toLowerCase();
     return fullName.includes(searchLower) || email.includes(searchLower);
+  }).sort((a, b) => {
+    let comparison = 0;
+    
+    if (ordenarPorNombre) {
+      // Ordenar por nombre completo
+      const nameA = `${a.persona_nombre} ${a.apellido}`.toLowerCase();
+      const nameB = `${b.persona_nombre} ${b.apellido}`.toLowerCase();
+      comparison = nameA.localeCompare(nameB);
+    } else if (ordenarPorEmail) {
+      // Ordenar por email
+      const emailA = (a.gmail || '').toLowerCase();
+      const emailB = (b.gmail || '').toLowerCase();
+      comparison = emailA.localeCompare(emailB);
+    }
+    
+    // Aplicar dirección del ordenamiento
+    return ordenAscendente ? comparison : -comparison;
   });
 
   // Función para resaltar el texto buscado en nombre, apellido o email
@@ -107,15 +138,29 @@ function Roles() {
   const handleConfirmDelete = async () => {
     if (!userToDelete) return;
     try {
-      await deleteUser(userToDelete.id_persona);
+      await deleteUserStore(userToDelete.id_persona);
       setDeleteModalOpen(false);
       setUserToDelete(null);
-      // Puedes mostrar un toast aquí si usas alguna librería de notificaciones
+      toast.success('Usuario eliminado correctamente');
     } catch {
       // Manejar error si lo deseas
       setDeleteModalOpen(false);
       setUserToDelete(null);
     }
+  };
+
+  // Función para cambiar el orden por nombre
+  const cambiarOrden = () => {
+    setOrdenarPorNombre(true);
+    setOrdenarPorEmail(false);
+    setOrdenAscendente(!ordenAscendente);
+  };
+
+  // Función para cambiar el orden por email
+  const cambiarOrdenPorEmail = () => {
+    setOrdenarPorNombre(false);
+    setOrdenarPorEmail(true);
+    setOrdenAscendente(!ordenAscendente);
   };
 
   if (loading) return (
@@ -220,7 +265,7 @@ function Roles() {
           <div className="relative w-full max-w-xs">
             <input
               type="text"
-              placeholder="Buscar usuario por nombre, apellido o email..."
+              placeholder="Buscar usuario"
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -251,8 +296,30 @@ function Roles() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
-                  <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/4">Nombre Completo</th>
-                  <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/4">Email</th>
+                  <th 
+                    className="py-4 px-6 text-left text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
+                    onClick={cambiarOrden}
+                  >
+                    <div className="flex items-center space-x-2 text-white">
+                      <span>Nombre Completo</span>
+                      <FontAwesomeIcon 
+                        icon={ordenAscendente ? iconos.faSortAlphaDown : iconos.faSortAlphaUp}
+                        className="transform group-hover:scale-110 transition-all duration-300"
+                      />
+                    </div>
+                  </th>
+                  <th 
+                    className="py-4 px-6 text-left text-sm uppercase tracking-wider cursor-pointer group transition-colors duration-300"
+                    onClick={cambiarOrdenPorEmail}
+                  >
+                    <div className="flex items-center space-x-2 text-white">
+                      <span>Email</span>
+                      <FontAwesomeIcon 
+                        icon={ordenAscendente ? iconos.faSortAlphaDown : iconos.faSortAlphaUp}
+                        className="transform group-hover:scale-110 transition-all duration-300"
+                      />
+                    </div>
+                  </th>
                   <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/6">Género</th>
                   <th className="py-4 px-6 text-left text-sm uppercase tracking-wider text-white w-1/4">Roles</th>
                   <th className="py-4 px-6 text-center text-sm uppercase tracking-wider text-white w-1/6">Acciones</th>
@@ -327,6 +394,14 @@ function Roles() {
                     </td>
                   </tr>
                 ))}
+                {filteredAndSearchedUsers.length === 0 && (
+                  <tr key="no-results-row">
+                    <td colSpan="5" className="py-8 text-center text-gray-500">
+                      <FontAwesomeIcon icon={iconos.faUserSlash} className="text-4xl mb-2" />
+                      <p>Usuario no existe</p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

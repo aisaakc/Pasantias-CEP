@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCursoStore } from '../store/cursoStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark,
@@ -17,8 +17,8 @@ import { faXmark,
         faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
-import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error, roles_facilitador, fetchFacilitadores, resetState } = useCursoStore();
@@ -40,11 +40,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [holidayWarning, setHolidayWarning] = useState('');
   const [codigoCohorte, setCodigoCohorte] = useState('');
-  const [editorLoading, setEditorLoading] = useState(false);
   
-  // Referencia para el editor Quill
-  const quillRef = useRef(null);
-  const quillEditorRef = useRef(null);
+  // const summernoteRef = useRef(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -132,6 +129,43 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
       setFechaFin('');
     }
   }, [curso, fecha, isDataLoaded]);
+
+  // Efecto para llenar automáticamente código y costo cuando se selecciona un curso
+  useEffect(() => {
+    if (cursoSeleccionado && isDataLoaded && cursos.length > 0) {
+      const cursoSeleccionadoData = cursos.find(c => c && c.id && c.id.toString() === cursoSeleccionado);
+      
+      if (cursoSeleccionadoData && cursoSeleccionadoData.adicional) {
+        try {
+          // Si adicional es un string, parsearlo como JSON
+          const adicional = typeof cursoSeleccionadoData.adicional === 'string' 
+            ? JSON.parse(cursoSeleccionadoData.adicional) 
+            : cursoSeleccionadoData.adicional;
+          
+          console.log('Datos adicionales del curso seleccionado:', adicional);
+          
+          // Llenar el código si existe en el adicional (siempre actualizar)
+          if (adicional.id) {
+            setCodigo(adicional.id);
+            console.log('Código llenado automáticamente:', adicional.id);
+          }
+          
+          // Llenar el costo si existe en el adicional (siempre actualizar)
+          if (adicional.costo !== undefined && adicional.costo !== null) {
+            setCosto(adicional.costo.toString());
+            console.log('Costo llenado automáticamente:', adicional.costo);
+          }
+        } catch (error) {
+          console.error('Error al procesar datos adicionales del curso:', error);
+        }
+      } else {
+        // Si el curso no tiene datos adicionales, limpiar los campos
+        console.log('Curso seleccionado no tiene datos adicionales, limpiando campos');
+        setCodigo('');
+        setCosto('');
+      }
+    }
+  }, [cursoSeleccionado, isDataLoaded, cursos]);
 
   useEffect(() => {
     if (!fechaInicio || !feriados || feriados.length === 0) {
@@ -223,173 +257,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
     }
   }, [fechaInicio, fechaFin, feriados]);
 
-  // Inicializar editor Quill
-  useEffect(() => {
-    // Solo inicializar cuando el modal esté completamente cargado
-    if (!isDataLoaded || loading) {
-      return;
-    }
-
-    // Esperar a que el DOM esté listo
-    const initQuill = () => {
-      console.log('Intentando inicializar Quill...');
-      console.log('Quill disponible:', typeof Quill);
-      console.log('quillEditorRef.current:', quillEditorRef.current);
-      console.log('quillRef.current:', quillRef.current);
-      
-      if (typeof Quill === 'undefined') {
-        console.error('Quill no está disponible');
-        return;
-      }
-      
-      if (quillEditorRef.current && !quillRef.current) {
-        console.log('Inicializando editor Quill...');
-        
-        const toolbarOptions = [
-          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ 'color': [] }, { 'background': [] }],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          [{ 'indent': '-1'}, { 'indent': '+1' }],
-          [{ 'align': [] }],
-          ['link', 'image'],
-          ['clean']
-        ];
-
-        try {
-          setEditorLoading(true);
-          // Limpiar el contenido del div antes de inicializar
-          quillEditorRef.current.innerHTML = '';
-          
-          quillRef.current = new Quill(quillEditorRef.current, {
-            theme: 'snow',
-            modules: {
-              toolbar: toolbarOptions
-            },
-            placeholder: 'Escribe el contenido del curso aquí...'
-          });
-
-          // Establecer contenido inicial si existe
-          if (descripcionHtml && descripcionHtml.trim() !== '') {
-            quillRef.current.root.innerHTML = descripcionHtml;
-          }
-
-          // Escuchar cambios
-          quillRef.current.on('text-change', () => {
-            const content = quillRef.current.root.innerHTML;
-            if (content !== descripcionHtml) {
-              setDescripcionHtml(content);
-            }
-          });
-
-          console.log('Editor Quill inicializado correctamente');
-        } catch (error) {
-          console.error('Error al inicializar Quill:', error);
-        } finally {
-          setEditorLoading(false);
-        }
-      } else {
-        console.log('No se puede inicializar Quill:', {
-          elementExists: !!quillEditorRef.current,
-          alreadyInitialized: !!quillRef.current
-        });
-      }
-    };
-
-    // Inicializar inmediatamente si el elemento existe
-    if (quillEditorRef.current) {
-      initQuill();
-    } else {
-      // Si no existe, esperar un poco y reintentar
-      console.log('Elemento del editor no encontrado, reintentando en 100ms...');
-      const timer = setTimeout(initQuill, 100);
-      return () => clearTimeout(timer);
-    }
-
-    return () => {
-      if (quillRef.current) {
-        quillRef.current = null;
-      }
-    };
-  }, [isDataLoaded, loading]); // Dependencias para reinicializar cuando los datos estén listos
-
-  // Inicializar editor cuando el modal esté visible
-  useEffect(() => {
-    if (isDataLoaded && !loading && quillEditorRef.current && !quillRef.current) {
-      // Pequeño delay para asegurar que el DOM esté completamente renderizado
-      const timer = setTimeout(() => {
-        console.log('Inicializando Quill después de que el modal esté visible...');
-        
-        if (typeof Quill === 'undefined') {
-          console.error('Quill no está disponible');
-          return;
-        }
-
-        if (quillEditorRef.current && !quillRef.current) {
-          const toolbarOptions = [
-            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'color': [] }, { 'background': [] }],
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-            [{ 'indent': '-1'}, { 'indent': '+1' }],
-            [{ 'align': [] }],
-            ['link', 'image'],
-            ['clean']
-          ];
-
-          try {
-            // Limpiar el contenido del div antes de inicializar
-            quillEditorRef.current.innerHTML = '';
-            
-            quillRef.current = new Quill(quillEditorRef.current, {
-              theme: 'snow',
-              modules: {
-                toolbar: toolbarOptions
-              },
-              placeholder: 'Escribe el contenido del curso aquí...'
-            });
-
-            // Establecer contenido inicial si existe
-            if (descripcionHtml && descripcionHtml.trim() !== '') {
-              quillRef.current.root.innerHTML = descripcionHtml;
-            }
-
-            // Escuchar cambios
-            quillRef.current.on('text-change', () => {
-              const content = quillRef.current.root.innerHTML;
-              if (content !== descripcionHtml) {
-                setDescripcionHtml(content);
-              }
-            });
-
-            console.log('Editor Quill inicializado correctamente (modal visible)');
-          } catch (error) {
-            console.error('Error al inicializar Quill:', error);
-          }
-        }
-      }, 200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isDataLoaded, loading, descripcionHtml]);
-
-  // Actualizar contenido del editor cuando cambie descripcionHtml
-  useEffect(() => {
-    if (quillRef.current && descripcionHtml !== quillRef.current.root.innerHTML) {
-      quillRef.current.root.innerHTML = descripcionHtml || '';
-    }
-  }, [descripcionHtml]);
-
   const handleClose = () => {
-    // Limpiar el editor Quill antes de cerrar
-    if (quillRef.current) {
-      try {
-        quillRef.current = null;
-      } catch (error) {
-        console.error('Error al limpiar Quill:', error);
-      }
-    }
-    
+    setDescripcionHtml('');
     setAnimationClass('animate-modal-out');
     setTimeout(() => {
       onClose();
@@ -712,24 +581,17 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                   />
                 </div>
                 <div className="transition-all duration-300">
-                  <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     <FontAwesomeIcon icon={faAlignLeft} className="mr-2 text-blue-500" />
                     Contenido del Curso
                   </label>
-                  {editorLoading ? (
-                    <div className="h-[300px] border border-gray-200 rounded-lg flex items-center justify-center bg-gray-50">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                        <p className="text-gray-600 text-sm">Cargando editor...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div 
-                      ref={quillEditorRef}
-                      id="quill-editor"
-                      className="h-[300px] border border-gray-200 rounded-lg"
-                    />
-                  )}
+                  <ReactQuill
+                    value={descripcionHtml}
+                    onChange={setDescripcionHtml}
+                    placeholder="Escribe el contenido del curso aquí..."
+                    className="quill-editor-amplio"
+                    theme="snow"
+                  />
                 </div>
               </div>
 
@@ -962,61 +824,83 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
         .animate-modal-in { animation: modalIn 0.3s ease-out; }
         .animate-modal-out { animation: modalOut 0.3s ease-out; }
 
-        /* Estilos personalizados para Quill */
-        .ql-editor {
-          min-height: 250px;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-size: 14px;
-          line-height: 1.6;
+        .quill-editor-amplio .ql-container {
+          min-height: 220px;
+          height: 220px;
+          font-size: 1rem;
         }
 
-        .ql-toolbar {
-          border-top-left-radius: 8px;
-          border-top-right-radius: 8px;
-          border-color: #e5e7eb;
-          background-color: #f9fafb;
+        /* Jodit Editor Custom Styles */
+        .jodit-container {
+          border-radius: 0.5rem !important;
+          border: 1px solid #e5e7eb !important;
+          transition: all 0.3s ease !important;
         }
 
-        .ql-container {
-          border-bottom-left-radius: 8px;
-          border-bottom-right-radius: 8px;
-          border-color: #e5e7eb;
+        .jodit-container:focus-within {
+          border-color: #3b82f6 !important;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
         }
 
-        .ql-editor:focus {
-          outline: none;
+        .jodit-container:hover {
+          border-color: #93c5fd !important;
         }
 
-        .ql-editor p {
-          margin-bottom: 0.5rem;
+        .jodit-toolbar {
+          border-bottom: 1px solid #e5e7eb !important;
+          background: #f9fafb !important;
+          border-radius: 0.5rem 0.5rem 0 0 !important;
         }
 
-        .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor h4, .ql-editor h5, .ql-editor h6 {
-          margin-top: 1rem;
-          margin-bottom: 0.5rem;
-          font-weight: 600;
+        .jodit-toolbar__box {
+          background: transparent !important;
         }
 
-        .ql-editor ul, .ql-editor ol {
-          padding-left: 1.5rem;
-          margin-bottom: 0.5rem;
+        .jodit-ui-button {
+          border-radius: 0.375rem !important;
+          transition: all 0.2s ease !important;
         }
 
-        .ql-editor blockquote {
-          border-left: 4px solid #e5e7eb;
-          padding-left: 1rem;
-          margin: 1rem 0;
-          font-style: italic;
-          color: #6b7280;
+        .jodit-ui-button:hover {
+          background-color: #e5e7eb !important;
         }
 
-        .ql-editor a {
-          color: #3b82f6;
-          text-decoration: underline;
+        .jodit-ui-button__icon {
+          color: #374151 !important;
         }
 
-        .ql-editor a:hover {
-          color: #2563eb;
+        .jodit-workplace {
+          border-radius: 0 0 0.5rem 0.5rem !important;
+          background: white !important;
+        }
+
+        .jodit-status-bar {
+          border-top: 1px solid #e5e7eb !important;
+          background: #f9fafb !important;
+          border-radius: 0 0 0.5rem 0.5rem !important;
+          font-size: 0.75rem !important;
+          color: #6b7280 !important;
+        }
+
+        .jodit-placeholder {
+          color: #9ca3af !important;
+          font-style: italic !important;
+        }
+
+        .jodit-editor__content {
+          padding: 1rem !important;
+          min-height: 200px !important;
+        }
+
+        /* Responsive adjustments for Jodit */
+        @media (max-width: 768px) {
+          .jodit-toolbar__box {
+            flex-wrap: wrap !important;
+          }
+          
+          .jodit-ui-button {
+            margin: 2px !important;
+          }
         }
       `}</style>
     </div>

@@ -35,4 +35,17 @@ TO DOs
 - qr y link (certificado), con token de autenticacion/verificacion
 
 
+Curso Básico de Mantenimiento y Reparación de PC
+Dominando MongoDB: “de CRUD a consultas avanzadas"
+Manejo de Bases de Datos con PostgreSQL
+Módulo 1: Introduction to Network
+Módulo 2: Switching, Routing and Wireless Essentials (SRWE)
+Nómina y Prestaciones Sociales
+Primeros pasos con Office
+
+
+
+
+
+
 - EN LO POSIBLE, REVISAR RENDIMIENTO/OPTIMIZACION de VISTAS (optimizar tiempo)

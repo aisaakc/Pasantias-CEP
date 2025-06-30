@@ -179,12 +179,12 @@ export default function Tipos() {
   const [selectedClasificacion, setSelectedClasificacion] = useState(null);
   const [nombreClasificacion, setNombreClasificacion] = useState('');
   const [parentHierarchy, setParentHierarchy] = useState([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // Nuevo estado para loading inicial
 
   const { 
     subClasificaciones, 
     fetchSubClasificaciones, 
     deleteClasificacion,
-    loading, 
     error,
     fetchAllClasificaciones,
     getClasificacionById
@@ -254,10 +254,17 @@ export default function Tipos() {
   // Single effect for initial data loading
   useEffect(() => {
     const loadInitialData = async () => {
-      if (realId) {
-        await fetchSubClasificaciones(realId, realParentId);
+      setIsInitialLoading(true);
+      try {
+        if (realId) {
+          await fetchSubClasificaciones(realId, realParentId);
+        }
+        await fetchAllClasificaciones();
+      } catch (error) {
+        console.error('Error al cargar datos iniciales:', error);
+      } finally {
+        setIsInitialLoading(false);
       }
-      await fetchAllClasificaciones();
     };
     
     loadInitialData();
@@ -385,11 +392,9 @@ export default function Tipos() {
   const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
     setSelectedClasificacion(null);
-    // Refrescar datos después de cerrar el modal
-    if (realId) {
-      fetchSubClasificaciones(realId, realParentId);
-    }
-  }, [realId, realParentId, fetchSubClasificaciones]);
+    // No refrescar datos inmediatamente para evitar parpadeos
+    // Los datos se actualizarán automáticamente cuando el store se actualice
+  }, []);
 
   // Memoizar las funciones de callback
   const handleDelete = useCallback((clasificacion) => {
@@ -403,16 +408,17 @@ export default function Tipos() {
 
   const handleConfirmDelete = useCallback(async () => {
     try {
-      await deleteClasificacion(selectedClasificacion.id_clasificacion);
+      await deleteClasificacion(selectedClasificacion.id_clasificacion, realId, realParentId);
       toast.success(`Subclasificación "${selectedClasificacion.nombre}" eliminada correctamente`);
       setIsDeleteModalOpen(false);
       setSelectedClasificacion(null);
-      fetchSubClasificaciones(realId);
+      // No refrescar datos inmediatamente para evitar parpadeos
+      // Los datos se actualizarán automáticamente cuando el store se actualice
     } catch (error) {
       console.error('Error al eliminar la clasificación:', error);
       toast.error('Error al eliminar la subclasificación');
     }
-  }, [selectedClasificacion, deleteClasificacion, fetchSubClasificaciones, realId]);
+  }, [selectedClasificacion, deleteClasificacion, realId, realParentId]);
 
   // Efecto para mostrar las subclasificaciones filtradas solo cuando cambie la búsqueda o el orden
   useEffect(() => {
@@ -458,6 +464,16 @@ export default function Tipos() {
     };
     fetchParentHierarchy();
   }, [realId, realParentId]);
+
+  // Memoizar el objeto parentInfo para el Modal
+  const modalParentInfo = useMemo(() => ({
+    type_id: realId, // Siempre el tipo de clasificación que estamos viendo
+    nombre: parentInfo.nombre,
+    icono: parentInfo.icono,
+    nicono: parentInfo.icono,
+    id_icono: parentInfo.id_icono,
+    parent_id: realParentId // La clasificación padre donde estamos agregando
+  }), [realId, realParentId, parentInfo.nombre, parentInfo.icono, parentInfo.id_icono]);
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
@@ -538,7 +554,7 @@ export default function Tipos() {
           </button>
         </div>
 
-        {loading ? (
+        {isInitialLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
           </div>
@@ -631,14 +647,7 @@ export default function Tipos() {
           onClose={handleModalClose}
           editData={selectedClasificacion}
           parentId={realParentId || realId}
-          parentInfo={{
-            type_id: realId, // Siempre el tipo de clasificación que estamos viendo
-            nombre: parentInfo.nombre,
-            icono: parentInfo.icono,
-            nicono: parentInfo.icono,
-            id_icono: parentInfo.id_icono,
-            parent_id: realParentId // La clasificación padre donde estamos agregando
-          }}
+          parentInfo={modalParentInfo}
         />
 
         {/* Modal de Eliminación */}

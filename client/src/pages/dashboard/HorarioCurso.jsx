@@ -12,8 +12,18 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import esLocale from '@fullcalendar/core/locales/es';
 import { toast } from 'sonner';
-import { decodeId, encodeId } from '../../utils/hashUtils';
+import { decodeId } from '../../utils/hashUtils';
 import { updateHorariosCurso } from '../../api/curso.api';
+
+// Convierte fecha local a 'YYYY-MM-DDTHH:mm:ss'
+const localToISOString = (dateString) => {
+  return dateString + ':00';
+};
+
+// Extrae solo la parte necesaria para el input datetime-local
+const isoToLocalString = (isoString) => {
+  return isoString.slice(0, 16);
+};
 
 function HorarioCurso() {
   const { id } = useParams();
@@ -26,7 +36,6 @@ function HorarioCurso() {
   const [eventosCalendario, setEventosCalendario] = useState([]);
   const [feriados, setFeriados] = useState([]);
   const [horarios, setHorarios] = useState([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
-  const [horariosAEliminar, setHorariosAEliminar] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState('timeGridWeek');
@@ -83,17 +92,10 @@ function HorarioCurso() {
                 
                 // Convertir los horarios existentes al formato del formulario
                 const horariosFormateados = horariosExistentes.map(horario => {
-                  const fechaInicio = new Date(horario.fecha_hora_inicio);
-                  const fechaFin = new Date(horario.fecha_hora_fin);
-                  
-                  // Ajustar al horario local
-                  const fechaInicioLocal = new Date(fechaInicio.getTime() - fechaInicio.getTimezoneOffset() * 60000);
-                  const fechaFinLocal = new Date(fechaFin.getTime() - fechaFin.getTimezoneOffset() * 60000);
-                  
                   return {
                     id: Date.now() + Math.random().toString(36).substr(2, 9),
-                    fechaHoraInicio: fechaInicioLocal.toISOString().slice(0, 16),
-                    fechaHoraFin: fechaFinLocal.toISOString().slice(0, 16),
+                    fechaHoraInicio: isoToLocalString(horario.fecha_hora_inicio),
+                    fechaHoraFin: isoToLocalString(horario.fecha_hora_fin),
                     descripcion: horario.observacion || '',
                     originalId: horario.id || Date.now() + Math.random().toString(36).substr(2, 9)
                   };
@@ -114,8 +116,7 @@ function HorarioCurso() {
                 title: cursoEncontrado.nombre_curso,
                 start: horario.fecha_hora_inicio,
                 end: horario.fecha_hora_fin,
-                // backgroundColor: cursoEncontrado.color || '#4F46E5',
-                backgroundColor: '#555555',
+                backgroundColor: cursoEncontrado.color || '#4F46E5',
                 borderColor: cursoEncontrado.color || '#4F46E5',
                 textColor: '#ffffff',
                 extendedProps: {
@@ -208,10 +209,38 @@ function HorarioCurso() {
           }
         });
 
-      setEventosCalendario(prev => {
-        const eventosCurso = prev.filter(evento => !evento.id.startsWith('feriado-'));
-        return [...eventosCurso, ...eventosFeriados];
-      });
+      // Crear eventos del curso con el color correcto
+      let eventosCurso = [];
+      if (curso?.horarios) {
+        try {
+          const horariosExistentes = typeof curso.horarios === 'string' 
+            ? JSON.parse(curso.horarios)
+            : curso.horarios;
+          
+          eventosCurso = horariosExistentes.map((horario, index) => ({
+            id: `horario-${horario.id || index}`,
+            title: curso.nombre_curso,
+            start: horario.fecha_hora_inicio,
+            end: horario.fecha_hora_fin,
+            backgroundColor: curso.color || '#4F46E5',
+            borderColor: curso.color || '#4F46E5',
+            textColor: '#ffffff',
+            display: 'block',
+            classNames: ['fc-daygrid-block-event', 'fc-h-event'],
+            extendedProps: {
+              descripcion: horario.observacion,
+              instructor: curso.nombre_completo_facilitador,
+              modalidad: curso.modalidad,
+              esHorario: true
+            }
+          }));
+        } catch (error) {
+          console.error('Error al procesar horarios del curso:', error);
+        }
+      }
+
+      // Combinar eventos del curso con feriados
+      setEventosCalendario([...eventosCurso, ...eventosFeriados]);
     };
 
     // Ejecutar inmediatamente
@@ -226,20 +255,119 @@ function HorarioCurso() {
         calendarApi.off('datesSet', procesarFeriados);
       };
     }
-  }, [feriados]);
+  }, [feriados, curso]);
 
   const handleAddRow = () => {
-    setHorarios([...horarios, { fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
+    let nuevaFechaInicio = '';
+    if (horarios.length > 0) {
+      const ultimo = horarios[horarios.length - 1];
+      nuevaFechaInicio = ultimo.fechaHoraFin;
+    }
+    setHorarios([
+      ...horarios,
+      { fechaHoraInicio: nuevaFechaInicio, fechaHoraFin: '', descripcion: '', id: Date.now() }
+    ]);
   };
 
-  const handleRemoveRow = (index) => {
+  const handleRemoveRow = async (index) => {
     const horarioAEliminar = horarios[index];
-    if (horarioAEliminar.originalId) {
-      // Si es un horario existente, agregarlo a la lista de horarios a eliminar
-      setHorariosAEliminar(prev => [...prev, horarioAEliminar.originalId]);
+    
+    // Confirmar eliminación
+    if (!window.confirm('¿Está seguro de que desea eliminar este horario?')) {
+      return;
     }
-    const newHorarios = horarios.filter((_, i) => i !== index);
-    setHorarios(newHorarios);
+
+    try {
+      // Si es un horario existente (tiene originalId), eliminarlo de la base de datos
+      if (horarioAEliminar.originalId) {
+        console.log('Eliminando horario existente:', horarioAEliminar);
+        
+        // Obtener los horarios actuales del curso
+        let horariosActuales = [];
+        if (curso?.horarios) {
+          try {
+            horariosActuales = typeof curso.horarios === 'string' 
+              ? JSON.parse(curso.horarios)
+              : curso.horarios;
+          } catch (error) {
+            console.error('Error al parsear horarios actuales:', error);
+            horariosActuales = [];
+          }
+        }
+
+        // Filtrar el horario a eliminar
+        const horariosFiltrados = horariosActuales.filter(h => h.id !== horarioAEliminar.originalId);
+        
+        // Actualizar en la base de datos
+        await updateHorariosCurso(decodedId, horariosFiltrados);
+        
+        // Recargar los datos del curso
+        const cursosResponse = await fetchCursos();
+        if (cursosResponse?.data?.data && decodedId) {
+          const cursoActualizado = cursosResponse.data.data.find(c => c.id_curso === parseInt(decodedId));
+          if (cursoActualizado) {
+            setCurso(cursoActualizado);
+            
+            // Actualizar los horarios en el formulario
+            let horariosActualizados = [];
+            if (cursoActualizado.horarios) {
+              try {
+                horariosActualizados = typeof cursoActualizado.horarios === 'string' 
+                  ? JSON.parse(cursoActualizado.horarios)
+                  : cursoActualizado.horarios;
+                
+                const horariosFormateados = horariosActualizados.map(horario => {
+                  return {
+                    id: Date.now() + Math.random().toString(36).substr(2, 9),
+                    fechaHoraInicio: isoToLocalString(horario.fecha_hora_inicio),
+                    fechaHoraFin: isoToLocalString(horario.fecha_hora_fin),
+                    descripcion: horario.observacion || '',
+                    originalId: horario.id || Date.now() + Math.random().toString(36).substr(2, 9)
+                  };
+                });
+                setHorarios(horariosFormateados);
+                
+                // Actualizar eventos del calendario
+                const eventosCalendario = horariosActualizados.map((horario, idx) => ({
+                  id: `horario-${horario.id || idx}`,
+                  title: cursoActualizado.nombre_curso,
+                  start: horario.fecha_hora_inicio,
+                  end: horario.fecha_hora_fin,
+                  backgroundColor: cursoActualizado.color || '#4F46E5',
+                  borderColor: cursoActualizado.color || '#4F46E5',
+                  textColor: '#ffffff',
+                  display: 'block',
+                  classNames: ['fc-daygrid-block-event', 'fc-h-event'],
+                  extendedProps: {
+                    descripcion: horario.observacion,
+                    instructor: cursoActualizado.nombre_completo_facilitador,
+                    modalidad: cursoActualizado.modalidad,
+                    esHorario: true
+                  }
+                }));
+                setEventosCalendario(eventosCalendario);
+              } catch (error) {
+                console.error('Error al procesar horarios actualizados:', error);
+                setHorarios([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
+              }
+            } else {
+              setHorarios([{ fechaHoraInicio: '', fechaHoraFin: '', descripcion: '', id: Date.now() }]);
+              setEventosCalendario([]);
+            }
+          }
+        }
+        
+        toast.success('Horario eliminado exitosamente');
+      } else {
+        // Si es un horario nuevo (sin originalId), solo eliminarlo del estado local
+        const newHorarios = horarios.filter((_, i) => i !== index);
+        setHorarios(newHorarios);
+        toast.success('Horario eliminado');
+      }
+    } catch (error) {
+      console.error('Error al eliminar horario:', error);
+      toast.error('Error al eliminar el horario');
+    }
   };
 
   const handleHorarioChange = (index, field, value) => {
@@ -247,12 +375,10 @@ function HorarioCurso() {
     
     const newHorarios = [...horarios];
     newHorarios[index][field] = value;
-    
-    // Si se cambia la fecha de inicio, actualizar automáticamente la fecha de fin
-    if (field === 'fechaHoraInicio') {
+    // Si se cambia la fecha de inicio y la de fin está vacía, copiar el valor
+    if (field === 'fechaHoraInicio' && !newHorarios[index].fechaHoraFin) {
       newHorarios[index].fechaHoraFin = value;
     }
-    
     setHorarios(newHorarios);
     console.log('Horarios actualizados en el estado:', newHorarios);
   };
@@ -297,48 +423,15 @@ function HorarioCurso() {
 
       // Formatear los horarios para la base de datos
       const horariosFormateados = horarios.map(horario => {
-        const fechaInicio = new Date(horario.fechaHoraInicio);
-        const fechaFin = new Date(horario.fechaHoraFin);
-        
-        // Asegurarse de que las fechas tengan segundos y milisegundos
-        fechaInicio.setSeconds(0, 0);
-        fechaFin.setSeconds(0, 0);
-        
-        // Guardar la fecha y hora tal como la selecciona el usuario (sin ajustar a UTC)
         return {
           id: horario.originalId || Date.now() + Math.random().toString(36).substr(2, 9),
-          fecha_hora_inicio: fechaInicio.toISOString().slice(0, 16),
-          fecha_hora_fin: fechaFin.toISOString().slice(0, 16),
+          fecha_hora_inicio: localToISOString(horario.fechaHoraInicio),
+          fecha_hora_fin: localToISOString(horario.fechaHoraFin),
           observacion: horario.descripcion || ''
         };
       });
 
       console.log('Horarios formateados para la BD:', horariosFormateados);
-
-      // Obtener los horarios existentes
-      let horariosExistentes = [];
-      if (curso?.horarios) {
-        try {
-          horariosExistentes = typeof curso.horarios === 'string' 
-            ? JSON.parse(curso.horarios)
-            : curso.horarios;
-          
-          // Validar que horariosExistentes sea un array
-          if (!Array.isArray(horariosExistentes)) {
-            console.error('horariosExistentes no es un array:', horariosExistentes);
-            horariosExistentes = [];
-          }
-        } catch (error) {
-          console.error('Error al parsear horarios existentes:', error);
-          horariosExistentes = [];
-        }
-      }
-      console.log('Horarios existentes:', horariosExistentes);
-      
-      // Filtrar los horarios existentes para eliminar los marcados para eliminación
-      const horariosExistentesFiltrados = horariosExistentes.filter(
-        h => !horariosAEliminar.includes(h.id)
-      );
 
       // Actualizar los horarios en la base de datos
       const response = await updateHorariosCurso(decodedId, horariosFormateados);
@@ -362,17 +455,10 @@ function HorarioCurso() {
               
               // Convertir los horarios actualizados al formato del formulario
               const horariosFormateados = horariosActualizados.map(horario => {
-                const fechaInicio = new Date(horario.fecha_hora_inicio);
-                const fechaFin = new Date(horario.fecha_hora_fin);
-                
-                // Ajustar al horario local
-                const fechaInicioLocal = new Date(fechaInicio.getTime() - fechaInicio.getTimezoneOffset() * 60000);
-                const fechaFinLocal = new Date(fechaFin.getTime() - fechaFin.getTimezoneOffset() * 60000);
-                
                 return {
                   id: Date.now() + Math.random().toString(36).substr(2, 9),
-                  fechaHoraInicio: fechaInicioLocal.toISOString().slice(0, 16),
-                  fechaHoraFin: fechaFinLocal.toISOString().slice(0, 16),
+                  fechaHoraInicio: isoToLocalString(horario.fecha_hora_inicio),
+                  fechaHoraFin: isoToLocalString(horario.fecha_hora_fin),
                   descripcion: horario.observacion || '',
                   originalId: horario.id || Date.now() + Math.random().toString(36).substr(2, 9)
                 };
@@ -394,11 +480,11 @@ function HorarioCurso() {
                 title: cursoActualizado.nombre_curso,
                 start: horario.fecha_hora_inicio,
                 end: horario.fecha_hora_fin,
-                backgroundColor: '#555555',
-                borderColor: '#555555',
+                backgroundColor: cursoActualizado.color || '#4F46E5',
+                borderColor: cursoActualizado.color || '#4F46E5',
                 textColor: '#ffffff',
                 display: 'block',
-                classNames: ['fc-event-horario', 'fc-daygrid-block-event', 'fc-h-event'],
+                classNames: ['fc-daygrid-block-event', 'fc-h-event'],
                 extendedProps: {
                   descripcion: horario.observacion,
                   instructor: cursoActualizado.nombre_completo_facilitador,
@@ -413,9 +499,6 @@ function HorarioCurso() {
           setEventosCalendario(eventosCalendario);
         }
       }
-      
-      // Limpiar estado de horarios a eliminar
-      setHorariosAEliminar([]);
       
       toast.success('Horarios actualizados exitosamente');
     } catch (error) {
@@ -483,7 +566,12 @@ function HorarioCurso() {
         {/* Información del curso */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">{curso.nombre_curso}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              {curso.codigo && (
+                <span className="text-indigo-600 font-normal">({curso.codigo}) </span>
+              )}
+              {curso.nombre_curso}
+            </h1>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="flex items-center space-x-3">
@@ -614,7 +702,6 @@ function HorarioCurso() {
                 }}
                 eventContent={(eventInfo) => {
                   const esFeriado = eventInfo.event.extendedProps.esFeriado;
-                  const esEventoPrincipal = eventInfo.event.extendedProps.esEventoPrincipal;
                   const esHorario = eventInfo.event.extendedProps.esHorario;
 
                   if (esFeriado) {
@@ -699,11 +786,7 @@ function HorarioCurso() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (window.confirm('¿Está seguro de que desea eliminar este horario?')) {
-                          handleRemoveRow(index);
-                        }
-                      }}
+                      onClick={() => handleRemoveRow(index)}
                       className="p-2 text-red-600 hover:text-red-700 transition-colors"
                     >
                       <FontAwesomeIcon icon={faTrash} />
@@ -1046,11 +1129,6 @@ function HorarioCurso() {
           .fc-event-principal {
             background-color: var(--fc-event-bg-color) !important;
             border-color: var(--fc-event-bg-color) !important;
-          }
-
-          .fc-event-horario {
-            background-color: #555555 !important;
-            border-color: #555555 !important;
           }
 
           .fc-event-feriado {

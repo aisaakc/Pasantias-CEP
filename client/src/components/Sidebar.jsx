@@ -86,13 +86,13 @@ export default function Sidebar() {
   return (
     <aside className={`${isSupervisor ? 'bg-gradient-to-br from-red-200 via-red-100 to-red-300 border-4 border-red-500 shadow-2xl animate-pulse' : 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'} w-80 h-full ${isSupervisor ? 'text-red-900' : 'text-white'} flex-shrink-0 p-8 shadow-2xl backdrop-blur-sm border-r border-gray-700/30`}>
       <div className="mb-16">
-        <h2 className={`text-3xl font-bold ${isSupervisor ? 'bg-gradient-to-r from-red-700 via-red-500 to-red-800 bg-clip-text text-transparent' : 'bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent animate-gradient'}`}>CEP<br></br>Coordinación de Extensión Profesional</h2>
+        <h2 className={`text-3xl font-bold ${isSupervisor ? 'bg-gradient-to-r from-red-700 via-red-500 to-red-800 bg-clip-text text-transparent' : 'bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent animate-gradient'}`}>Coordinación de Extensión Profesional</h2>
         <div className={`${isSupervisor ? 'h-1 w-24 bg-gradient-to-r from-red-500 via-red-400 to-red-600' : 'h-1 w-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600'} mt-3 rounded-full`}></div>
       </div>
 
       <nav className="flex flex-col gap-3">
         {puedeAccederCursos && (
-          renderSidebarLink('/dashboard/cursos', 'Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion, isSupervisor)
+          renderSidebarLink('/dashboard/cursos', 'Calendario de Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion, isSupervisor)
         )}
 
         {puedeAccederListaCursos && (

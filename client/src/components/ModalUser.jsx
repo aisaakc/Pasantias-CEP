@@ -26,7 +26,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const { 
     createUser, 
-    updateUser, 
+    updateUserStore, 
     loading, 
     fetchSubclasificaciones,
     preguntas,
@@ -138,7 +138,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
       delete userData.confirmarContrasena;
 
       if (editData) {
-        await updateUser(editData.id_persona, userData);
+        await updateUserStore(editData.id_persona, userData);
         toast.success('Usuario actualizado correctamente');
         onClose();
       } else {

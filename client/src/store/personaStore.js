@@ -45,17 +45,21 @@ const usePersonaStore = create((set, get) => ({
 
   // Crear usuario
   createUser: async (userData) => {
+    console.log('Creando usuario:', userData);
     set({ loading: true, error: null });
     try {
       const response = await CreateUsers(userData);
+      console.log('Usuario creado exitosamente:', response.data);
       // Actualizar la lista de usuarios después de crear uno nuevo
       const usuariosResponse = await getUsuarios();
+      console.log('Lista de usuarios actualizada después de crear:', usuariosResponse.data.data.length);
       set({ 
         usuarios: usuariosResponse.data.data, 
         loading: false 
       });
       return response.data;
     } catch (error) {
+      console.error('Error al crear usuario:', error);
       set({ 
         error: error.response?.data?.message || error.message, 
         loading: false 
@@ -65,18 +69,22 @@ const usePersonaStore = create((set, get) => ({
   },
 
   // Actualizar usuario
-  updateUser: async (id, userData) => {
+  updateUserStore: async (id, userData) => {
+    console.log('Actualizando usuario:', id, userData);
     set({ loading: true, error: null });
     try {
       const response = await updateUser(id, userData);
+      console.log('Usuario actualizado exitosamente:', response.data);
       // Actualizar la lista de usuarios después de actualizar uno
       const usuariosResponse = await getUsuarios();
+      console.log('Lista de usuarios actualizada después de editar:', usuariosResponse.data.data.length);
       set({ 
         usuarios: usuariosResponse.data.data, 
         loading: false 
       });
       return response.data;
     } catch (error) {
+      console.error('Error al actualizar usuario:', error);
       set({ 
         error: error.response?.data?.message || error.message, 
         loading: false 
@@ -86,7 +94,7 @@ const usePersonaStore = create((set, get) => ({
   },
 
   // Eliminar usuario
-  deleteUser: async (id) => {
+  deleteUserStore: async (id) => {
     set({ loading: true, error: null });
     try {
       const response = await deleteUser(id);

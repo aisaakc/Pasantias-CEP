@@ -28,7 +28,7 @@ class CursoModel {
    async getAllCursosById(id) {
        try {
       const query = `
-        SELECT id_clasificacion AS id, nombre
+        SELECT id_clasificacion AS id, nombre, adicional
         FROM clasificacion
         WHERE type_id = $1;
       `;

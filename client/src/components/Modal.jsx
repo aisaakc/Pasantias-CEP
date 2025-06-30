@@ -24,12 +24,15 @@ import IconSelector from './IconSelector';
 const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo = null }) => {
   const { 
     createClasificacion, 
-    updateClasificacion, 
+    createSubclasificacionSilent,
+    updateClasificacionSilent,
     error, 
     clearError,
     fetchParentClasifications,
+    refreshSubClasificaciones,
     fetchProgramas,
-    programas
+    programas,
+    getSubclasificaciones
   } = useClasificacionStore();
 
   const { isSupervisor } = useAuthStore();
@@ -45,8 +48,11 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [protectedValue, setProtectedValue] = useState(editData?.protected === 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [programasConMascaras, setProgramasConMascaras] = useState([]);
+  const [codigoGenerado, setCodigoGenerado] = useState('');
+  const [mascaraActual, setMascaraActual] = useState('');
 
-  // Refs para inputs no controlados - máxima velocidad
+  // Refs para inputs de texto - máxima velocidad (no controlados)
   const inputRefs = useRef({});
 
   // Estados locales para inputs optimizados - usando useMemo para evitar re-creaciones
@@ -62,37 +68,40 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     isMobile: editData?.adicional?.mobile || false,
     codigo: (editData?.adicional && typeof editData.adicional === 'object' && 'id' in editData.adicional) ? editData.adicional.id : '',
     costo: (editData?.adicional && typeof editData.adicional === 'object' && 'costo' in editData.adicional) ? editData.adicional.costo : ''
-  }), [editData, parentInfo, parentId]);
+  }), [
+    editData?.id_clasificacion,
+    editData?.nombre,
+    editData?.descripcion,
+    editData?.id_icono,
+    editData?.type_id,
+    editData?.parent_id,
+    editData?.orden,
+    editData?.adicional,
+    parentInfo?.type_id,
+    parentInfo?.parent_id,
+    parentId
+  ]);
 
   const [formValues, setFormValues] = useState(initialFormValues);
 
   // Determinar si es una clasificación principal o subclasificación
-  const isMainClassification = !parentInfo && !editData?.type_id;
+  const isMainClassification = useMemo(() => {
+    return !parentInfo && !editData?.type_id;
+  }, [parentInfo, editData?.type_id]);
 
-  // Función para obtener valores de los inputs no controlados
+  // Función para obtener valores de los inputs - híbrida para máximo rendimiento
   const getFormValues = useCallback(() => {
-    const values = { ...initialFormValues };
+    const values = { ...formValues };
     
-    // Obtener valores de inputs no controlados
+    // Obtener valores de inputs de texto no controlados (máxima velocidad)
     Object.keys(inputRefs.current).forEach(key => {
       if (inputRefs.current[key] && inputRefs.current[key].value !== undefined) {
         values[key] = inputRefs.current[key].value;
       }
     });
 
-    // Obtener valores de selects
-    const typeIdSelect = inputRefs.current.type_id;
-    if (typeIdSelect) values.type_id = typeIdSelect.value;
-    
-    const parentIdSelect = inputRefs.current.parent_id;
-    if (parentIdSelect) values.parent_id = parentIdSelect.value;
-
-    // Obtener valores de checkboxes
-    const isMobileCheckbox = inputRefs.current.isMobile;
-    if (isMobileCheckbox) values.isMobile = isMobileCheckbox.checked;
-
     return values;
-  }, [initialFormValues]);
+  }, [formValues]);
 
   // Función de validación personalizada - optimizada
   const validateForm = useCallback(() => {
@@ -128,6 +137,117 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     return Object.keys(newErrors).length === 0;
   }, [getFormValues]);
 
+  // Función para generar código automático basado en máscaras
+  const generarCodigoAutomatico = useCallback(async (programaId) => {
+    try {
+      console.log('Generando código automático para programa ID:', programaId);
+      
+      // Buscar el programa seleccionado
+      const programa = programasConMascaras.find(p => p.id === Number(programaId));
+      if (!programa) {
+        console.log('No se encontró el programa con ID:', programaId);
+        return '';
+      }
+
+      console.log('Programa encontrado:', programa.nombre);
+
+      // Determinar la máscara basada en el nombre del programa
+      let mascara = 'CEP-999'; // Máscara por defecto
+      
+      // Si es Cisco Academy, usar máscara específica
+      if (programa.nombre.toLowerCase().includes('cisco')) {
+        mascara = 'CEP-CISCO-999';
+        console.log('Usando máscara Cisco:', mascara);
+      } else {
+        console.log('Usando máscara estándar:', mascara);
+      }
+
+      // Establecer la máscara actual para mostrar en la UI
+      setMascaraActual(mascara);
+
+      // Obtener cursos existentes del programa
+      const cursosExistentes = await getSubclasificaciones(CLASSIFICATION_IDS.CURSOS, programaId);
+      console.log('Cursos existentes del programa:', cursosExistentes.data);
+      
+      const codigosExistentes = cursosExistentes.data
+        .filter(curso => curso.adicional && curso.adicional.id)
+        .map(curso => curso.adicional.id);
+
+      console.log('Códigos existentes:', codigosExistentes);
+
+      // Filtrar códigos que siguen el patrón de la máscara
+      const codigosValidos = codigosExistentes.filter(codigo => {
+        const pattern = mascara.replace('999', '\\d+');
+        const regex = new RegExp(`^${pattern}$`);
+        const esValido = regex.test(codigo);
+        console.log(`Código ${codigo} - Patrón ${pattern} - Válido: ${esValido}`);
+        return esValido;
+      });
+
+      console.log('Códigos válidos que siguen el patrón:', codigosValidos);
+
+      // Extraer números de los códigos válidos
+      const numeros = codigosValidos.map(codigo => {
+        const match = codigo.match(/\d+$/);
+        const numero = match ? parseInt(match[0]) : 0;
+        console.log(`Código ${codigo} -> Número ${numero}`);
+        return numero;
+      });
+
+      // Encontrar el siguiente número disponible
+      const siguienteNumero = numeros.length > 0 ? Math.max(...numeros) + 1 : 1;
+      console.log('Siguiente número disponible:', siguienteNumero);
+      
+      // Generar el código con el formato de la máscara
+      const codigoGenerado = mascara.replace('999', String(siguienteNumero).padStart(2, '0'));
+      console.log('Código generado final:', codigoGenerado);
+      
+      return codigoGenerado;
+    } catch (error) {
+      console.error('Error al generar código automático:', error);
+      return '';
+    }
+  }, [programasConMascaras, getSubclasificaciones]);
+
+  // Función para manejar cambios en el programa seleccionado
+  const handleProgramaChange = useCallback((e) => {
+    const parentId = e.target.value;
+    console.log('Programa seleccionado:', parentId);
+    console.log('formValues.type_id:', formValues.type_id);
+    console.log('parentInfo?.type_id:', parentInfo?.type_id);
+    console.log('CLASSIFICATION_IDS.CURSOS:', CLASSIFICATION_IDS.CURSOS);
+    
+    setFormValues(prev => ({ ...prev, parent_id: parentId }));
+    
+    // Verificar si es un curso usando tanto formValues.type_id como parentInfo.type_id
+    const isCursos = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS || 
+                    Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS;
+    
+    console.log('¿Es un curso?', isCursos);
+    
+    // Si es un curso, generar código automáticamente inmediatamente al seleccionar programa
+    if (parentId && isCursos && !editData) {
+      console.log('Generando código automático para programa:', parentId);
+      generarCodigoAutomatico(parentId).then(codigo => {
+        console.log('Código generado:', codigo);
+        if (codigo) {
+          setCodigoGenerado(codigo);
+          // Actualizar tanto el estado como el campo de código en el formulario
+          setFormValues(prev => ({ ...prev, codigo }));
+          if (inputRefs.current['codigo']) {
+            inputRefs.current['codigo'].value = codigo;
+          }
+        }
+      });
+    } else {
+      console.log('No se generó código porque:', {
+        parentId: !!parentId,
+        isCursos,
+        editData: !!editData
+      });
+    }
+  }, [formValues.type_id, parentInfo?.type_id, editData, generarCodigoAutomatico]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -159,10 +279,16 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
 
       // Guardar código y costo en adicional si es curso
       if (isCursos) {
+        const codigoFinal = formValues.codigo || codigoGenerado || '';
+        console.log('Código final a guardar:', codigoFinal);
+        console.log('Costo a guardar:', formValues.costo);
+        
         dataToSend.adicional = {
-          id: formValues.codigo || '',
+          id: codigoFinal,
           costo: formValues.costo !== '' ? Number(formValues.costo) : null
         };
+        
+        console.log('Objeto adicional final para curso:', dataToSend.adicional);
       }
 
       // Format permissions as an object with id_objeto array and id_clasificacion array for roles
@@ -199,18 +325,30 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       }
 
       if (editData) {
-        await updateClasificacion(editData.id_clasificacion, dataToSend);
+        await updateClasificacionSilent(editData.id_clasificacion, dataToSend);
         toast.success(`Clasificación "${dataToSend.nombre}" actualizada correctamente`);
       } else {
-        await createClasificacion(dataToSend);
+        if (isMainClassification) {
+          await createClasificacion(dataToSend);
+        } else {
+          await createSubclasificacionSilent(dataToSend);
+        }
         const message = isMainClassification 
           ? `Clasificación principal "${dataToSend.nombre}" creada correctamente`
           : `Subclasificación "${dataToSend.nombre}" creada correctamente`;
         toast.success(message);
       }
 
-      onClose();
-      await fetchParentClasifications();
+      handleClose();
+      
+      // Solo actualizar las clasificaciones principales si es una clasificación principal
+      if (isMainClassification) {
+        await fetchParentClasifications();
+      } else if (dataToSend.type_id) {
+        // Si es una subclasificación, actualizar todas las subclasificaciones del mismo type_id
+        // sin filtrar por parent_id para mostrar todas las subclasificaciones del tipo
+        await refreshSubClasificaciones(dataToSend.type_id, null);
+      }
     } catch (err) {
       console.error("Error al guardar:", err);
       // Extraer los mensajes de error del backend
@@ -233,8 +371,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   // Cargar datos necesarios
   useEffect(() => {
     if (isOpen) {
-      const loadData = async () => {
-        try {
+        const loadData = async () => {
+          try {
           // Para crear clasificación principal, cargar clasificaciones principales
           if (!editData && !parentInfo?.type_id) {
             const principalesResponse = await getAllClasificaciones();
@@ -258,6 +396,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             
             if (typeId === CLASSIFICATION_IDS.CURSOS) {
               fetchProgramas();
+              // Cargar programas con sus máscaras
+              const programasResponse = await getSubclasificaciones(CLASSIFICATION_IDS.PROGRAMAS, null);
+              setProgramasConMascaras(programasResponse.data || []);
             }
             
             if (typeId === CLASSIFICATION_IDS.CARRERAS) {
@@ -266,18 +407,18 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             }
             
             if (typeId === CLASSIFICATION_IDS.PROGRAMAS) {
-              const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
-              setCarreras(carrerasResponse.data.data || []);
+                const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
+                setCarreras(carrerasResponse.data.data || []);
+              }
             }
+          } catch (err) {
+            console.error('Error al cargar datos:', err);
+            toast.error('Error al cargar los datos');
           }
-        } catch (err) {
-          console.error('Error al cargar datos:', err);
-          toast.error('Error al cargar los datos');
-        }
-      };
-      
-      loadData();
-    }
+        };
+        
+        loadData();
+      }
   }, [isOpen, editData?.id_clasificacion, parentInfo?.type_id]);
 
   // Efecto para manejar la apertura y cierre del modal
@@ -301,7 +442,18 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       const timeout = setTimeout(() => setShouldRender(false), 300);
       return () => clearTimeout(timeout);
     }
-  }, [isOpen, editData?.adicional, isSupervisor, editData, parentInfo, parentId, initialFormValues]);
+  }, [isOpen, isSupervisor]);
+
+  // Efecto separado para actualizar valores del formulario cuando cambian los datos de edición
+  useEffect(() => {
+    if (isOpen && editData) {
+      setFormValues(initialFormValues);
+      if (isSupervisor) {
+        setAdicionalRaw(editData?.adicional ? JSON.stringify(editData.adicional, null, 2) : '');
+        setProtectedValue(editData?.protected === 1);
+      }
+    }
+  }, [editData?.id_clasificacion, isOpen, isSupervisor, initialFormValues]);
 
   // Efecto para limpiar errores cuando se cierra el modal
   useEffect(() => {
@@ -309,6 +461,39 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       clearError();
     }
   }, [isOpen, clearError]);
+
+  // Efecto para generar código automático cuando se seleccione el programa
+  useEffect(() => {
+    const generarCodigo = async () => {
+      // Verificar si es un curso usando tanto formValues.type_id como parentInfo.type_id
+      const isCursos = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS || 
+                      Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS;
+      
+      console.log('Efecto - ¿Es un curso?', isCursos);
+      console.log('Efecto - parent_id:', formValues.parent_id);
+      
+      if (formValues.parent_id && isCursos && !editData) {
+        console.log('Efecto - Generando código automático para programa:', formValues.parent_id);
+        const codigo = await generarCodigoAutomatico(formValues.parent_id);
+        console.log('Efecto - Código generado:', codigo);
+        if (codigo) {
+          setCodigoGenerado(codigo);
+          // Actualizar tanto el estado como el campo de código en el formulario
+          setFormValues(prev => ({ ...prev, codigo }));
+          if (inputRefs.current['codigo']) {
+            inputRefs.current['codigo'].value = codigo;
+          }
+        }
+      }
+    };
+
+    generarCodigo();
+  }, [formValues.parent_id, formValues.type_id, parentInfo?.type_id, editData, generarCodigoAutomatico]);
+
+  // Memoizar la función onClose para evitar re-renders
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
   if (!shouldRender) return null;
 
@@ -318,7 +503,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-500 ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`} 
-        onClick={onClose}
+        onClick={handleClose}
       />
       
       <div 
@@ -369,7 +554,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
               {editData ? `Editar ${editData.nombre}` : isMainClassification ? 'Crear Clasificación' : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
             </h2>
             <button 
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full transform hover:rotate-90 duration-300"
             >
               <FontAwesomeIcon icon={faXmark} className="text-xl" />
@@ -401,42 +586,52 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                 type: 'icon'
               },
             ].map((field) => (
-              <div 
-                key={field.name}
+                    <div 
+                      key={field.name}
                 className="mb-5"
-              >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
-                  {field.label}
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={field.icon} className="mr-2 text-blue-500" />
+                        {field.label}
                   {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                {field.type === 'textarea' ? (
+                      </label>
+                      {field.type === 'textarea' ? (
                   <textarea
                     ref={el => inputRefs.current[field.name] = el}
-                    name={field.name}
+                          name={field.name}
                     defaultValue={formValues[field.name] || ''}
-                    placeholder={`${field.label} detallado...`}
-                    className={`w-full px-4 py-3 rounded-lg border ${
+                    onBlur={(e) => {
+                      if (field.name === 'descripcion') {
+                        setFormValues(prev => ({ ...prev, descripcion: e.target.value }));
+                      }
+                    }}
+                          placeholder={`${field.label} detallado...`}
+                          className={`w-full px-4 py-3 rounded-lg border ${
                       errors[field.name] 
-                        ? 'border-red-300 focus:ring-red-500' 
-                        : 'border-gray-200 focus:ring-blue-500'
-                    } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
-                  />
+                              ? 'border-red-300 focus:ring-red-500' 
+                              : 'border-gray-200 focus:ring-blue-500'
+                          } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300 min-h-[100px] resize-none`}
+                        />
                 ) : field.type === 'icon' ? (
-                  <IconSelector
+                          <IconSelector
                     value={formValues[field.name] || ''}
                     onChange={(e) => {
                       // Para IconSelector mantenemos el estado controlado
                       setFormValues(prev => ({ ...prev, [field.name]: e.target.value }));
                     }}
                     name={field.name}
-                  />
-                ) : (
+                          />
+                        ) : (
                   <input
                     ref={el => inputRefs.current[field.name] = el}
                     type={field.type}
-                    name={field.name}
+                            name={field.name}
                     defaultValue={formValues[field.name] || ''}
+                    onBlur={(e) => {
+                      if (field.name === 'nombre') {
+                        setFormValues(prev => ({ ...prev, nombre: e.target.value }));
+                      }
+                    }}
                     placeholder={`${field.label}...`}
                     className={`w-full px-4 py-3 rounded-lg border ${
                       errors[field.name] 
@@ -461,15 +656,15 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   Tipo <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
-                  ref={el => inputRefs.current.type_id = el}
                   name="type_id"
-                  defaultValue={formValues.type_id}
-                  className={`w-full px-4 py-3 rounded-lg border ${
+                  value={formValues.type_id}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, type_id: e.target.value }))}
+                            className={`w-full px-4 py-3 rounded-lg border ${
                     errors.type_id 
-                      ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-200 focus:ring-blue-500'
-                  } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                >
+                                ? 'border-red-300 focus:ring-red-500' 
+                                : 'border-gray-200 focus:ring-blue-500'
+                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                          >
                   <option value="">Seleccionar tipo</option>
                   {clasificacionesPrincipales.map((c) => (
                     <option key={c.id_clasificacion} value={c.id_clasificacion}>{c.nombre}</option>
@@ -491,13 +686,13 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   Programa <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
-                  ref={el => inputRefs.current.parent_id = el}
                   name="parent_id"
-                  defaultValue={formValues.parent_id}
-                  className={`w-full px-4 py-3 rounded-lg border ${
+                  value={formValues.parent_id}
+                  onChange={handleProgramaChange}
+                          className={`w-full px-4 py-3 rounded-lg border ${
                     errors.parent_id 
-                      ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-200 focus:ring-blue-500'
+                              ? 'border-red-300 focus:ring-red-500' 
+                              : 'border-gray-200 focus:ring-blue-500'
                   } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
                 >
                   <option value="">Seleccionar programa</option>
@@ -520,9 +715,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   Instituto <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
-                  ref={el => inputRefs.current.parent_id = el}
                   name="parent_id"
-                  defaultValue={formValues.parent_id}
+                  value={formValues.parent_id}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, parent_id: e.target.value }))}
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.parent_id 
                       ? 'border-red-300 focus:ring-red-500' 
@@ -549,9 +744,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                   Carrera <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
-                  ref={el => inputRefs.current.parent_id = el}
                   name="parent_id"
-                  defaultValue={formValues.parent_id}
+                  value={formValues.parent_id}
+                  onChange={(e) => setFormValues(prev => ({ ...prev, parent_id: e.target.value }))}
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.parent_id 
                       ? 'border-red-300 focus:ring-red-500' 
@@ -580,13 +775,29 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                     Código
                   </label>
                   <input
-                    ref={el => inputRefs.current.codigo = el}
+                    ref={el => inputRefs.current['codigo'] = el}
                     type="text"
                     name="codigo"
-                    defaultValue={formValues.codigo}
-                    placeholder="Ingrese el código del curso"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
+                    value={editData ? formValues.codigo : codigoGenerado || formValues.codigo}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, codigo: e.target.value }))}
+                    placeholder="Código generado automáticamente"
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      !editData && codigoGenerado 
+                        ? 'border-green-300 bg-green-50 focus:ring-green-500' 
+                        : 'border-gray-200 focus:ring-blue-500'
+                    } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
                   />
+                  {!editData && codigoGenerado && (
+                    <p className="mt-1 text-sm text-green-600 flex items-center">
+                      <span className="mr-2">✓</span>
+                      Código generado automáticamente
+                    </p>
+                  )}
+                  {mascaraActual && (
+                    <p className="mt-1 text-sm text-blue-600">
+                      Máscara: <code className="bg-blue-100 px-2 py-1 rounded font-mono">{mascaraActual}</code>
+                    </p>
+                  )}
                 </div>
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -594,10 +805,11 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                     Costo
                   </label>
                   <input
-                    ref={el => inputRefs.current.costo = el}
+                    ref={el => inputRefs.current['costo'] = el}
                     type="number"
                     name="costo"
                     defaultValue={formValues.costo}
+                    onBlur={(e) => setFormValues(prev => ({ ...prev, costo: e.target.value }))}
                     placeholder="Ingrese el costo del curso"
                     step="0.01"
                     min="0"
@@ -614,10 +826,11 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                 Orden
               </label>
               <input
-                ref={el => inputRefs.current.orden = el}
+                ref={el => inputRefs.current['orden'] = el}
                 type="number"
                 name="orden"
                 defaultValue={formValues.orden}
+                onBlur={(e) => setFormValues(prev => ({ ...prev, orden: e.target.value }))}
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 appearance-none"
               />
               {errors.orden && (
@@ -630,151 +843,151 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             {/* Permisos de Objetos para roles */}
             {Number(formValues.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
-                  Permisos de Objetos
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {permisos.map((permiso) => (
-                    <label 
-                      key={permiso.id}
-                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
-                    >
-                      <input
-                        type="checkbox"
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
+                        Permisos de Objetos
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {permisos.map((permiso) => (
+                          <label 
+                            key={permiso.id}
+                            className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
+                          >
+                            <input
+                              type="checkbox"
                         checked={formValues.permisos ? formValues.permisos.split(',').includes(permiso.id.toString()) : false}
-                        onChange={() => {
+                              onChange={() => {
                           const currentPermisos = formValues.permisos ? formValues.permisos.split(',').map(p => p.trim()) : [];
-                          const newPermisos = currentPermisos.includes(permiso.id.toString())
-                            ? currentPermisos.filter(id => id !== permiso.id.toString())
-                            : [...currentPermisos, permiso.id.toString()];
+                                const newPermisos = currentPermisos.includes(permiso.id.toString())
+                                  ? currentPermisos.filter(id => id !== permiso.id.toString())
+                                  : [...currentPermisos, permiso.id.toString()];
                           setFormValues(prev => ({ ...prev, permisos: newPermisos.join(',') }));
-                        }}
-                        className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
-                      />
-                      <span className="text-gray-700 text-sm leading-tight">
-                        {permiso.nombre}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+                              }}
+                              className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
+                            />
+                            <span className="text-gray-700 text-sm leading-tight">
+                              {permiso.nombre}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
             {/* Configuraciones Accesibles para roles */}
             {Number(formValues.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
-                  Configuraciones Accesibles
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {clasificacionesPrincipales.map((clasificacion) => (
-                    <label 
-                      key={clasificacion.id_clasificacion}
-                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
-                    >
-                      <input
-                        type="checkbox"
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
+                        Configuraciones Accesibles
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {clasificacionesPrincipales.map((clasificacion) => (
+                          <label 
+                            key={clasificacion.id_clasificacion}
+                            className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
+                          >
+                            <input
+                              type="checkbox"
                         checked={formValues.clasificaciones ? formValues.clasificaciones.split(',').includes(clasificacion.id_clasificacion.toString()) : false}
-                        onChange={() => {
+                              onChange={() => {
                           const currentClasificaciones = formValues.clasificaciones ? formValues.clasificaciones.split(',').map(c => c.trim()) : [];
-                          const newClasificaciones = currentClasificaciones.includes(clasificacion.id_clasificacion.toString())
-                            ? currentClasificaciones.filter(id => id !== clasificacion.id_clasificacion.toString())
-                            : [...currentClasificaciones, clasificacion.id_clasificacion.toString()];
+                                const newClasificaciones = currentClasificaciones.includes(clasificacion.id_clasificacion.toString())
+                                  ? currentClasificaciones.filter(id => id !== clasificacion.id_clasificacion.toString())
+                                  : [...currentClasificaciones, clasificacion.id_clasificacion.toString()];
                           setFormValues(prev => ({ ...prev, clasificaciones: newClasificaciones.join(',') }));
-                        }}
-                        className="form-checkbox h-4 w-4 text-green-600 mt-1 flex-shrink-0"
-                      />
-                      <span className="text-gray-700 text-sm leading-tight">
-                        Configuración de {clasificacion.nombre}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+                              }}
+                              className="form-checkbox h-4 w-4 text-green-600 mt-1 flex-shrink-0"
+                            />
+                            <span className="text-gray-700 text-sm leading-tight">
+                              Configuración de {clasificacion.nombre}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-            {/* Campo checkbox para PREFIJOS_TLF */}
+                  {/* Campo checkbox para PREFIJOS_TLF */}
             {(Number(formValues.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF || Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) && (
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faMobile} className="mr-2 text-blue-500" />
-                  Tipo de Teléfono
-                </label>
-                <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200">
-                  <input
-                    ref={el => inputRefs.current.isMobile = el}
-                    type="checkbox"
-                    name="isMobile"
-                    defaultChecked={formValues.isMobile || false}
-                    className="form-checkbox h-5 w-5 text-blue-600"
-                  />
-                  <span className="text-gray-700 text-sm font-medium">
-                    Es un número móvil
-                  </span>
-                  <span className="text-gray-500 text-xs ml-2">
-                    (Marcar si es un prefijo de telefonía móvil)
-                  </span>
-                </div>
-              </div>
-            )}
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FontAwesomeIcon icon={faMobile} className="mr-2 text-blue-500" />
+                        Tipo de Teléfono
+                      </label>
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200">
+                        <input
+                          type="checkbox"
+                          name="isMobile"
+                    checked={formValues.isMobile || false}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, isMobile: e.target.checked }))}
+                          className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <span className="text-gray-700 text-sm font-medium">
+                          Es un número móvil
+                        </span>
+                        <span className="text-gray-500 text-xs ml-2">
+                          (Marcar si es un prefijo de telefonía móvil)
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-            {/* SOLO SUPERVISOR: Campo JSON adicional y protected */}
-            {isSupervisor && (
+                  {/* SOLO SUPERVISOR: Campo JSON adicional y protected */}
+                  {isSupervisor && (
               <div className="mb-5 space-y-4 p-4 border-2 border-red-400 rounded-lg bg-red-50">
-                <label className="block text-sm font-bold text-red-700 mb-2">JSON adicional (solo supervisor)</label>
-                <textarea
-                  value={adicionalRaw}
+                      <label className="block text-sm font-bold text-red-700 mb-2">JSON adicional (solo supervisor)</label>
+                      <textarea
+                        value={adicionalRaw}
                   onChange={(e) => setAdicionalRaw(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-red-900 font-mono"
-                  placeholder={'{\n  "clave": "valor"\n}'}
-                />
-                <div className="flex items-center space-x-3 mt-2">
-                  <input
-                    type="checkbox"
-                    checked={protectedValue}
+                        rows={4}
+                        className="w-full px-4 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-red-900 font-mono"
+                        placeholder={'{\n  "clave": "valor"\n}'}
+                      />
+                      <div className="flex items-center space-x-3 mt-2">
+                        <input
+                          type="checkbox"
+                          checked={protectedValue}
                     onChange={(e) => setProtectedValue(e.target.checked)}
-                    className="form-checkbox h-5 w-5 text-red-600"
-                  />
-                  <span className="text-red-700 text-sm font-bold">Protected (solo supervisor)</span>
-                </div>
-              </div>
-            )}
+                          className="form-checkbox h-5 w-5 text-red-600"
+                        />
+                        <span className="text-red-700 text-sm font-bold">Protected (solo supervisor)</span>
+                      </div>
+                    </div>
+                  )}
 
-            {error && (
+                  {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center space-x-2">
-                <FontAwesomeIcon icon={faTimes} className="text-red-500" />
-                <p>{error}</p>
-              </div>
-            )}
+                      <FontAwesomeIcon icon={faTimes} className="text-red-500" />
+                      <p>{error}</p>
+                    </div>
+                  )}
 
             {/* Footer */}
             <div className="border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={onClose}
+                    <div className="flex justify-end space-x-4">
+                      <button
+                        type="button"
+                        onClick={handleClose}
                   className="px-6 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-sm hover:shadow"
-                  disabled={isSubmitting}
-                >
-                  <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                  <span>Cancelar</span>
-                </button>
-                <button
-                  type="submit"
+                        disabled={isSubmitting}
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                        <span>Cancelar</span>
+                      </button>
+                      <button
+                        type="submit"
                   className="px-6 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-sm hover:shadow-lg disabled:opacity-50"
-                  disabled={isSubmitting}
-                >
-                  <FontAwesomeIcon 
-                    icon={faSave} 
-                    className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
-                  />
-                  <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
-                </button>
-              </div>
-            </div>
+                        disabled={isSubmitting}
+                      >
+                        <FontAwesomeIcon 
+                          icon={faSave} 
+                          className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
+                        />
+                        <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
+                      </button>
+                    </div>
+                  </div>
           </form>
         </div>
       </div>

@@ -101,6 +101,32 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
+  // Refrescar subclasificaciones sin cambiar el estado de loading (para evitar parpadeos)
+  refreshSubClasificaciones: async (id, id_parent) => {
+    try {
+      const response = await getAllSubclasificaciones(id, id_parent);
+      set(state => ({
+        ...state,
+        subClasificaciones: response.data,
+      }));
+      return response;
+    } catch (error) {
+      console.error("Error en refreshSubClasificaciones:", error);
+      // No cambiar el estado de loading ni error para evitar parpadeos
+      throw error;
+    }
+  },
+
+  // Función directa para obtener subclasificaciones (para uso en componentes)
+  getSubclasificaciones: async (id, id_parent) => {
+    try {
+      const response = await getAllSubclasificaciones(id, id_parent);
+      return response;
+    } catch (error) {
+      console.error("Error en getSubclasificaciones:", error);
+      throw error;
+    }
+  },
 
   // Obtener todas las clasificaciones
   fetchAllClasificaciones: async () => {
@@ -120,23 +146,7 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  // Obtener todos los íconos
-  // fetchIcons: async () => {
-  //   set({ loading: true, error: null });
-  //   try {
-  //     const response = await getAllIcons();
-  //     set({
-  //       icons: response.data,
-  //       loading: false,
-  //     });
-  //   } catch (error) {
-  //     console.error("Error al obtener los íconos:", error);
-  //     set({
-  //       loading: false,
-  //       error: 'Error al obtener los íconos.',
-  //       icons: []
-  //     });
-  //   }
+  
   // },
 
   // Operaciones de escritura
@@ -171,8 +181,9 @@ export const useClasificacionStore = create((set, get) => ({
       const response = await createClasificacionAPI(data);
       
       // Actualizar las subclasificaciones inmediatamente después de crear una nueva
+      // Mostrar todas las subclasificaciones del mismo type_id, no solo las del parent_id específico
       if (data.type_id) {
-        const subResponse = await getAllSubclasificaciones(data.type_id);
+        const subResponse = await getAllSubclasificaciones(data.type_id, null);
         set(state => ({
           ...state,
           subClasificaciones: subResponse.data,
@@ -192,6 +203,33 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
+  // Versión optimizada que no cambia el estado de loading (para evitar parpadeos)
+  createSubclasificacionSilent: async (data) => {
+    try {
+      // Validar datos requeridos
+      if (!data.nombre || !data.type_id) {
+        throw new Error('El nombre y el tipo son campos requeridos');
+      }
+
+      const response = await createClasificacionAPI(data);
+      
+      // Actualizar las subclasificaciones sin cambiar el estado de loading
+      // Mostrar todas las subclasificaciones del mismo type_id, no solo las del parent_id específico
+      if (data.type_id) {
+        const subResponse = await getAllSubclasificaciones(data.type_id, null);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data,
+        }));
+      }
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || 'Error al crear la subclasificación';
+      // No cambiar el estado de loading para evitar parpadeos
+      throw error;
+    }
+  },
+
   updateClasificacion: async (id, data) => {
     set({ loading: true, error: null });
     try {
@@ -203,8 +241,9 @@ export const useClasificacionStore = create((set, get) => ({
       const response = await updateClasificacionAPI(id, data);
       
       // Actualizar el estado después de la actualización
+      // Mostrar todas las subclasificaciones del mismo type_id, no solo las del parent_id específico
       if (data.type_id) {
-        const subResponse = await getAllSubclasificaciones(data.type_id, data.parent_id);
+        const subResponse = await getAllSubclasificaciones(data.type_id, null);
         set(state => ({
           ...state,
           subClasificaciones: subResponse.data,
@@ -233,14 +272,96 @@ export const useClasificacionStore = create((set, get) => ({
     }
   },
 
-  deleteClasificacion: async (id) => {
+  // Versión optimizada que no cambia el estado de loading (para evitar parpadeos)
+  updateClasificacionSilent: async (id, data) => {
+    try {
+      // Validar datos requeridos
+      if (!data.nombre) {
+        throw new Error('El nombre es un campo requerido');
+      }
+
+      const response = await updateClasificacionAPI(id, data);
+      
+      // Actualizar el estado después de la actualización sin cambiar loading
+      // Mostrar todas las subclasificaciones del mismo type_id, no solo las del parent_id específico
+      if (data.type_id) {
+        const subResponse = await getAllSubclasificaciones(data.type_id, null);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data,
+        }));
+      } else {
+        // Si no es una subclasificación, actualizar las clasificaciones principales
+        const parentResponse = await getParentClassifications();
+        set(state => ({
+          ...state,
+          parentClasifications: parentResponse.data,
+        }));
+      }
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar la clasificación';
+      // No cambiar el estado de loading para evitar parpadeos
+      throw error;
+    }
+  },
+
+  deleteClasificacion: async (id, typeId) => {
     set({ loading: true, error: null });
     try {
       await deleteClasificacion(id);
-      await updateStoreState(set);
+      
+      // Si tenemos typeId, actualizar todas las subclasificaciones del mismo type_id
+      if (typeId) {
+        const subResponse = await getAllSubclasificaciones(typeId, null);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data,
+          loading: false,
+          error: null
+        }));
+      } else {
+        // Si no tenemos typeId, actualizar todo el estado
+        await updateStoreState(set);
+      }
+      
       return { success: true, message: 'Clasificación eliminada correctamente' };
     } catch (error) {
       handleError(set, error, 'Error al eliminar la clasificación.');
+      throw error;
+    }
+  },
+
+  // Versión silenciosa que no cambia el estado de loading (para evitar parpadeos)
+  deleteClasificacionSilent: async (id, typeId, parentId) => {
+    try {
+      await deleteClasificacion(id);
+      
+      // Si tenemos typeId, actualizar todas las subclasificaciones del mismo type_id
+      if (typeId) {
+        const subResponse = await getAllSubclasificaciones(typeId, null);
+        set(state => ({
+          ...state,
+          subClasificaciones: subResponse.data,
+        }));
+      } else {
+        // Si no tenemos typeId, actualizar todo el estado sin cambiar loading
+        const [allClasificacionesResponse, parentClasificationsResponse] = await Promise.all([
+          getAllClasificaciones(),
+          getParentClassifications()
+        ]);
+        
+        set(state => ({
+          ...state,
+          allClasificaciones: allClasificacionesResponse.data,
+          parentClasifications: parentClasificationsResponse.data,
+        }));
+      }
+      
+      return { success: true, message: 'Clasificación eliminada correctamente' };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar la clasificación';
+      // No cambiar el estado de loading para evitar parpadeos
       throw error;
     }
   },

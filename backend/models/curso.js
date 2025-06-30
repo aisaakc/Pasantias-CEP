@@ -153,10 +153,28 @@ class CursoModel {
       color,
       duracion,
       horarios,
-      codigo_cohorte
+      codigo_cohorte,
+      participante
     } = cursoData;
 
     console.log('Datos recibidos en modelo updateCurso:', cursoData);
+
+    // Obtener los participantes actuales
+    let participantes = [];
+    try {
+      const getQuery = 'SELECT partipantes FROM cursos WHERE id_curso = $1';
+      const getResult = await pool.query(getQuery, [id]);
+      participantes = getResult.rows[0]?.partipantes || [];
+      if (!Array.isArray(participantes)) participantes = [];
+    } catch (e) {
+      console.warn('No se pudo obtener participantes previos:', e.message);
+      participantes = [];
+    }
+
+    // Agregar el nuevo participante si viene en el payload
+    if (participante) {
+      participantes.push(participante);
+    }
 
     const query = `
       UPDATE cursos 
@@ -173,8 +191,9 @@ class CursoModel {
         color = $10,
         duracion = $11,
         horarios = $12,
-        codigo_cohorte = $13
-      WHERE id_curso = $14
+        codigo_cohorte = $13,
+        partipantes = $14
+      WHERE id_curso = $15
       RETURNING *;
     `;
 
@@ -193,6 +212,7 @@ class CursoModel {
         duracion,
         horarios ? JSON.stringify(horarios) : null,
         codigo_cohorte || null,
+        JSON.stringify(participantes),
         id
       ];
 

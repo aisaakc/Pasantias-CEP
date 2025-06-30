@@ -6,7 +6,7 @@ import useAuthStore from '../store/authStore';
 
 
 export default function ModalParticipante({ onClose }) {
-  const addParticipante = useCursoStore((state) => state.addParticipante);
+  const updateCurso = useCursoStore((state) => state.updateCurso);
   const { user } = useAuthStore();
   const [form, setForm] = useState({
     curso_id: '',
@@ -56,12 +56,12 @@ export default function ModalParticipante({ onClose }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     let soporte_pago_url = form.soporte_pago ? form.soporte_pago.name : '';
     const participante = {
-      id_usuario: user?.id_persona,
+      id_persona: user?.id_persona,
       nombre: `${user?.nombre} ${user?.apellido}`,
       curso_id: Number(form.curso_id),
       monto: Number(form.monto),
@@ -72,19 +72,33 @@ export default function ModalParticipante({ onClose }) {
       cedula_cuenta: form.cedula_cuenta,
       soporte_pago: soporte_pago_url,
     };
-    addParticipante(participante);
-    setForm({
-      curso_id: '',
-      monto: '',
-      forma_pago: '',
-      nro_referencia: '',
-      banco: '',
-      fecha_pago: '',
-      cedula_cuenta: '',
-      soporte_pago: null,
-    });
-    setIsSubmitting(false);
-    if (onClose) onClose();
+    const cursoSeleccionado = cursos.find(c => c.id_curso === Number(form.curso_id));
+    if (!cursoSeleccionado) {
+      alert('Curso no encontrado');
+      setIsSubmitting(false);
+      return;
+    }
+    try {
+      await updateCurso({
+        ...cursoSeleccionado,
+        participante
+      });
+      setForm({
+        curso_id: '',
+        monto: '',
+        forma_pago: '',
+        nro_referencia: '',
+        banco: '',
+        fecha_pago: '',
+        cedula_cuenta: '',
+        soporte_pago: null,
+      });
+      setIsSubmitting(false);
+      if (onClose) onClose();
+    } catch {
+      setIsSubmitting(false);
+      alert('Error al inscribirse en el curso');
+    }
   };
 
   return (

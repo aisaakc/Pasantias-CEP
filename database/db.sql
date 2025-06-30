@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-06-29 18:44:12
+-- Started on 2025-06-30 11:56:22
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1829,8 +1829,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 8007	fa7		\N	27	\N	8007	\N	1	\N
 8008	fa8		\N	27	\N	8008	\N	1	\N
 100129	Fin de Año	31/12	8	100121	100121	\N	\N	0	\N
-100167	Agregar Configuraciones		0	73	\N	\N	\N	0	\N
-100290	Menú de Lista de Cursos		0	73	\N	\N	\N	0	\N
 100028	Divisas en efectivo ( directamente en caja principal)		\N	100026	100026	\N	\N	0	\N
 100130	Halloween	31/10	10	100121	100121	\N	\N	0	\N
 100270	Administración  de Empresas		0	110	201	\N	\N	0	\N
@@ -1842,7 +1840,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100132	Elecciones 2025	25/05/25	9	100121	100121	\N	\N	0	\N
 100191	0412	Digitel	0	100190	\N	9104	{"mobile":true}	0	\N
 100314	Admin xd		9	3	\N	9769	{"id_objeto":[100290,100141,100142],"id_clasificacion":[110,200,122,5,1,4,100310]}	0	\N
-100171	Menú de Tipos de Documentos		0	73	\N	\N	\N	0	\N
 100192	Día de Todos los Santos	01/11\n	0	100121	\N	\N	\N	0	\N
 100133	Oficio Tecnológico emergente (Petare)		0	4	100134	\N	\N	0	\N
 100134	Informática (Sede Petare)		0	110	202	\N	\N	0	\N
@@ -1850,21 +1847,16 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100152	Informática		0	110	201	8414	\N	0	\N
 100194	Día de la Divina Pastora	14/01\n	0	100121	\N	\N	\N	0	\N
 100195	Declaración de la Independencia	19/04	0	100121	\N	\N	\N	0	\N
-15	Super Administrador		1	3	\N	9769	{"id_objeto":[100166,100156,100157,100158,100159,100161,100162,100067,100068,100160,100142,100164,100171,100066,100290,100141],"id_clasificacion":[100172,100173,100174,100178,100179,100181,100234,100300,100301,200,110,4,122,100050,5,123,124,27,1,73,100190,3,100094,100121,100187,100026,100155,8,100059,100311,100315,100310,100317,100318,100327]}	0	\N
-100154	Campo ORDEN (Clasificacion)		0	73	\N	\N	\N	0	\N
 100196	Día de la Bandera	03/08\n	0	100121	\N	\N	\N	0	\N
-100319	Menú de Coherte		0	73	73	\N	\N	0	\N
 100155	Bancos		129	\N	\N	8244	\N	1	\N
 100197	Día de la Guardía Nacional	04/08	0	100121	\N	\N	\N	0	\N
 100198	Día de la Resistencia Indígena	12/10\n	0	100121	\N	\N	\N	0	\N
 100140	¿Cuál es tu deporte favorito?		0	8	8	9817	\N	0	\N
 100199	0414	Movistar	0	100190	\N	9104	{"mobile": true}	0	\N
 100201	0416	Movilnet	0	100190	\N	9104	{"mobile": true}	0	\N
-100141	Menú de Cursos		0	73	\N	\N	\N	0	\N
 100200	0424	Movistar	0	100190	\N	9104	{"mobile": true}	0	\N
 100121	Días Feriados		126	\N	\N	8269	\N	1	\N
 100122	Año Nuevo	01/01	1	100121	100121	\N	\N	0	\N
-100142	Menú de Configuración		0	73	\N	\N	\N	0	\N
 100202	0426	Movilnet	0	100190	\N	9104	{"mobile": true}	0	\N
 100323	Contaduria (Sede Petare)		0	110	202	\N	\N	0	\N
 100123	Batalla de Carabobo	24/06	3	100121	100121	\N	\N	0	\N
@@ -1874,6 +1866,11 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 301	BANCO VENEZOLANO DE CREDITO	0104	0	100155	\N	\N	\N	0	\N
 100124	Día Del Trabajador	01/05	2	100121	100121	\N	\N	0	\N
 302	BANCO MERCANTIL	0105	0	100155	\N	\N	\N	0	\N
+100167	Agregar Configuraciones	No tiene la opción de agregar configuraciones	0	73	\N	\N	\N	0	\N
+100142	Menú de Configuración	No tiene la opción del menú de configuración	0	73	\N	\N	\N	0	\N
+100319	Menú de Cohorte	No tiene la opción del  menú de la Cohorte	0	73	\N	\N	\N	0	\N
+100290	Menú de Lista de Cursos	No tiene la opción del menú de la lista de cursos	0	73	\N	\N	\N	0	\N
+100171	Menú de Tipos de Documentos	No tiene la opción del menú de documentos	0	73	\N	\N	\N	0	\N
 303	 BBVA PROVINCIAL	0108	0	100155	\N	\N	\N	0	\N
 100205	0234	Miranda (Los Teques)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100206	0235	Miranda (Guatire)	\N	100190	\N	9265	{"mobile": false}	0	\N
@@ -1930,8 +1927,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 10024	Distrito Capital		0	122	\N	8072	\N	0	\N
 100126	Víspera de Navidad	24/12	6	100121	100121	\N	\N	0	\N
 5	Cursos		40	\N	4	9019	\N	0	\N
-100164	Menú de PDF		0	73	\N	\N	\N	0	\N
-100066	Menú de Roles		0	73	\N	\N	\N	0	\N
 6	Masculino	sexo masculino	1	1	\N	9053	\N	1	\N
 12	Estudiante IUJO		6	3	11	9772	{"id_objeto":[]}	0	\N
 100052	Presencial / Sabatino		\N	100050	\N	\N	\N	0	\N
@@ -4021,11 +4016,17 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100149	Oficio Tecnológico emergente		0	4	100152	\N	\N	0	\N
 100330	Curso Básico de Mantenimiento y Reparación de PC		0	5	100149	9078	{"id":"CEP-01","costo":20}	0	\N
 100331	Módulo 1: Introduction to Network		0	5	100147	8584	{"id":"CEP-CISCO-01","costo":100}	0	\N
+100337	Menú de Estadística	No tiene la opción del menú de estadísticas 	0	73	\N	\N	\N	0	\N
 100332	Dominando MongoDB: “de CRUD a consultas avanzadas"		0	5	100149	8488	{"id":"CEP-02","costo":20}	0	\N
 100333	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		0	5	100147	8584	{"id":"CEP-CISCO-02","costo":100}	0	\N
 100334	Primeros pasos con Office		0	5	100149	8660	{"id":"CEP-03","costo":20}	0	\N
 100335	Manejo de Bases de Datos con PostgreSQL		0	5	100149	8488	{"id":"CEP-04","costo":20}	0	\N
 100336	Nómina y Prestaciones Sociales		0	5	100149	9109	{"id":"CEP-05","costo":20}	0	\N
+100154	Campo ORDEN (Clasificacion)	No tiene la opción agregar/modificar el orden\n	0	73	\N	\N	\N	0	\N
+100141	Menú de Cursos	No tiene la opción del menú de cursos 	0	73	\N	\N	\N	0	\N
+100164	Menú de PDF	No tiene la opción del menú del PDF	0	73	\N	\N	\N	0	\N
+100066	Menú de Roles	No tiene la opción del menú de roles	0	73	\N	\N	\N	0	\N
+15	Super Administrador		1	3	\N	9769	{"id_objeto":[100166,100156,100157,100158,100159,100161,100162,100067,100068,100160,100142,100164,100171,100066,100290,100319,100337,100141],"id_clasificacion":[100172,100173,100174,100178,100179,100181,100234,100300,100301,200,110,4,122,100050,5,123,124,27,1,73,100190,3,100094,100121,100187,100026,100155,8,100059,100311,100315,100310,100317,100318,100327]}	0	\N
 \.
 
 
@@ -4036,6 +4037,9 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 --
 
 COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, fecha_hora_inicio, fecha_hora_fin, color, partipantes, codigo_cohorte, horarios, propiedades_curso, documentos) FROM stdin;
+3	100334	\N	100060	17	Primer cohorte	<p><strong style="background-color: initial;">CONTENIDO:</strong></p><ul><li>Descripción y manipulación de Libro, Hoja (etiqueta), Celda, Columna, Fila, Rango. Desplazamiento y selección en la hoja de cálculo. Uso de los atajos con el teclado. Introducción de datos. Copiar, cortar, pegar y mover celdas. Buscar valores.</li><li>Formato de hojas, tablas, celdas, textos, números y fechas. Fuentes, bordes, alineación, alto y ancho de celdas, filas y columnas, combinación de celdas. Formatos condicionales.</li><li>Creación de Gráficos (Columnas, Circulares, Líneas).</li><li>Fórmulas y funciones. Referencias Relativas y Absolutas. Creación de fórmulas. Inserción de funciones en la hoja de cálculo. Funciones básicas. Aplicación de funciones matemáticas, estadísticas, de fecha y hora, de texto, y lógicas simples.</li><li>Esquemas. Esquemas manuales y automáticos.</li><li>Manipulación de Bases de Datos en Excel. Ordenar y filtrar hojas de cálculo por una o varias columnas. Manejo de filtros automáticos. Generar subtotales automáticos por una o varias columnas.</li><li>Aplicación de buenas prácticas con ejercicios simples: Ejercicio de familiarización con el entorno de Excel, aplicación de trucos y atajos, cómo calcular porcentajes y promedios, generar la Contabilidad diaria (básica), control diario de Ventas (básico), calcular la morosidad de créditos, generar la Pre-Nómina de empleados y realizar análisis de ventas</li></ul><p><br></p>	20	CEP-03	107	\N	100052	2025-06-19 13:00:00	2025-06-26 22:24:00	#4F46E5	\N	1-2025	\N	\N	\N
+2	100332	\N	100060	35	Primer Cohorte de MongoDB	<p><strong style="color: rgb(78, 78, 78); background-color: initial;">CONTENIDO:</strong></p><ol><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Introducción a las Bases de Datos NoSQL</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Diferencias ACID vs. BASE</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Tipos de Bases de Datos NoSQL</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Introducción a MongoDB y Compass</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Fundamentos de MongoDB</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Documentos y Colecciones</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">CRUD básico &lt;Back&gt; (Crear, Leer, Actualizar, Eliminar)</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Consultas simples y operadores</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Consultas Avanzadas en MongoDB</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Índices y rendimiento</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Agregaciones y pipelines</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Uso de Compass para consultas avanzadas</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">[</span><strong style="color: rgb(78, 78, 78); background-color: initial;">Sesión 4</strong><span style="color: rgb(78, 78, 78); background-color: initial;">]: </span><strong style="color: rgb(78, 78, 78); background-color: initial;">Modelado de Datos y Seguridad</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Modelado de datos en NoSQL</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Seguridad en MongoDB</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Introducción a Studio 3T</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Studio 3T para Desarrolladores</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Herramientas avanzadas en Studio 3T</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Automatización de tareas con Studio 3T</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Integración con sistemas existentes</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Integración con Node.js</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Configuración del entorno Node.js con MongoDB</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Conexión y operaciones CRUD desde Node.js</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Ejemplo de aplicación</span></li></ol><p><br></p>	20	CEP-02	108	\N	100053	2025-05-28 19:00:00	2025-06-18 22:00:00	#464384	\N	1-2025	\N	\N	\N
+1	100331	\N	100060	70	Primer Modulo de Cisco del mes de Junio	<p><strong style="color: rgb(78, 78, 78); background-color: initial;">CONTENIDO:</strong></p><ol><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Configuración básica de switches</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Protocolos y modelos.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa física</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Sistemas numéricos</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de enlace de datos</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Switching Ethernet.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de red</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Resolución de dirección</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Configuración básica de un router.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Asignación de direcciones IPv4.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Asignación de direcciones IPv6</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">ICMP</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de transporte</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de aplicación</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Fundamentos de seguridad en la red.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Cree una red pequeña. </span></li></ol><p><br></p>	100	CEP-CISCO-01	97	\N	100052	2025-05-10 08:00:00	2025-08-02 12:00:00	#4F46E5	\N	1-2025	\N	\N	\N
 \.
 
 
@@ -4097,7 +4101,7 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100336, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100337, true);
 
 
 --
@@ -4106,7 +4110,7 @@ SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100336, tr
 -- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 1, false);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 3, true);
 
 
 --
@@ -4349,7 +4353,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-06-29 18:44:13
+-- Completed on 2025-06-30 11:56:22
 
 --
 -- PostgreSQL database dump complete

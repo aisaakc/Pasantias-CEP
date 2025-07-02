@@ -32,7 +32,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     refreshSubClasificaciones,
     fetchProgramas,
     programas,
-    getSubclasificaciones
+    getSubclasificaciones,
+    allClasificaciones
   } = useClasificacionStore();
 
   const { isSupervisor } = useAuthStore();
@@ -495,6 +496,86 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     onClose();
   }, [onClose]);
 
+  // Obtener info de la clasificación de iconos (ID 27) buscando en ambas fuentes
+  const getIconosClasificacionInfo = () => {
+    let clasif = clasificacionesPrincipales.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.ICONOS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.ICONOS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faFolder
+      };
+    }
+    return null;
+  };
+  const iconosClasificacionInfo = getIconosClasificacionInfo();
+
+  // Obtener info de la clasificación de institutos (ID 200) buscando en ambas fuentes
+  const getInstitutosClasificacionInfo = () => {
+    let clasif = clasificacionesPrincipales.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.INSTITUTOS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.INSTITUTOS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faFolder
+      };
+    }
+    return null;
+  };
+  const institutosClasificacionInfo = getInstitutosClasificacionInfo();
+
+  // Obtener info de la clasificación de carreras (ID 110) buscando en ambas fuentes
+  const getCarrerasClasificacionInfo = () => {
+    let clasif = clasificacionesPrincipales.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.CARRERAS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.CARRERAS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faFolder
+      };
+    }
+    return null;
+  };
+  const carrerasClasificacionInfo = getCarrerasClasificacionInfo();
+
+  // Obtener info de la clasificación de programas (ID 4) buscando en ambas fuentes
+  const getProgramasClasificacionInfo = () => {
+    let clasif = clasificacionesPrincipales.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.PROGRAMAS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.PROGRAMAS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faFolder
+      };
+    }
+    return null;
+  };
+  const programasClasificacionInfo = getProgramasClasificacionInfo();
+
+  // Obtener info de la clasificación de objetos (ID 73) buscando en ambas fuentes
+  const getObjetosClasificacionInfo = () => {
+    let clasif = clasificacionesPrincipales.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.OBJETOS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.OBJETOS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faFolder
+      };
+    }
+    return null;
+  };
+  const objetosClasificacionInfo = getObjetosClasificacionInfo();
+
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
@@ -581,8 +662,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
               },
               { 
                 name: 'id_icono', 
-                icon: faFolder, 
-                label: 'Ícono', 
+                icon: iconosClasificacionInfo ? iconosClasificacionInfo.icono : faFolder, 
+                label: iconosClasificacionInfo ? iconosClasificacionInfo.nombre : 'Ícono', 
                 type: 'icon'
               },
             ].map((field) => (
@@ -682,14 +763,14 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS || Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS) && (
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
-                  Programa <span className="text-red-500 ml-1">*</span>
+                  <FontAwesomeIcon icon={programasClasificacionInfo ? programasClasificacionInfo.icono : faFolder} className="mr-2 text-blue-500" />
+                  {programasClasificacionInfo ? programasClasificacionInfo.nombre : 'Programa'} <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
                   name="parent_id"
                   value={formValues.parent_id}
                   onChange={handleProgramaChange}
-                          className={`w-full px-4 py-3 rounded-lg border ${
+                  className={`w-full px-4 py-3 rounded-lg border ${
                     errors.parent_id 
                               ? 'border-red-300 focus:ring-red-500' 
                               : 'border-gray-200 focus:ring-blue-500'
@@ -711,8 +792,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(formValues.type_id) === CLASSIFICATION_IDS.CARRERAS) && (
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
-                  Instituto <span className="text-red-500 ml-1">*</span>
+                  <FontAwesomeIcon icon={institutosClasificacionInfo ? institutosClasificacionInfo.icono : faFolder} className="mr-2 text-blue-500" />
+                  {institutosClasificacionInfo ? institutosClasificacionInfo.nombre : 'Instituto'} <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
                   name="parent_id"
@@ -740,8 +821,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(formValues.type_id) === CLASSIFICATION_IDS.PROGRAMAS) && (
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
-                  Carrera <span className="text-red-500 ml-1">*</span>
+                  <FontAwesomeIcon icon={carrerasClasificacionInfo ? carrerasClasificacionInfo.icono : faFolder} className="mr-2 text-blue-500" />
+                  {carrerasClasificacionInfo ? carrerasClasificacionInfo.nombre : 'Carrera'} <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
                   name="parent_id"
@@ -843,36 +924,36 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             {/* Permisos de Objetos para roles */}
             {Number(formValues.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (
               <div className="mb-5">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
-                        Permisos de Objetos
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {permisos.map((permiso) => (
-                          <label 
-                            key={permiso.id}
-                            className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
-                          >
-                            <input
-                              type="checkbox"
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FontAwesomeIcon icon={objetosClasificacionInfo ? objetosClasificacionInfo.icono : faLayerGroup} className="mr-2 text-blue-500" />
+                  {objetosClasificacionInfo ? objetosClasificacionInfo.nombre : 'Permisos de Objetos'}
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {permisos.map((permiso) => (
+                    <label 
+                      key={permiso.id}
+                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors duration-200 min-h-[52px]"
+                    >
+                      <input
+                        type="checkbox"
                         checked={formValues.permisos ? formValues.permisos.split(',').includes(permiso.id.toString()) : false}
-                              onChange={() => {
+                        onChange={() => {
                           const currentPermisos = formValues.permisos ? formValues.permisos.split(',').map(p => p.trim()) : [];
-                                const newPermisos = currentPermisos.includes(permiso.id.toString())
-                                  ? currentPermisos.filter(id => id !== permiso.id.toString())
-                                  : [...currentPermisos, permiso.id.toString()];
+                          const newPermisos = currentPermisos.includes(permiso.id.toString())
+                            ? currentPermisos.filter(id => id !== permiso.id.toString())
+                            : [...currentPermisos, permiso.id.toString()];
                           setFormValues(prev => ({ ...prev, permisos: newPermisos.join(',') }));
-                              }}
-                              className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
-                            />
-                            <span className="text-gray-700 text-sm leading-tight">
-                              {permiso.nombre}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        }}
+                        className="form-checkbox h-4 w-4 text-blue-600 mt-1 flex-shrink-0"
+                      />
+                      <span className="text-gray-700 text-sm leading-tight">
+                        {permiso.nombre}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Configuraciones Accesibles para roles */}
             {Number(formValues.type_id) === CLASSIFICATION_IDS.ROLES && !isMainClassification && (

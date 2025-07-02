@@ -2,16 +2,21 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { FaFileAlt, FaTimes, FaSave } from 'react-icons/fa';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileAlt, faTimes, faSave } from '@fortawesome/free-solid-svg-icons';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
 import useDocumentoStore from '../store/documentoStrore';
 import { getAllSubclasificaciones } from '../api/clasificacion.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import { toast } from 'sonner';
+import useClasificacionStore from '../store/clasificacionStore';
 
 const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [animationClass, setAnimationClass] = useState('');
   const [tipos, setTipos] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(false);
+  const { parentClasifications, allClasificaciones } = useClasificacionStore();
 
   // Usar el store Zustand
   const {
@@ -53,6 +58,22 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
     tipo: isEdit ? editData.id_tipo?.toString() || '' : '',
     archivo: null
   };
+
+  // Obtener info de la clasificación de documentos (ID 100094)
+  const getDocumentosClasificacionInfo = () => {
+    let clasif = parentClasifications?.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.DOCUMENTOS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.DOCUMENTOS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faFileAlt
+      };
+    }
+    return null;
+  };
+  const documentosClasificacionInfo = getDocumentosClasificacionInfo();
 
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center perspective-1000">
@@ -129,7 +150,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
           {({ isSubmitting, setFieldValue }) => (
             <Form className="flex-1 overflow-y-auto p-6 space-y-5">
               <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '0ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del documento</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FontAwesomeIcon icon={faFileAlt} className="mr-2 text-blue-500" />
+                  Nombre del documento
+                </label>
                 <Field
                   type="text"
                   name="nombre"
@@ -139,7 +163,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 <ErrorMessage name="nombre" component="div" className="mt-1 text-sm text-red-600" />
               </div>
               <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '100ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FontAwesomeIcon icon={faFileAlt} className="mr-2 text-blue-500" />
+                  Descripción
+                </label>
                 <Field
                   as="textarea"
                   name="descripcion"
@@ -148,7 +175,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 />
               </div>
               <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '200ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de documento</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FontAwesomeIcon icon={documentosClasificacionInfo ? documentosClasificacionInfo.icono : faFileAlt} className="mr-2 text-blue-500" />
+                  {documentosClasificacionInfo ? documentosClasificacionInfo.nombre : 'Tipo de documento'}
+                </label>
                 <Field
                   as="select"
                   name="tipo"
@@ -163,7 +193,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 <ErrorMessage name="tipo" component="div" className="mt-1 text-sm text-red-600" />
               </div>
               <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '300ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Archivo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FontAwesomeIcon icon={faFileAlt} className="mr-2 text-blue-500" />
+                  Archivo
+                </label>
                 <input
                   type="file"
                   name="archivo"

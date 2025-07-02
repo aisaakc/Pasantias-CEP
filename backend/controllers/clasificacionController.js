@@ -168,6 +168,7 @@ class clasificacionController {
             console.log('ID recibido en el controlador:', id_clasificacion);
             
             // Decodificar el ID de base64
+            console.log('Valor recibido para parsear:', Buffer.from(id_clasificacion, 'base64').toString());
             const decodedId = JSON.parse(Buffer.from(id_clasificacion, 'base64').toString()).id;
             console.log('ID decodificado:', decodedId);
             
@@ -200,6 +201,15 @@ class clasificacionController {
         }
     } 
     
+    async getHierarchyFromId(req, res) {
+        try {
+            const id_raiz = parseInt(req.params.id_raiz);
+            const jerarquia = await Clasificacion.getHierarchyFromId(id_raiz);
+            res.json(jerarquia);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 
 }
 

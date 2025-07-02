@@ -11,9 +11,6 @@ export default function Login() {
 
   const { loginUser, loading, error, successMessage, clearMessages } = useAuthStore();
   
-  // Siempre redirigir a Clasificación después del login
-  const redirectTo = '/dashboard/clasificacion';
-
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -58,17 +55,46 @@ export default function Login() {
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage); // ✅ Mostrar mensaje de éxito
-      setTimeout(() => {
-        clearMessages();
-        navigate(redirectTo);
-      }, 1200);
+      
+      // Determinar la redirección basada en los roles del usuario
+      const determinarRedireccion = async () => {
+        try {
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          const rolesUsuario = userData.id_rol || [];
+          const { CLASSIFICATION_IDS } = await import('../../config/classificationIds');
+          
+          // Verificar si el usuario tiene rol de Estudiante_IUJO o Participante_Externo
+          const tieneRolEstudiante = rolesUsuario.includes(CLASSIFICATION_IDS.Estudiante_IUJO);
+          const tieneRolParticipante = rolesUsuario.includes(CLASSIFICATION_IDS.Participante_Externo);
+          
+          let rutaDestino = '/dashboard/clasificacion'; // Ruta por defecto
+          
+          if (tieneRolEstudiante || tieneRolParticipante) {
+            rutaDestino = '/dashboard/listcursos';
+          }
+          
+          setTimeout(() => {
+            clearMessages();
+            navigate(rutaDestino);
+          }, 1200);
+        } catch (error) {
+          console.error('Error al determinar redirección:', error);
+          // En caso de error, usar la ruta por defecto
+          setTimeout(() => {
+            clearMessages();
+            navigate('/dashboard/clasificacion');
+          }, 1200);
+        }
+      };
+      
+      determinarRedireccion();
     }
 
     if (error) {
       toast.error(error); // ✅ Mostrar mensaje de error
       clearMessages();
     }
-  }, [successMessage, error, clearMessages, navigate, redirectTo]);
+  }, [successMessage, error, clearMessages, navigate]);
 
   return (
     <div className="login-page flex h-screen bg-gray-50">

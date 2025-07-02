@@ -19,4 +19,7 @@ router.get('/clasificaciones/parents/:id_clasificacion', Clasificacion.getParent
 
 router.get('/clasificaciones/icons', Clasificacion.getAllIcons);
 
+router.get('/clasificaciones/jerarquia/:id_raiz', Clasificacion.getHierarchyFromId);
+
+
 export default router;

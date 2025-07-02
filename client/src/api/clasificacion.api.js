@@ -24,5 +24,7 @@ export const deleteClasificacion = async (id) =>
 export const getParentHierarchy = async (id_clasificacion) => 
     axios.get(`http://localhost:3001/api/clasificaciones/parents/${id_clasificacion}`);
 
+export const getJerarquiaDesde = async (id_raiz) => 
+    axios.get(`http://localhost:3001/api/clasificaciones/jerarquia/${id_raiz}`);
 
 

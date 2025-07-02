@@ -5,8 +5,6 @@ import { faXmark,
         faSave,
         faTimes,
         faBook,
-        faChalkboardTeacher, 
-        faCheckCircle, 
         faHashtag, 
         faClock, 
         faMoneyBill, 
@@ -17,11 +15,17 @@ import { faXmark,
         faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { Editor, EditorState, RichUtils } from 'draft-js';
+import 'draft-js/dist/Draft.css';
+import draftToHtml from 'draftjs-to-html';
+import { convertToRaw } from 'draft-js';
+import { CLASSIFICATION_IDS } from '../config/classificationIds';
+import useClasificacionStore from '../store/clasificacionStore';
+
 
 function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const { modalidades, cursos, status, fetchOpcionesCurso, createCurso, updateCurso, loading, error, roles_facilitador, fetchFacilitadores, resetState } = useCursoStore();
+  const { parentClasifications, fetchParentClasifications } = useClasificacionStore();
   const [cursoSeleccionado, setCursoSeleccionado] = useState('');
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState('');
   const [statusSeleccionado, setStatusSeleccionado] = useState('');
@@ -40,8 +44,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [holidayWarning, setHolidayWarning] = useState('');
   const [codigoCohorte, setCodigoCohorte] = useState('');
-  
-  // const summernoteRef = useRef(null);
+  const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
+  const [showHtmlModal, setShowHtmlModal] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -256,6 +260,26 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
       setHolidayWarning('');
     }
   }, [fechaInicio, fechaFin, feriados]);
+
+  // Cargar clasificaciones principales si no están cargadas
+  useEffect(() => {
+    if (!parentClasifications || parentClasifications.length === 0) {
+      fetchParentClasifications();
+    }
+  }, [parentClasifications, fetchParentClasifications]);
+
+  // Obtener nombres e iconos dinámicos de las clasificaciones principales
+  const getClasificacionInfo = (id, defaultIcon) => {
+    const clasif = parentClasifications?.find(c => Number(c.id_clasificacion) === Number(id));
+    return {
+      nombre: clasif ? clasif.nombre : '',
+      icono: clasif && clasif.nicono ? iconos[clasif.nicono] : defaultIcon
+    };
+  };
+
+  const infoCurso = getClasificacionInfo(CLASSIFICATION_IDS.CURSOS);
+  const infoModalidad = getClasificacionInfo(CLASSIFICATION_IDS.MODALIDAD);
+  const infoStatus = getClasificacionInfo(CLASSIFICATION_IDS.STATUS);
 
   const handleClose = () => {
     setDescripcionHtml('');
@@ -474,8 +498,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                   {[
                     { 
                       name: 'curso', 
-                      icon: faBook, 
-                      label: 'Curso', 
+                      icon: infoCurso.icono, 
+                      label: infoCurso.nombre || 'Curso', 
                       value: cursoSeleccionado,
                       onChange: (e) => setCursoSeleccionado(e.target.value),
                       options: cursos || [],
@@ -483,8 +507,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                     },
                     { 
                       name: 'modalidad', 
-                      icon: faChalkboardTeacher, 
-                      label: 'Modalidad', 
+                      icon: infoModalidad.icono, 
+                      label: infoModalidad.nombre || 'Modalidad', 
                       value: modalidadSeleccionada,
                       onChange: (e) => setModalidadSeleccionada(e.target.value),
                       options: modalidades || [],
@@ -492,8 +516,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                     },
                     { 
                       name: 'status', 
-                      icon: faCheckCircle, 
-                      label: 'Status', 
+                      icon: infoStatus.icono, 
+                      label: infoStatus.nombre || 'Status', 
                       value: statusSeleccionado,
                       onChange: (e) => setStatusSeleccionado(e.target.value),
                       options: status || [],
@@ -585,13 +609,92 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                     <FontAwesomeIcon icon={faAlignLeft} className="mr-2 text-blue-500" />
                     Contenido del Curso
                   </label>
-                  <ReactQuill
-                    value={descripcionHtml}
-                    onChange={setDescripcionHtml}
-                    placeholder="Escribe el contenido del curso aquí..."
-                    className="quill-editor-amplio"
-                    theme="snow"
-                  />
+                  <div className="bg-white border border-gray-300 rounded-xl shadow-sm p-4">
+                    {/* Barra de herramientas */}
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-blue-100 text-gray-700"
+                        title="Negrita"
+                        onClick={() => setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'))}
+                      >
+                        <b>B</b>
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-blue-100 text-gray-700 italic"
+                        title="Cursiva"
+                        onClick={() => setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'))}
+                      >
+                        I
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-blue-100 text-gray-700 underline"
+                        title="Subrayado"
+                        onClick={() => setEditorState(RichUtils.toggleInlineStyle(editorState, 'UNDERLINE'))}
+                      >
+                        U
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-blue-100 text-gray-700"
+                        title="Lista con viñetas"
+                        onClick={() => setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'))}
+                      >
+                        • Lista
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-blue-100 text-gray-700"
+                        title="Lista numerada"
+                        onClick={() => setEditorState(RichUtils.toggleBlockType(editorState, 'ordered-list-item'))}
+                      >
+                        1. Lista
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-green-100 text-gray-700 ml-auto"
+                        title="Ver HTML"
+                        onClick={() => setShowHtmlModal(true)}
+                      >
+                        &lt;/&gt;
+                      </button>
+                    </div>
+                    {/* Área editable */}
+                    <div
+                      className="min-h-[120px] p-3 rounded-lg border border-gray-200 focus-within:border-blue-400 bg-gray-50 transition"
+                      style={{ cursor: "text" }}
+                      onClick={() => {
+                        document.querySelector('.DraftEditor-root').focus();
+                      }}
+                    >
+                      <Editor
+                        editorState={editorState}
+                        onChange={setEditorState}
+                        placeholder="Escribe el contenido del curso aquí..."
+                      />
+                    </div>
+                  </div>
+                  {/* Modal para mostrar el HTML generado */}
+                  {showHtmlModal && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full relative">
+                        <button
+                          className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+                          onClick={() => setShowHtmlModal(false)}
+                        >
+                          ×
+                        </button>
+                        <h3 className="text-lg font-bold mb-4">HTML generado</h3>
+                        <textarea
+                          className="w-full h-64 p-2 border border-gray-200 rounded bg-gray-50 font-mono text-xs"
+                          readOnly
+                          value={draftToHtml(convertToRaw(editorState.getCurrentContent()))}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -97,6 +97,9 @@ export const useAuthStore = create((set, get) => ({
         isAuthenticated: true,
         isSupervisor: !!response.data.user.isSupervisor,
       });
+      
+      // Retornar la respuesta para que el componente pueda acceder a los datos del usuario
+      return response;
     } catch (error) {
       set({
         loading: false,
@@ -104,6 +107,7 @@ export const useAuthStore = create((set, get) => ({
         isAuthenticated: false,
         isSupervisor: false,
       });
+      throw error; // Re-lanzar el error para que el componente pueda manejarlo
     }
   },
 

@@ -260,7 +260,30 @@ class Clasificacion {
         }
     }
 
-    
+    async getHierarchyFromId(id_raiz) {
+        try {
+            const query = 'SELECT * FROM obtener_jerarquia_desde($1)';
+            const result = await pool.query(query, [id_raiz]);
+            // ...transformación a árbol igual que antes...
+            const items = result.rows;
+            const map = {};
+            const roots = [];
+            items.forEach(item => {
+                map[item.id] = { ...item, hijos: [] };
+            });
+            items.forEach(item => {
+                if (item.parent_id && map[item.parent_id]) {
+                    map[item.parent_id].hijos.push(map[item.id]);
+                } else {
+                    roots.push(map[item.id]);
+                }
+            });
+            return roots;
+        } catch (error) {
+            console.error("Error en getHierarchyFromId:", error.message);
+            throw new Error("Error interno del servidor al obtener la jerarquía desde el nodo.");
+        }
+    }
 }
 
 export default new Clasificacion();

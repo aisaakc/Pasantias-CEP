@@ -19,6 +19,9 @@ import {
 import { toast } from 'sonner';
 import usePersonaStore from '../store/personaStore';
 import PhoneInput from './PhoneInput';
+import { CLASSIFICATION_IDS } from '../config/classificationIds';
+import * as iconos from '@fortawesome/free-solid-svg-icons';
+import useClasificacionStore from '../store/clasificacionStore';
 
 const ModalUser = ({ isOpen, onClose, editData = null }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -35,6 +38,7 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     prefijosTelefonicos,
     dataLoaded
   } = usePersonaStore();
+  const { parentClasifications, allClasificaciones } = useClasificacionStore();
 
   // Valores iniciales del formulario
   const initialValues = {
@@ -162,6 +166,38 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
     }
   };
 
+  // Obtener info de la clasificación de roles (ID 3) buscando en ambas fuentes
+  const getRolesClasificacionInfo = () => {
+    let clasif = parentClasifications.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.ROLES);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.ROLES);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faUserShield
+      };
+    }
+    return null;
+  };
+  const rolesClasificacionInfo = getRolesClasificacionInfo();
+
+  // Obtener info de la clasificación de preguntas (ID 8) buscando en ambas fuentes
+  const getPreguntasClasificacionInfo = () => {
+    let clasif = parentClasifications.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.PREGUNTAS);
+    if (!clasif && allClasificaciones && allClasificaciones.length > 0) {
+      clasif = allClasificaciones.find(c => Number(c.id_clasificacion) === CLASSIFICATION_IDS.PREGUNTAS);
+    }
+    if (clasif) {
+      return {
+        nombre: clasif.nombre,
+        icono: clasif.nicono ? iconos[clasif.nicono] : faQuestionCircle
+      };
+    }
+    return null;
+  };
+  const preguntasClasificacionInfo = getPreguntasClasificacionInfo();
+
   if (!shouldRender) return null;
 
   return ReactDOM.createPortal(
@@ -286,8 +322,8 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                   },
                   { 
                     name: 'id_pregunta', 
-                    icon: faQuestionCircle, 
-                    label: 'Pregunta de Seguridad', 
+                    icon: preguntasClasificacionInfo ? preguntasClasificacionInfo.icono : faQuestionCircle, 
+                    label: preguntasClasificacionInfo ? preguntasClasificacionInfo.nombre : 'Pregunta de Seguridad', 
                     type: 'select',
                     required: true
                   },
@@ -389,8 +425,8 @@ const ModalUser = ({ isOpen, onClose, editData = null }) => {
                   style={{ animationDelay: '900ms' }}
                 >
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FontAwesomeIcon icon={faUserShield} className="mr-2 text-blue-500" />
-                    Roles <span className="text-red-500 ml-1">*</span>
+                    <FontAwesomeIcon icon={rolesClasificacionInfo ? rolesClasificacionInfo.icono : faUserShield} className="mr-2 text-blue-500" />
+                    {rolesClasificacionInfo ? rolesClasificacionInfo.nombre : 'Roles'} <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {rolesClasificacion.map((rol) => (

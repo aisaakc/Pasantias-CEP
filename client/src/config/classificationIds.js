@@ -14,6 +14,8 @@ export const CLASSIFICATION_IDS = {
   PREFIJOS_TLF: 100190,
   BANCOS: 100155,
   FORMA_PAGO: 100026,
+  Estudiante_IUJO: 12,
+  Participante_Externo: 13,
   
   MN_ROLES: 100066,
   MN_CURSO: 100141,

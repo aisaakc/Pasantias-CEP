@@ -1,3 +1,5 @@
+window.global = window;
+
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Home from "./pages/cep/Home";
 import Lista from "./pages/cep/Lista";

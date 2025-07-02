@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Mapa from '../../components/Mapa';
+// import Mapa from '../../components/Mapa';
 import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
 
 export default function Contacto() {
@@ -137,12 +137,12 @@ export default function Contacto() {
       </div>
 
       {/* Mapa */}
-      <div className="max-w-5xl mx-auto mt-16 animate-fadeIn delay-200">
+      {/* <div className="max-w-5xl mx-auto mt-16 animate-fadeIn delay-200">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Ubicación</h2>
         <div className=" top-24 relative w-full h-[500px] rounded-2xl overflow-hidden shadow-2xl z-0">
           <Mapa />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

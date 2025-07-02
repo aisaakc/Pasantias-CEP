@@ -39,6 +39,19 @@ function HorarioCurso() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState('timeGridWeek');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Decodificar el ID de manera segura
   const decodedId = React.useMemo(() => {
@@ -569,277 +582,299 @@ function HorarioCurso() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8">
+      <div className="w-full px-1 sm:px-2 lg:px-4 xl:px-6 max-w-full mx-auto">
         {/* Botón de regreso */}
         <button
           onClick={() => navigate('/dashboard/cursos')}
-          className="mb-6 flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
+          className="mb-4 sm:mb-6 flex items-center text-gray-600 hover:text-indigo-600 transition-colors text-sm sm:text-base"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
           Volver a Cursos
         </button>
 
         {/* Información del curso */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-6">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
               {curso.codigo && (
                 <span className="text-indigo-600 font-normal">({curso.codigo}) </span>
               )}
               {curso.nombre_curso}
             </h1>
             {curso.codigo_cohorte && (
-              <div className="text-sm text-indigo-600 font-medium mb-4">
+              <div className="text-xs sm:text-sm text-indigo-600 font-medium mb-3 sm:mb-4">
                 Cohorte: {curso.codigo_cohorte}
               </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="flex items-center space-x-3">
-                <FontAwesomeIcon icon={faCalendarAlt} className="text-indigo-600 text-xl" />
-                <div>
-                  <p className="text-sm text-gray-500">Fecha de Inicio</p>
-                  <p className="font-medium">{new Date(curso.fecha_hora_inicio).toLocaleDateString()}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-indigo-600 text-lg sm:text-xl flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-500">Fecha de Inicio</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{new Date(curso.fecha_hora_inicio).toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <FontAwesomeIcon icon={faClock} className="text-indigo-600 text-xl" />
-                <div>
-                  <p className="text-sm text-gray-500">Duración</p>
-                  <p className="font-medium">{curso.duracion || 'No especificada'} horas</p>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <FontAwesomeIcon icon={faClock} className="text-indigo-600 text-lg sm:text-xl flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-500">Duración</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{curso.duracion || 'No especificada'} horas</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <FontAwesomeIcon icon={faUser} className="text-indigo-600 text-xl" />
-                <div>
-                  <p className="text-sm text-gray-500">Instructor</p>
-                  <p className="font-medium">{curso.nombre_completo_facilitador || 'No asignado'}</p>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <FontAwesomeIcon icon={faUser} className="text-indigo-600 text-lg sm:text-xl flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-500">Instructor</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{curso.nombre_completo_facilitador || 'No asignado'}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <FontAwesomeIcon icon={faChalkboardTeacher} className="text-indigo-600 text-xl" />
-                <div>
-                  <p className="text-sm text-gray-500">Modalidad</p>
-                  <p className="font-medium">{curso.modalidad || 'No especificada'}</p>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <FontAwesomeIcon icon={faChalkboardTeacher} className="text-indigo-600 text-lg sm:text-xl flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-500">Modalidad</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{curso.modalidad || 'No especificada'}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <FontAwesomeIcon icon={faMoneyBill} className="text-indigo-600 text-xl" />
-                <div>
-                  <p className="text-sm text-gray-500">Costo</p>
-                  <p className="font-medium">${curso.costo || 'No especificado'}</p>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <FontAwesomeIcon icon={faMoneyBill} className="text-indigo-600 text-lg sm:text-xl flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-500">Costo</p>
+                  <p className="font-medium text-sm sm:text-base truncate">${curso.costo || 'No especificado'}</p>
                 </div>
               </div>
             </div>
 
             {/* Descripción */}
             {curso.descripcion_corto && (
-              <div className="mt-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Descripción</h2>
-                <p className="text-gray-600">{curso.descripcion_corto}</p>
+              <div className="mt-4 sm:mt-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Descripción</h2>
+                <p className="text-sm sm:text-base text-gray-600">{curso.descripcion_corto}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Contenedor principal de dos columnas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Contenedor principal - Responsive */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-stretch">
           {/* Columna izquierda: Calendario */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Horario del Curso</h2>
-              <div className="flex justify-end mb-4 space-x-2">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden order-2 xl:order-1 xl:col-span-1 flex flex-col min-h-[500px] xl:min-h-[600px] 2xl:min-h-[700px]">
+            <div className="p-6 sm:p-10 flex flex-col flex-1">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-6">Horario del Curso</h2>
+              {/* Botones de vista - Responsive */}
+              <div className="flex flex-wrap justify-center sm:justify-end mb-6 gap-2">
                 <button
                   onClick={() => handleViewChange('dayGridMonth')}
-                  className={`px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 ${
+                  className={`px-3 sm:px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm ${
                     currentView === 'dayGridMonth'
                       ? 'bg-indigo-600 text-white shadow-lg'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
-                  Mes
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Mes</span>
+                  <span className="sm:hidden">M</span>
                 </button>
                 <button
                   onClick={() => handleViewChange('timeGridWeek')}
-                  className={`px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 ${
+                  className={`px-3 sm:px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm ${
                     currentView === 'timeGridWeek'
                       ? 'bg-indigo-600 text-white shadow-lg'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <FontAwesomeIcon icon={faCalendar} className="mr-2" />
-                  Semana
+                  <FontAwesomeIcon icon={faCalendar} className="mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Semana</span>
+                  
                 </button>
                 <button
                   onClick={() => handleViewChange('timeGridDay')}
-                  className={`px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 ${
+                  className={`px-3 sm:px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm ${
                     currentView === 'timeGridDay'
                       ? 'bg-indigo-600 text-white shadow-lg'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <FontAwesomeIcon icon={faCalendar} className="mr-2" />
-                  Día
+                  <FontAwesomeIcon icon={faCalendar} className="mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Día</span>
+                  <span className="sm:hidden">D</span>
                 </button>
               </div>
-              <FullCalendar
-                ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-                initialView={currentView}
-                headerToolbar={{
-                  left: 'prev,next today',
-                  center: 'title',
-                  right: ''
-                }}
-                locale={esLocale}
-                height="auto"
-                allDaySlot={true}
-                slotMinTime="01:00:00"
-                slotMaxTime="24:00:00"
-                weekends={true}
-                events={eventosCalendario}
-                views={{
-                  dayGridMonth: {
-                    titleFormat: { year: 'numeric', month: 'long' },
-                    dayMaxEventRows: true,
-                    displayEventTime: false,
-                    eventDisplay: 'block'
-                  },
-                  timeGridWeek: {
-                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
-                    dayMaxEventRows: true,
-                    eventDisplay: 'block'
-                  },
-                  timeGridDay: {
-                    titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
-                    dayMaxEventRows: true,
-                    eventDisplay: 'block'
-                  }
-                }}
-                eventContent={(eventInfo) => {
-                  const esFeriado = eventInfo.event.extendedProps.esFeriado;
-                  const esHorario = eventInfo.event.extendedProps.esHorario;
+              <div className="flex-1 overflow-x-auto">
+                <FullCalendar
+                  contentHeight="auto"
+                  height="100%"
+                  ref={calendarRef}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+                  initialView={isMobile ? 'listWeek' : currentView}
+                  headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                  }}
+                  locale={esLocale}
+                  allDaySlot={true}
+                  slotMinTime="01:00:00"
+                  slotMaxTime="24:00:00"
+                  weekends={true}
+                  events={eventosCalendario}
+                  views={{
+                    dayGridMonth: {
+                      titleFormat: { year: 'numeric', month: 'long' },
+                      dayMaxEventRows: true,
+                      displayEventTime: false,
+                      eventDisplay: 'block'
+                    },
+                    timeGridWeek: {
+                      titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+                      dayMaxEventRows: true,
+                      eventDisplay: 'block'
+                    },
+                    timeGridDay: {
+                      titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+                      dayMaxEventRows: true,
+                      eventDisplay: 'block'
+                    },
+                    listWeek: {
+                      titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+                    }
+                  }}
+                  eventContent={(eventInfo) => {
+                    const esFeriado = eventInfo.event.extendedProps.esFeriado;
+                    const esHorario = eventInfo.event.extendedProps.esHorario;
 
-                  if (esFeriado) {
+                    if (esFeriado) {
+                      return (
+                        <div 
+                          className="flex items-center gap-2 p-1 group relative"
+                          title={eventInfo.event.title}
+                        >
+                          <FontAwesomeIcon icon={faCalendar} className="text-white" />
+                          <span className="truncate font-medium text-sm">{eventInfo.event.title}</span>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
+                            {eventInfo.event.title}
+                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
-                      <div 
-                        className="flex items-center gap-2 p-1 group relative"
-                        title={eventInfo.event.title}
-                      >
-                        <FontAwesomeIcon icon={faCalendar} className="text-white" />
-                        <span className="truncate font-medium">{eventInfo.event.title}</span>
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
+                      <div className="p-2">
+                        <div className="font-semibold flex items-center text-sm">
                           {eventInfo.event.title}
-                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+                          {esHorario && (
+                            <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-0.5 rounded">
+                              Horario
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs sm:text-sm">
+                          {eventInfo.event.extendedProps.instructor && (
+                            <div className="truncate">Instructor: {eventInfo.event.extendedProps.instructor}</div>
+                          )}
+                          {eventInfo.event.extendedProps.modalidad && (
+                            <div className="truncate">Modalidad: {eventInfo.event.extendedProps.modalidad}</div>
+                          )}
+                          {eventInfo.event.extendedProps.descripcion && (
+                            <div className="truncate">Descripción: {eventInfo.event.extendedProps.descripcion}</div>
+                          )}
                         </div>
                       </div>
                     );
-                  }
-
-                  return (
-                    <div className="p-2">
-                      <div className="font-semibold flex items-center">
-                        {eventInfo.event.title}
-                        {esHorario && (
-                          <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-0.5 rounded">
-                            Horario
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm">
-                        {eventInfo.event.extendedProps.instructor && (
-                          <div>Instructor: {eventInfo.event.extendedProps.instructor}</div>
-                        )}
-                        {eventInfo.event.extendedProps.modalidad && (
-                          <div>Modalidad: {eventInfo.event.extendedProps.modalidad}</div>
-                        )}
-                        {eventInfo.event.extendedProps.descripcion && (
-                          <div>Descripción: {eventInfo.event.extendedProps.descripcion}</div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }}
-              />
+                  }}
+                />
+              </div>
             </div>
           </div>
 
           {/* Columna derecha: Formulario de horarios */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Agregar Horarios</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden order-1 xl:order-2 xl:col-span-1 flex flex-col min-h-[500px] xl:min-h-[600px] 2xl:min-h-[700px]">
+            <div className="p-4 sm:p-6 xl:p-8 flex-1 flex flex-col">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-6">Agregar Horarios</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {horarios.map((horario, index) => (
-                  <div key={horario.id} className="flex items-center gap-4">
-                    <div className="flex-1">
+                  <div
+                    key={horario.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2 bg-gray-50 sm:bg-transparent rounded-lg p-2 sm:p-0"
+                  >
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <label className="block text-xs font-medium text-gray-700 mb-1 sm:mb-0 sm:hidden">Inicio</label>
                       <input
                         type="datetime-local"
                         value={horario.fechaHoraInicio}
                         onChange={(e) => handleHorarioChange(index, 'fechaHoraInicio', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm h-11 sm:h-12"
                         placeholder="Inicio"
                         required
                       />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <label className="block text-xs font-medium text-gray-700 mb-1 sm:mb-0 sm:hidden">Fin</label>
                       <input
                         type="datetime-local"
                         value={horario.fechaHoraFin}
                         onChange={(e) => handleHorarioChange(index, 'fechaHoraFin', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm h-11 sm:h-12"
                         placeholder="Fin"
                         required
                       />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <label className="block text-xs font-medium text-gray-700 mb-1 sm:mb-0 sm:hidden">Descripción</label>
                       <input
                         type="text"
                         value={horario.descripcion}
                         onChange={(e) => handleHorarioChange(index, 'descripcion', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm h-11 sm:h-12"
                         placeholder="Descripción"
                       />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveRow(index)}
-                      className="p-2 text-red-600 hover:text-red-700 transition-colors"
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
+                    <div className="flex items-center justify-center mt-2 sm:mt-0">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRow(index)}
+                        className="p-2 text-red-600 hover:text-red-700 transition-colors flex-shrink-0 rounded-full bg-white border border-gray-200 shadow-sm"
+                        title="Eliminar horario"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="text-base" />
+                      </button>
+                    </div>
                   </div>
                 ))}
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                   <button
                     type="button"
                     onClick={handleAddRow}
-                    className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                   >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Agregar Fila
+                    <span className="hidden sm:inline">Agregar Fila</span>
+                    <span className="sm:hidden">Agregar</span>
                   </button>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        <span>Actualizando...</span>
+                        <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2"></div>
+                        <span className="hidden sm:inline">Actualizando...</span>
+                        <span className="sm:hidden">Actualizando</span>
                       </>
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                        <span>Actualizar Horarios</span>
+                        <span className="hidden sm:inline">Actualizar Horarios</span>
+                        <span className="sm:hidden">Actualizar</span>
                       </>
                     )}
                   </button>
@@ -874,6 +909,40 @@ function HorarioCurso() {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transition: all 0.3s ease;
             overflow: hidden;
+            font-size: 0.875rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc {
+              font-size: 0.75rem;
+            }
+            
+            .fc .fc-toolbar {
+              flex-direction: column;
+              gap: 0.5rem;
+              padding: 1rem;
+            }
+            
+            .fc .fc-toolbar-title {
+              font-size: 1.25rem !important;
+            }
+            
+            .fc .fc-button {
+              padding: 0.5rem 1rem !important;
+              font-size: 0.75rem !important;
+            }
+            
+            .fc .fc-prev-button, .fc .fc-next-button {
+              padding: 0.5rem !important;
+              min-width: 36px;
+              height: 36px;
+            }
+            
+            .fc .fc-today-button {
+              padding: 0.5rem 1rem !important;
+              min-width: 80px;
+              height: 36px;
+            }
           }
 
           .fc-theme-standard td, .fc-theme-standard th {
@@ -908,11 +977,18 @@ function HorarioCurso() {
           }
 
           .fc .fc-daygrid-day-number {
-            padding: 12px;
+            padding: 8px;
             color: #4B5563;
             font-weight: 500;
             transition: all 0.2s ease;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc .fc-daygrid-day-number {
+              padding: 4px;
+              font-size: 0.75rem;
+            }
           }
 
           .fc .fc-daygrid-day:hover .fc-daygrid-day-number {
@@ -921,10 +997,16 @@ function HorarioCurso() {
           }
 
           .fc .fc-col-header-cell {
-            padding: 16px 0;
+            padding: 12px 0;
             background-color: #F9FAFB;
             transition: all 0.2s ease;
             border-bottom: 2px solid #E5E7EB;
+          }
+
+          @media (max-width: 640px) {
+            .fc .fc-col-header-cell {
+              padding: 8px 0;
+            }
           }
 
           .fc .fc-col-header-cell:hover {
@@ -932,13 +1014,20 @@ function HorarioCurso() {
           }
 
           .fc .fc-col-header-cell-cushion {
-            padding: 12px;
+            padding: 8px;
             color: #1F2937;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.2s ease;
-            font-size: 1rem;
+            font-size: 0.875rem;
             text-transform: capitalize;
+          }
+
+          @media (max-width: 640px) {
+            .fc .fc-col-header-cell-cushion {
+              padding: 4px;
+              font-size: 0.75rem;
+            }
           }
 
           .fc .fc-col-header-cell:hover .fc-col-header-cell-cushion {
@@ -965,7 +1054,7 @@ function HorarioCurso() {
             align-items: center;
             gap: 0.75rem;
             padding: 0.75rem;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
           }
 
           .fc-list {
@@ -982,10 +1071,17 @@ function HorarioCurso() {
 
           .fc-list-event-time {
             font-weight: 500;
-            padding: 1.25rem;
+            padding: 1rem;
             color: #4B5563;
             transition: all 0.2s ease;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc-list-event-time {
+              padding: 0.75rem;
+              font-size: 0.75rem;
+            }
           }
 
           .fc-list-event:hover .fc-list-event-time {
@@ -994,10 +1090,17 @@ function HorarioCurso() {
 
           .fc-list-event-title a {
             font-weight: 600;
-            padding: 1.25rem;
+            padding: 1rem;
             color: #1F2937;
             transition: all 0.2s ease;
-            font-size: 1rem;
+            font-size: 0.875rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc-list-event-title a {
+              padding: 0.75rem;
+              font-size: 0.75rem;
+            }
           }
 
           .fc-list-event:hover .fc-list-event-title a {
@@ -1006,9 +1109,15 @@ function HorarioCurso() {
 
           .fc-list-day-cushion {
             background-color: #F9FAFB !important;
-            padding: 1.25rem !important;
+            padding: 1rem !important;
             transition: all 0.2s ease;
             border-bottom: 2px solid #E5E7EB;
+          }
+
+          @media (max-width: 640px) {
+            .fc-list-day-cushion {
+              padding: 0.75rem !important;
+            }
           }
 
           .fc-list-day-cushion:hover {
@@ -1018,8 +1127,14 @@ function HorarioCurso() {
           .fc-list-day-text, .fc-list-day-side-text {
             font-weight: 600;
             color: #1F2937;
-            font-size: 1.1rem;
+            font-size: 1rem;
             transition: all 0.2s ease;
+          }
+
+          @media (max-width: 640px) {
+            .fc-list-day-text, .fc-list-day-side-text {
+              font-size: 0.875rem;
+            }
           }
 
           .fc-list-day-cushion:hover .fc-list-day-text,
@@ -1028,8 +1143,14 @@ function HorarioCurso() {
           }
 
           .fc-timegrid-slot {
-            height: 3.5em !important;
+            height: 3em !important;
             transition: all 0.2s ease;
+          }
+
+          @media (max-width: 640px) {
+            .fc-timegrid-slot {
+              height: 2.5em !important;
+            }
           }
 
           .fc-timegrid-slot:hover {
@@ -1037,10 +1158,16 @@ function HorarioCurso() {
           }
 
           .fc-timegrid-slot-label {
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             color: #4B5563;
             transition: all 0.2s ease;
             font-weight: 500;
+          }
+
+          @media (max-width: 640px) {
+            .fc-timegrid-slot-label {
+              font-size: 0.75rem;
+            }
           }
 
           .fc-timegrid-slot:hover .fc-timegrid-slot-label {
@@ -1074,12 +1201,20 @@ function HorarioCurso() {
             border-radius: 0.75rem;
             transition: all 0.3s ease;
             text-transform: capitalize;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc .fc-button-primary {
+              padding: 0.5rem 1rem;
+              font-size: 0.75rem;
+              border-radius: 0.5rem;
+            }
           }
 
           .fc .fc-button-primary:hover {
@@ -1104,11 +1239,24 @@ function HorarioCurso() {
             gap: 1rem;
           }
 
+          @media (max-width: 640px) {
+            .fc .fc-toolbar {
+              padding: 1rem;
+              gap: 0.5rem;
+            }
+          }
+
           .fc .fc-toolbar-title {
             font-size: 1.5rem !important;
             font-weight: 700;
             color: #1F2937;
             margin: 0;
+          }
+
+          @media (max-width: 640px) {
+            .fc .fc-toolbar-title {
+              font-size: 1.25rem !important;
+            }
           }
 
           .fc .fc-prev-button, .fc .fc-next-button {
@@ -1121,6 +1269,15 @@ function HorarioCurso() {
             justify-content: center;
           }
 
+          @media (max-width: 640px) {
+            .fc .fc-prev-button, .fc .fc-next-button {
+              padding: 0.5rem !important;
+              border-radius: 0.5rem !important;
+              min-width: 36px;
+              height: 36px;
+            }
+          }
+
           .fc .fc-today-button {
             padding: 0.75rem 1.5rem !important;
             border-radius: 0.75rem !important;
@@ -1131,6 +1288,16 @@ function HorarioCurso() {
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc .fc-today-button {
+              padding: 0.5rem 1rem !important;
+              border-radius: 0.5rem !important;
+              font-weight: 600 !important;
+              min-width: 80px;
+              height: 36px;
+            }
           }
 
           .fc .fc-button-group {
@@ -1201,9 +1368,23 @@ function HorarioCurso() {
             line-height: 1.25rem;
           }
 
+          @media (max-width: 640px) {
+            .fc-daygrid-event-harness .fc-event-title {
+              font-size: 0.75rem;
+              line-height: 1rem;
+            }
+          }
+
           .fc-daygrid-event-harness .fc-event-time {
             font-size: 0.75rem;
             line-height: 1rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc-daygrid-event-harness .fc-event-time {
+              font-size: 0.625rem;
+              line-height: 0.875rem;
+            }
           }
 
           .fc-daygrid-more-link {
@@ -1213,6 +1394,12 @@ function HorarioCurso() {
             border-radius: 3px;
             font-size: 0.875rem;
             font-weight: 500;
+          }
+
+          @media (max-width: 640px) {
+            .fc-daygrid-more-link {
+              font-size: 0.75rem;
+            }
           }
 
           .fc-daygrid-more-link:hover {
@@ -1244,9 +1431,23 @@ function HorarioCurso() {
             line-height: 1.25rem;
           }
 
+          @media (max-width: 640px) {
+            .fc-daygrid-day-events .fc-event-title {
+              font-size: 0.75rem;
+              line-height: 1rem;
+            }
+          }
+
           .fc-daygrid-day-events .fc-event-time {
             font-size: 0.75rem;
             line-height: 1rem;
+          }
+
+          @media (max-width: 640px) {
+            .fc-daygrid-day-events .fc-event-time {
+              font-size: 0.625rem;
+              line-height: 0.875rem;
+            }
           }
 
           /* Estilos específicos para feriados en diferentes vistas */
@@ -1268,6 +1469,21 @@ function HorarioCurso() {
           .fc-timeGridDay-view .fc-event-feriado,
           .fc-dayGridMonth-view .fc-event-feriado {
             display: block !important;
+          }
+
+          /* Responsive para el calendario en móviles */
+          @media (max-width: 640px) {
+            .fc .fc-view-harness {
+              min-height: 400px;
+            }
+            
+            .fc .fc-list-table {
+              font-size: 0.75rem;
+            }
+            
+            .fc .fc-list-event-dot {
+              border-width: 6px;
+            }
           }
         `}
       </style>

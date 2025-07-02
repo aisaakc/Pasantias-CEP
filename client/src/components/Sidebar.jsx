@@ -48,7 +48,7 @@ export default function Sidebar() {
 
   // Encontrar las clasificaciones específicas para Cursos, Roles y Documentos
   const cursosClasificacion = parentClasifications.find(c => c.nombre === 'Cursos');
-  const rolesClasificacion = parentClasifications.find(c => c.nombre === 'Rol');
+  const rolesClasificacion = parentClasifications.find(c => c.nombre === 'Roles');
   const documentosClasificacion = parentClasifications.find(c => c.nombre === 'Tipo de Documento');
 
   // Verificar permisos usando el contexto interno del authStore

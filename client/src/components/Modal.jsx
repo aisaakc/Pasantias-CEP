@@ -4,7 +4,7 @@ import { Formik, Form } from 'formik';
 import useClasificacionStore from '../store/clasificacionStore';
 import { getAllClasificaciones } from '../api/clasificacion.api';
 import { getSubclassificationsById } from '../api/auth.api';
-import { CLASSIFICATION_IDS } from '../config/classificationIds';
+import { CLASSIFICATION_IDS, MASK_DEFAULT } from '../config/classificationIds';
 import useAuthStore from '../store/authStore';
 import useIcons from '../hooks/useIcons';
 
@@ -30,8 +30,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     clearError,
     fetchParentClasifications,
     refreshSubClasificaciones,
-    fetchProgramas,
-    programas,
     getSubclasificaciones,
     allClasificaciones
   } = useClasificacionStore();
@@ -45,41 +43,47 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   const [clasificacionesPrincipales, setClasificacionesPrincipales] = useState([]);
   const [institutos, setInstitutos] = useState([]);
   const [carreras, setCarreras] = useState([]);
+  const [programas, setProgramas] = useState([]); 
   const [adicionalRaw, setAdicionalRaw] = useState(editData?.adicional ? JSON.stringify(editData.adicional, null, 2) : '');
   const [protectedValue, setProtectedValue] = useState(editData?.protected === 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [programasConMascaras, setProgramasConMascaras] = useState([]);
   const [codigoGenerado, setCodigoGenerado] = useState('');
-  const [mascaraActual, setMascaraActual] = useState('');
 
   // Refs para inputs de texto - máxima velocidad (no controlados)
   const inputRefs = useRef({});
 
   // Estados locales para inputs optimizados - usando useMemo para evitar re-creaciones
-  const initialFormValues = useMemo(() => ({
-    nombre: editData?.nombre || '',
-    descripcion: editData?.descripcion || '',
-    id_icono: editData?.id_icono || '',
-    type_id: editData?.type_id || parentInfo?.type_id || '',
-    parent_id: editData?.parent_id || parentInfo?.parent_id || parentId || '',
-    orden: editData?.orden || '',
-    permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
-    clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
-    isMobile: editData?.adicional?.mobile || false,
-    codigo: (editData?.adicional && typeof editData.adicional === 'object' && 'id' in editData.adicional) ? editData.adicional.id : '',
-    costo: (editData?.adicional && typeof editData.adicional === 'object' && 'costo' in editData.adicional) ? editData.adicional.costo : ''
-  }), [
-    editData?.id_clasificacion,
-    editData?.nombre,
-    editData?.descripcion,
-    editData?.id_icono,
-    editData?.type_id,
-    editData?.parent_id,
-    editData?.orden,
-    editData?.adicional,
-    parentInfo?.type_id,
-    parentInfo?.parent_id,
+  const initialFormValues = useMemo(() => {
+    let type_id = editData?.type_id || parentInfo?.type_id || '';
+    // Si estamos agregando (no editando) y el padre es PROGRAMA, el hijo debe ser CURSO
+    if (!editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) {
+      type_id = CLASSIFICATION_IDS.CURSOS;
+    }
+    // Si el padre es CARRERA, el hijo debe ser PROGRAMA
+    if (!editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS) {
+      type_id = CLASSIFICATION_IDS.PROGRAMAS;
+    }
+    // Si el padre es INSTITUTO, el hijo debe ser CARRERA
+    if (!editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.INSTITUTOS) {
+      type_id = CLASSIFICATION_IDS.CARRERAS;
+    }
+    return ({
+      nombre: editData?.nombre || '',
+      descripcion: editData?.descripcion || '',
+      id_icono: editData?.id_icono || '',
+      type_id,
+      parent_id: editData?.parent_id || parentInfo?.parent_id || parentId || '',
+      orden: editData?.orden || '',
+      permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
+      clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
+      isMobile: editData?.adicional?.mobile || false,
+      codigo: (editData?.adicional && typeof editData.adicional === 'object' && 'id' in editData.adicional) ? editData.adicional.id : '',
+      costo: (editData?.adicional && typeof editData.adicional === 'object' && 'costo' in editData.adicional) ? editData.adicional.costo : ''
+    });
+  }, [
+    editData,
+    parentInfo,
     parentId
   ]);
 
@@ -138,116 +142,24 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     return Object.keys(newErrors).length === 0;
   }, [getFormValues]);
 
-  // Función para generar código automático basado en máscaras
-  const generarCodigoAutomatico = useCallback(async (programaId) => {
-    try {
-      console.log('Generando código automático para programa ID:', programaId);
-      
-      // Buscar el programa seleccionado
-      const programa = programasConMascaras.find(p => p.id === Number(programaId));
-      if (!programa) {
-        console.log('No se encontró el programa con ID:', programaId);
-        return '';
-      }
-
-      console.log('Programa encontrado:', programa.nombre);
-
-      // Determinar la máscara basada en el nombre del programa
-      let mascara = 'CEP-999'; // Máscara por defecto
-      
-      // Si es Cisco Academy, usar máscara específica
-      if (programa.nombre.toLowerCase().includes('cisco')) {
-        mascara = 'CEP-CISCO-999';
-        console.log('Usando máscara Cisco:', mascara);
-      } else {
-        console.log('Usando máscara estándar:', mascara);
-      }
-
-      // Establecer la máscara actual para mostrar en la UI
-      setMascaraActual(mascara);
-
-      // Obtener cursos existentes del programa
-      const cursosExistentes = await getSubclasificaciones(CLASSIFICATION_IDS.CURSOS, programaId);
-      console.log('Cursos existentes del programa:', cursosExistentes.data);
-      
-      const codigosExistentes = cursosExistentes.data
-        .filter(curso => curso.adicional && curso.adicional.id)
-        .map(curso => curso.adicional.id);
-
-      console.log('Códigos existentes:', codigosExistentes);
-
-      // Filtrar códigos que siguen el patrón de la máscara
-      const codigosValidos = codigosExistentes.filter(codigo => {
-        const pattern = mascara.replace('999', '\\d+');
-        const regex = new RegExp(`^${pattern}$`);
-        const esValido = regex.test(codigo);
-        console.log(`Código ${codigo} - Patrón ${pattern} - Válido: ${esValido}`);
-        return esValido;
-      });
-
-      console.log('Códigos válidos que siguen el patrón:', codigosValidos);
-
-      // Extraer números de los códigos válidos
-      const numeros = codigosValidos.map(codigo => {
-        const match = codigo.match(/\d+$/);
-        const numero = match ? parseInt(match[0]) : 0;
-        console.log(`Código ${codigo} -> Número ${numero}`);
-        return numero;
-      });
-
-      // Encontrar el siguiente número disponible
-      const siguienteNumero = numeros.length > 0 ? Math.max(...numeros) + 1 : 1;
-      console.log('Siguiente número disponible:', siguienteNumero);
-      
-      // Generar el código con el formato de la máscara
-      const codigoGenerado = mascara.replace('999', String(siguienteNumero).padStart(2, '0'));
-      console.log('Código generado final:', codigoGenerado);
-      
-      return codigoGenerado;
-    } catch (error) {
-      console.error('Error al generar código automático:', error);
+  // Función para obtener el siguiente código desde el backend
+  const fetchNextCourseCode = async (mask) => {
+    console.log('[GEN-COD] Llamando a fetchNextCourseCode con mask:', mask);
+    if (!mask || typeof mask !== 'string' || !mask.includes('9')) {
+      console.warn('[GEN-COD] Máscara inválida, no se hace petición:', mask);
       return '';
     }
-  }, [programasConMascaras, getSubclasificaciones]);
-
-  // Función para manejar cambios en el programa seleccionado
-  const handleProgramaChange = useCallback((e) => {
-    const parentId = e.target.value;
-    console.log('Programa seleccionado:', parentId);
-    console.log('formValues.type_id:', formValues.type_id);
-    console.log('parentInfo?.type_id:', parentInfo?.type_id);
-    console.log('CLASSIFICATION_IDS.CURSOS:', CLASSIFICATION_IDS.CURSOS);
-    
-    setFormValues(prev => ({ ...prev, parent_id: parentId }));
-    
-    // Verificar si es un curso usando tanto formValues.type_id como parentInfo.type_id
-    const isCursos = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS || 
-                    Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS;
-    
-    console.log('¿Es un curso?', isCursos);
-    
-    // Si es un curso, generar código automáticamente inmediatamente al seleccionar programa
-    if (parentId && isCursos && !editData) {
-      console.log('Generando código automático para programa:', parentId);
-      generarCodigoAutomatico(parentId).then(codigo => {
-        console.log('Código generado:', codigo);
-        if (codigo) {
-          setCodigoGenerado(codigo);
-          // Actualizar tanto el estado como el campo de código en el formulario
-          setFormValues(prev => ({ ...prev, codigo }));
-          if (inputRefs.current['codigo']) {
-            inputRefs.current['codigo'].value = codigo;
-          }
-        }
-      });
-    } else {
-      console.log('No se generó código porque:', {
-        parentId: !!parentId,
-        isCursos,
-        editData: !!editData
-      });
+    try {
+      const response = await fetch(`http://localhost:3001/api/clasificaciones/next-code?mask=${encodeURIComponent(mask)}`);
+      if (!response.ok) throw new Error('Error al obtener el siguiente código');
+      const data = await response.json();
+      console.log('[GEN-COD] Respuesta de next-code:', data);
+      return data.nextCode || '';
+    } catch (e) {
+      console.error('[GEN-COD] Error al obtener siguiente código:', e);
+      return '';
     }
-  }, [formValues.type_id, parentInfo?.type_id, editData, generarCodigoAutomatico]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -277,6 +189,13 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
         orden: formValues.orden !== '' ? parseInt(formValues.orden) : 0
       };
       console.log('Objeto enviado:', dataToSend);
+      console.log('Depuración adicional (typeof):', typeof dataToSend.adicional);
+      console.log('Depuración adicional (valor):', dataToSend.adicional);
+      try {
+        console.log('Depuración adicional (JSON.stringify):', JSON.stringify(dataToSend.adicional));
+      } catch (e) {
+        console.log('No se pudo serializar adicional:', e);
+      }
 
       // Guardar código y costo en adicional si es curso
       if (isCursos) {
@@ -323,6 +242,30 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
           return;
         }
         dataToSend.protected = protectedValue ? 1 : 0;
+      }
+
+      // Guardar máscara en adicional si corresponde (Instituto, Carrera, Programa, pero NO curso)
+      if ((isCarrera || isPrograma) && !isCursos) {
+        let adicionalObj = {};
+        // Si ya hay un objeto adicional, lo fusionamos
+        if (dataToSend.adicional && typeof dataToSend.adicional === 'object') {
+          adicionalObj = { ...dataToSend.adicional };
+        }
+        // Si es supervisor y hay JSON en adicionalRaw, fusionar
+        if (isSupervisor && adicionalRaw) {
+          try {
+            adicionalObj = { ...adicionalObj, ...JSON.parse(adicionalRaw) };
+          } catch {
+            toast.error('El campo adicional no es un JSON válido');
+            setIsSubmitting(false);
+            return;
+          }
+        }
+        // Agregar/actualizar la clave mask
+        if (maskValue) {
+          adicionalObj.mask = maskValue;
+        }
+        dataToSend.adicional = Object.keys(adicionalObj).length > 0 ? adicionalObj : null;
       }
 
       if (editData) {
@@ -372,55 +315,98 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   // Cargar datos necesarios
   useEffect(() => {
     if (isOpen) {
-        const loadData = async () => {
-          try {
+      const loadData = async () => {
+        try {
           // Para crear clasificación principal, cargar clasificaciones principales
           if (!editData && !parentInfo?.type_id) {
             const principalesResponse = await getAllClasificaciones();
             const principales = principalesResponse.data.filter(c => c.type_id === null);
             setClasificacionesPrincipales(principales);
           }
-          
-          // Cargar otros datos según el tipo
-          if (editData?.type_id || parentInfo?.type_id) {
-            const typeId = Number(editData?.type_id || parentInfo?.type_id);
-            
-            if (typeId === CLASSIFICATION_IDS.ROLES) {
-              const permisosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
-              setPermisos(permisosResponse.data.data || []);
-              
-              // Cargar clasificaciones principales para "Configuraciones Accesibles"
-              const principalesResponse = await getAllClasificaciones();
-              const principales = principalesResponse.data.filter(c => c.type_id === null);
-              setClasificacionesPrincipales(principales);
-            }
-            
-            if (typeId === CLASSIFICATION_IDS.CURSOS) {
-              fetchProgramas();
-              // Cargar programas con sus máscaras
-              const programasResponse = await getSubclasificaciones(CLASSIFICATION_IDS.PROGRAMAS, null);
-              setProgramasConMascaras(programasResponse.data || []);
-            }
-            
-            if (typeId === CLASSIFICATION_IDS.CARRERAS) {
-              const institutosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.INSTITUTOS);
-              setInstitutos(institutosResponse.data.data || []);
-            }
-            
-            if (typeId === CLASSIFICATION_IDS.PROGRAMAS) {
-                const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
-                setCarreras(carrerasResponse.data.data || []);
-              }
-            }
-          } catch (err) {
-            console.error('Error al cargar datos:', err);
-            toast.error('Error al cargar los datos');
+
+          // Cargar opciones de padre según el tipo a crear
+          const typeId = Number(editData?.type_id || formValues.type_id);
+          if (typeId === CLASSIFICATION_IDS.CARRERAS) {
+            // Carrera: cargar institutos
+            const institutosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.INSTITUTOS);
+            console.log('[GEN-COD-LOAD] Institutos cargados:', institutosResponse.data.data, 'parent_id esperado:', formValues.parent_id || parentInfo?.parent_id);
+            setInstitutos(institutosResponse.data.data || []);
           }
-        };
-        
-        loadData();
-      }
-  }, [isOpen, editData?.id_clasificacion, parentInfo?.type_id]);
+          if (typeId === CLASSIFICATION_IDS.PROGRAMAS) {
+            // Programa: cargar carreras
+            const carrerasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.CARRERAS);
+            console.log('[GEN-COD-LOAD] Carreras cargadas:', carrerasResponse.data.data, 'parent_id esperado:', formValues.parent_id || parentInfo?.parent_id);
+            setCarreras(carrerasResponse.data.data || []);
+          }
+          if (typeId === CLASSIFICATION_IDS.CURSOS) {
+            // Curso: cargar programas
+            const programasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.PROGRAMAS);
+            console.log('[GEN-COD-LOAD] Programas cargados:', programasResponse.data.data, 'parent_id esperado:', formValues.parent_id || parentInfo?.parent_id);
+            setProgramas(programasResponse.data.data || []);
+
+            let idCarrera = null;
+            // // Si parentInfo es un PROGRAMA, su parent_id es la carrera
+            // if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS && parentInfo.parent_id) {
+            //   idCarrera = parentInfo.parent_id;
+            // }
+            // // Si parentInfo es una CARRERA
+            // else if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS && parentInfo.id_clasificacion) {
+            //   idCarrera = parentInfo.id_clasificacion;
+            // }
+            // // Si parentInfo es un CURSO, buscar la jerarquía ascendente para encontrar la carrera
+            // else if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.CURSOS && parentInfo.id_clasificacion) {
+            //   // Buscar la jerarquía ascendente para encontrar la carrera
+            //   try {
+            //     if (useClasificacionStore.getState().getParentHierarchy) {
+            //       const jerarquia = await useClasificacionStore.getState().getParentHierarchy(parentInfo.id_clasificacion);
+            //       const carrera = jerarquia.find(j => Number(j.type_id) === CLASSIFICATION_IDS.CARRERAS);
+            //       if (carrera) {
+            //         idCarrera = carrera.id_clasificacion;
+            //       }
+            //     }
+            //   } catch (e) {
+            //     console.error('[GEN-COD-LOAD] Error obteniendo jerarquía ascendente para curso:', e);
+            //   }
+            // }
+            // Fallbacks
+            // else if (parentInfo && parentInfo.parent_id) {
+            //   idCarrera = parentInfo.parent_id;
+            // } else if (editData && editData.parent_id) {
+            //   idCarrera = editData.parent_id;
+            // }
+            console.log('[GEN-COD-LOAD] idCarrera para cargar programas:', idCarrera);
+            if (idCarrera) {
+              const programasResponse = await getSubclasificaciones(CLASSIFICATION_IDS.PROGRAMAS, idCarrera);
+              console.log('[GEN-COD-LOAD] Programas hijos de la carrera:', programasResponse.data);
+            } else {
+              // Fallback: cargar todos los programas raíz
+              const programasResponse = await getSubclasificaciones(CLASSIFICATION_IDS.PROGRAMAS, null);
+              console.log('[GEN-COD-LOAD] Fallback: todos los programas raíz:', programasResponse.data);
+            }
+          }
+          // Roles y otros tipos especiales
+          if (typeId === CLASSIFICATION_IDS.ROLES) {
+            const permisosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
+            setPermisos(permisosResponse.data.data || []);
+            const principalesResponse = await getAllClasificaciones();
+            const principales = principalesResponse.data.filter(c => c.type_id === null);
+            setClasificacionesPrincipales(principales);
+          }
+        } catch (err) {
+          console.error('Error al cargar datos:', err);
+          toast.error('Error al cargar los datos');
+        }
+      };
+      loadData();
+    }
+  }, [isOpen, editData, formValues.type_id, formValues.parent_id, parentInfo?.type_id, parentInfo?.parent_id]);
+
+  // Precarga el parent_id desde el contexto de navegación si no está seteado
+  useEffect(() => {
+    if (isOpen && !editData && parentInfo?.parent_id && !formValues.parent_id) {
+      setFormValues(prev => ({ ...prev, parent_id: parentInfo.parent_id }));
+    }
+  }, [isOpen, editData, parentInfo?.parent_id, formValues.parent_id]);
 
   // Efecto para manejar la apertura y cierre del modal
   useEffect(() => {
@@ -463,33 +449,40 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     }
   }, [isOpen, clearError]);
 
-  // Efecto para generar código automático cuando se seleccione el programa
+  // Efecto para generar código automático cuando se seleccione el programa o al abrir el modal para agregar un curso
   useEffect(() => {
     const generarCodigo = async () => {
-      // Verificar si es un curso usando tanto formValues.type_id como parentInfo.type_id
-      const isCursos = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS || 
-                      Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS;
-      
-      console.log('Efecto - ¿Es un curso?', isCursos);
-      console.log('Efecto - parent_id:', formValues.parent_id);
-      
-      if (formValues.parent_id && isCursos && !editData) {
-        console.log('Efecto - Generando código automático para programa:', formValues.parent_id);
-        const codigo = await generarCodigoAutomatico(formValues.parent_id);
-        console.log('Efecto - Código generado:', codigo);
+      const isCursoNuevo = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS && !editData;
+      if ((formValues.parent_id || parentInfo?.parent_id) && isCursoNuevo) {
+        // Determinar la máscara a usar (de la jerarquía o MASK_DEFAULT)
+        let mask = '';
+        if (useClasificacionStore.getState().getParentHierarchy && formValues.parent_id) {
+          const parentHierarchy = await useClasificacionStore.getState().getParentHierarchy(formValues.parent_id);
+          for (const parent of parentHierarchy) {
+            if (parent.adicional && typeof parent.adicional === 'object' && parent.adicional.mask) {
+              mask = parent.adicional.mask;
+              break;
+            }
+          }
+        }
+        if (!mask) mask = MASK_DEFAULT;
+        console.log('[GEN-COD] Máscara final usada para next-code:', mask);
+        // Llamar al backend para obtener el siguiente código
+        const codigo = await fetchNextCourseCode(mask);
+        console.log('[GEN-COD] Código sugerido recibido:', codigo);
         if (codigo) {
           setCodigoGenerado(codigo);
-          // Actualizar tanto el estado como el campo de código en el formulario
           setFormValues(prev => ({ ...prev, codigo }));
           if (inputRefs.current['codigo']) {
             inputRefs.current['codigo'].value = codigo;
           }
         }
+      } else {
+        console.log('[GEN-COD] No se genera código automático: parent_id o isCursoNuevo no cumplen condición.', formValues.parent_id, isCursoNuevo);
       }
     };
-
     generarCodigo();
-  }, [formValues.parent_id, formValues.type_id, parentInfo?.type_id, editData, generarCodigoAutomatico]);
+  }, [formValues.parent_id, formValues.type_id, parentInfo?.parent_id, editData]);
 
   // Memoizar la función onClose para evitar re-renders
   const handleClose = useCallback(() => {
@@ -575,6 +568,46 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     return null;
   };
   const objetosClasificacionInfo = getObjetosClasificacionInfo();
+
+  // Determinar si es Instituto, Carrera o Programa para mostrar el input de máscara (pero NO si es curso)
+  const isInstituto = Number(formValues.type_id) === CLASSIFICATION_IDS.INSTITUTOS;
+  const isCarrera = Number(formValues.type_id) === CLASSIFICATION_IDS.CARRERAS;
+  const isPrograma = Number(formValues.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
+  const isCurso = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS;
+
+  // Estado local para la máscara
+  const [maskValue, setMaskValue] = useState(() => {
+    // Si estamos editando y hay mask en adicional, lo precargamos
+    if (editData?.adicional && typeof editData.adicional === 'object' && editData.adicional.mask) {
+      return editData.adicional.mask;
+    }
+    return '';
+  });
+
+  // Actualizar maskValue si cambia editData
+  useEffect(() => {
+    if (editData?.adicional && typeof editData.adicional === 'object' && editData.adicional.mask) {
+      setMaskValue(editData.adicional.mask);
+    } else {
+      setMaskValue('');
+    }
+  }, [editData]);
+
+  // Refuerzo tipoPadre para ocultar select si es Instituto o si type_id es vacío/nulo
+  const tipoPadre = useMemo(() => {
+    if (!formValues.type_id || Number(formValues.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return null;
+    if (isCarrera) return 'instituto';
+    if (isPrograma) return 'carrera';
+    if (isCurso) return 'programa';
+    return null;
+  }, [formValues.type_id, isCarrera, isPrograma, isCurso]);
+
+  const opcionesPadre = useMemo(() => {
+    if (isCarrera) return institutos;
+    if (isPrograma) return carreras;
+    if (isCurso) return programas;
+    return [];
+  }, [isCarrera, isPrograma, isCurso, institutos, carreras, programas]);
 
   if (!shouldRender) return null;
 
@@ -760,25 +793,25 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             )}
 
             {/* Campo parent_id según el tipo */}
-            {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS || Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS) && (
+            {tipoPadre && (
+              console.log('[GEN-COD-RENDER] Opciones padre:', opcionesPadre, 'parent_id seleccionado:', formValues.parent_id),
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={programasClasificacionInfo ? programasClasificacionInfo.icono : faFolder} className="mr-2 text-blue-500" />
-                  {programasClasificacionInfo ? programasClasificacionInfo.nombre : 'Programa'} <span className="text-red-500 ml-1">*</span>
+                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
+                  {tipoPadre === 'instituto' && (institutosClasificacionInfo ? institutosClasificacionInfo.nombre : 'Instituto')}
+                  {tipoPadre === 'carrera' && (carrerasClasificacionInfo ? carrerasClasificacionInfo.nombre : 'Carrera')}
+                  {tipoPadre === 'programa' && (programasClasificacionInfo ? programasClasificacionInfo.nombre : 'Programa')}
+                  <span className="text-red-500 ml-1">*</span>
                 </label>
                 <select
                   name="parent_id"
                   value={formValues.parent_id}
-                  onChange={handleProgramaChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.parent_id 
-                              ? 'border-red-300 focus:ring-red-500' 
-                              : 'border-gray-200 focus:ring-blue-500'
-                  } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
+                  onChange={e => setFormValues(prev => ({ ...prev, parent_id: e.target.value }))}
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.parent_id ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'} focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
                 >
-                  <option value="">Seleccionar programa</option>
-                  {programas.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  <option value="">Seleccionar {tipoPadre}</option>
+                  {opcionesPadre.map((op) => (
+                    <option key={op.id} value={op.id}>{op.nombre}</option>
                   ))}
                 </select>
                 {errors.parent_id && (
@@ -789,66 +822,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
               </div>
             )}
 
-            {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(formValues.type_id) === CLASSIFICATION_IDS.CARRERAS) && (
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={institutosClasificacionInfo ? institutosClasificacionInfo.icono : faFolder} className="mr-2 text-blue-500" />
-                  {institutosClasificacionInfo ? institutosClasificacionInfo.nombre : 'Instituto'} <span className="text-red-500 ml-1">*</span>
-                </label>
-                <select
-                  name="parent_id"
-                  value={formValues.parent_id}
-                  onChange={(e) => setFormValues(prev => ({ ...prev, parent_id: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.parent_id 
-                      ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-200 focus:ring-blue-500'
-                  } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                >
-                  <option value="">Seleccionar instituto</option>
-                  {institutos.map((i) => (
-                    <option key={i.id} value={i.id}>{i.nombre}</option>
-                  ))}
-                </select>
-                {errors.parent_id && (
-                  <div className="mt-1 text-sm text-red-600">
-                    {errors.parent_id}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS || Number(formValues.type_id) === CLASSIFICATION_IDS.PROGRAMAS) && (
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={carrerasClasificacionInfo ? carrerasClasificacionInfo.icono : faFolder} className="mr-2 text-blue-500" />
-                  {carrerasClasificacionInfo ? carrerasClasificacionInfo.nombre : 'Carrera'} <span className="text-red-500 ml-1">*</span>
-                </label>
-                <select
-                  name="parent_id"
-                  value={formValues.parent_id}
-                  onChange={(e) => setFormValues(prev => ({ ...prev, parent_id: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.parent_id 
-                      ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-200 focus:ring-blue-500'
-                  } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                >
-                  <option value="">Seleccionar carrera</option>
-                  {carreras.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-                {errors.parent_id && (
-                  <div className="mt-1 text-sm text-red-600">
-                    {errors.parent_id}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Campos de código y costo para cursos */}
-            {(Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS || Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS || Number(editData?.type_id) === CLASSIFICATION_IDS.CURSOS) && (
+            {/* Mostrar los campos de código y costo SIEMPRE que sea curso (crear o editar) */}
+            {isCurso && (
               <>
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -874,11 +849,6 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                       Código generado automáticamente
                     </p>
                   )}
-                  {mascaraActual && (
-                    <p className="mt-1 text-sm text-blue-600">
-                      Máscara: <code className="bg-blue-100 px-2 py-1 rounded font-mono">{mascaraActual}</code>
-                    </p>
-                  )}
                 </div>
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -889,8 +859,8 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                     ref={el => inputRefs.current['costo'] = el}
                     type="number"
                     name="costo"
-                    defaultValue={formValues.costo}
-                    onBlur={(e) => setFormValues(prev => ({ ...prev, costo: e.target.value }))}
+                    value={editData ? formValues.costo : formValues.costo || ''}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, costo: e.target.value }))}
                     placeholder="Ingrese el costo del curso"
                     step="0.01"
                     min="0"
@@ -1043,6 +1013,25 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                       <p>{error}</p>
                     </div>
                   )}
+
+            {/* Mostrar el input de máscara solo si es Instituto, Carrera o Programa y NO es curso */}
+            {(isInstituto || isCarrera || isPrograma) && !isCurso && (
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FontAwesomeIcon icon={faLayerGroup} className="mr-2 text-blue-500" />
+                  Máscara
+                </label>
+                <input
+                  type="text"
+                  name="mask"
+                  value={maskValue}
+                  onChange={e => setMaskValue(e.target.value)}
+                  placeholder="Ej: CEP-9999, IUSF-INF-99, CEP-CISCO-999"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
+                />
+                <p className="mt-1 text-xs text-gray-500">Máscara de generación automática de Códigos. Usar: 999 para indicar dígitos consecutivos.</p>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">

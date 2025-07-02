@@ -21,6 +21,8 @@ class Clasificacion {
 
     async create(nuevaClasificacion) {
         const { nombre, descripcion, orden, type_id, parent_id, id_icono, adicional } = nuevaClasificacion;
+        console.log('Depuración BACKEND MODEL - create - adicional:', adicional);
+        console.log('Depuración BACKEND MODEL - create - typeof adicional:', typeof adicional);
         try {
             const query = `
                 INSERT INTO clasificacion (nombre, descripcion, orden, type_id, parent_id, id_icono, adicional)
@@ -108,6 +110,8 @@ class Clasificacion {
   
     async updateClasificacion(id, clasificacionActualizada) {
         const { nombre, descripcion, orden, type_id, parent_id, id_icono, adicional, protected: protectedValue } = clasificacionActualizada;
+        console.log('Depuración BACKEND MODEL - update - adicional:', adicional);
+        console.log('Depuración BACKEND MODEL - update - typeof adicional:', typeof adicional);
         try {
             const query = `
                 UPDATE clasificacion 
@@ -219,14 +223,12 @@ class Clasificacion {
 
     async getParentHierarchy(id_clasificacion) {
         try {
-            console.log('Iniciando getParentHierarchy con ID:', id_clasificacion);
-            
+            console.log('[GEN-COD-BACK] Iniciando getParentHierarchy con ID:', id_clasificacion);
             // Primero probamos la función obtener_parents directamente
             const testQuery = 'SELECT * FROM obtener_parents($1)';
-            console.log('Ejecutando consulta de prueba:', testQuery);
+            console.log('[GEN-COD-BACK] Ejecutando consulta de prueba:', testQuery);
             const testResult = await pool.query(testQuery, [id_clasificacion]);
-            console.log('Resultado de prueba:', testResult.rows);
-
+            console.log('[GEN-COD-BACK] Resultado de prueba:', testResult.rows);
             // Ahora la consulta completa
             const query = `
                 SELECT 
@@ -243,13 +245,12 @@ class Clasificacion {
                 LEFT JOIN clasificacion t ON c.type_id = t.id_clasificacion
                 LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
             `;
-            console.log('Ejecutando consulta completa:', query);
+            console.log('[GEN-COD-BACK] Ejecutando consulta completa:', query);
             const result = await pool.query(query, [id_clasificacion]);
-            console.log('Resultado completo:', result.rows);
-            
+            console.log('[GEN-COD-BACK] Resultado completo:', result.rows);
             return result.rows;
         } catch (error) {
-            console.error("Error detallado en getParentHierarchy:", {
+            console.error('[GEN-COD-BACK] Error detallado en getParentHierarchy:', {
                 message: error.message,
                 code: error.code,
                 detail: error.detail,

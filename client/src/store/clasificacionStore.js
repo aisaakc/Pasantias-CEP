@@ -6,7 +6,8 @@ import {
     getAllClasificaciones,
     deleteClasificacion,
     getAllSubclasificaciones,
-    getAllIcons as getAllIconsAPI
+    getAllIcons as getAllIconsAPI,
+    getParentHierarchy as getParentHierarchyAPI
     } from '../api/clasificacion.api';
 import { getAllCursosById } from '../api/curso.api';
 
@@ -416,6 +417,17 @@ export const useClasificacionStore = create((set, get) => ({
       iconsLoaded: false, 
       iconsLoading: false 
     });
+  },
+
+  // Obtener la jerarquía de padres de una clasificación
+  getParentHierarchy: async (id_clasificacion) => {
+    try {
+      const response = await getParentHierarchyAPI(id_clasificacion);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener la jerarquía de padres:', error);
+      throw error;
+    }
   },
 }));
 

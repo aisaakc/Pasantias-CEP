@@ -1,5 +1,6 @@
 import express from "express";
 import Clasificacion from '../controllers/clasificacionController.js'; 
+import { getNextCourseCode } from '../controllers/clasificacionController.js';
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.get('/clasificaciones/icons', Clasificacion.getAllIcons);
 
 router.get('/clasificaciones/jerarquia/:id_raiz', Clasificacion.getHierarchyFromId);
 
+router.get('/clasificaciones/next-code', getNextCourseCode);
 
 export default router;

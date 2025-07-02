@@ -54,6 +54,8 @@ export const CLASSIFICATION_IDS = {
   
 };
 
+export const MASK_DEFAULT = "CEP-CISCO-99";
+
 // Exportar todo en un solo objeto para facilitar la importación
 export default {
   CLASSIFICATION_IDS

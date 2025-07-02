@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-07-01 01:53:59
+-- Started on 2025-07-02 05:28:57
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,6 +35,59 @@ END;$$;
 
 
 ALTER FUNCTION public.check_fechas_horarios() OWNER TO postgres;
+
+--
+-- TOC entry 244 (class 1255 OID 108370)
+-- Name: obtener_jerarquia_desde(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.obtener_jerarquia_desde(id_raiz integer) RETURNS TABLE(id integer, nombre text, descripcion text, type_id integer, parent_id integer, id_icono integer, icono text, nivel integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    WITH RECURSIVE jerarquia AS (
+        SELECT 
+            c.id_clasificacion AS id,
+            c.nombre::text,
+            c.descripcion::text,
+            c.type_id::integer,
+            c.parent_id::integer,
+            c.id_icono::integer,
+            1 AS nivel
+        FROM clasificacion c
+        WHERE c.id_clasificacion = id_raiz
+
+        UNION ALL
+
+        SELECT 
+            h.id_clasificacion,
+            h.nombre::text,
+            h.descripcion::text,
+            h.type_id::integer,
+            h.parent_id::integer,
+            h.id_icono::integer,
+            j.nivel + 1
+        FROM clasificacion h
+        INNER JOIN jerarquia j ON h.parent_id = j.id
+    )
+    SELECT 
+        jerarquia.id, 
+        jerarquia.nombre, 
+        jerarquia.descripcion, 
+        jerarquia.type_id, 
+        jerarquia.parent_id, 
+        jerarquia.id_icono, 
+        icono.nombre::text AS icono,  -- <--- CAST EXPLÍCITO AQUÍ
+        jerarquia.nivel
+    FROM jerarquia
+    LEFT JOIN clasificacion icono ON jerarquia.id_icono = icono.id_clasificacion
+    ORDER BY jerarquia.nivel, jerarquia.nombre;
+END;
+$$;
+
+
+ALTER FUNCTION public.obtener_jerarquia_desde(id_raiz integer) OWNER TO postgres;
 
 --
 -- TOC entry 228 (class 1255 OID 108233)
@@ -241,7 +294,7 @@ CREATE SEQUENCE public.auditorias_id_auditoria_seq
 ALTER SEQUENCE public.auditorias_id_auditoria_seq OWNER TO postgres;
 
 --
--- TOC entry 4866 (class 0 OID 0)
+-- TOC entry 4867 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: auditorias_id_auditoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -287,7 +340,7 @@ CREATE SEQUENCE public.clasificacion_id_clasificacion_seq
 ALTER SEQUENCE public.clasificacion_id_clasificacion_seq OWNER TO postgres;
 
 --
--- TOC entry 4867 (class 0 OID 0)
+-- TOC entry 4868 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -343,7 +396,7 @@ CREATE SEQUENCE public.cursos_id_curso_seq
 ALTER SEQUENCE public.cursos_id_curso_seq OWNER TO postgres;
 
 --
--- TOC entry 4868 (class 0 OID 0)
+-- TOC entry 4869 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: cursos_id_curso_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -386,7 +439,7 @@ CREATE SEQUENCE public.documentos_id_documento_seq
 ALTER SEQUENCE public.documentos_id_documento_seq OWNER TO postgres;
 
 --
--- TOC entry 4869 (class 0 OID 0)
+-- TOC entry 4870 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: documentos_id_documento_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -435,7 +488,7 @@ CREATE SEQUENCE public.personas_id_persona_seq
 ALTER SEQUENCE public.personas_id_persona_seq OWNER TO postgres;
 
 --
--- TOC entry 4870 (class 0 OID 0)
+-- TOC entry 4871 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: personas_id_persona_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -444,7 +497,7 @@ ALTER SEQUENCE public.personas_id_persona_seq OWNED BY public.personas.id_person
 
 
 --
--- TOC entry 4667 (class 2604 OID 108270)
+-- TOC entry 4668 (class 2604 OID 108270)
 -- Name: auditorias id_auditoria; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -452,7 +505,7 @@ ALTER TABLE ONLY public.auditorias ALTER COLUMN id_auditoria SET DEFAULT nextval
 
 
 --
--- TOC entry 4668 (class 2604 OID 108271)
+-- TOC entry 4669 (class 2604 OID 108271)
 -- Name: clasificacion id_clasificacion; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -460,7 +513,7 @@ ALTER TABLE ONLY public.clasificacion ALTER COLUMN id_clasificacion SET DEFAULT 
 
 
 --
--- TOC entry 4670 (class 2604 OID 108272)
+-- TOC entry 4671 (class 2604 OID 108272)
 -- Name: cursos id_curso; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -468,7 +521,7 @@ ALTER TABLE ONLY public.cursos ALTER COLUMN id_curso SET DEFAULT nextval('public
 
 
 --
--- TOC entry 4671 (class 2604 OID 108273)
+-- TOC entry 4672 (class 2604 OID 108273)
 -- Name: documentos id_documento; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -476,7 +529,7 @@ ALTER TABLE ONLY public.documentos ALTER COLUMN id_documento SET DEFAULT nextval
 
 
 --
--- TOC entry 4673 (class 2604 OID 108274)
+-- TOC entry 4674 (class 2604 OID 108274)
 -- Name: personas id_persona; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -484,7 +537,7 @@ ALTER TABLE ONLY public.personas ALTER COLUMN id_persona SET DEFAULT nextval('pu
 
 
 --
--- TOC entry 4851 (class 0 OID 108238)
+-- TOC entry 4852 (class 0 OID 108238)
 -- Dependencies: 217
 -- Data for Name: auditorias; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -494,7 +547,7 @@ COPY public.auditorias (id_auditoria, fecha_hora, ip, descripcion, id_persona, i
 
 
 --
--- TOC entry 4853 (class 0 OID 108244)
+-- TOC entry 4854 (class 0 OID 108244)
 -- Dependencies: 219
 -- Data for Name: clasificacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -503,7 +556,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 14	Personal IUJO		7	3	11	\N	{"id_objeto":[]}	0	\N
 13	Participante Externo		8	3	11	\N	{"id_objeto":[]}	0	\N
 100004	faMapLocationDot	xx	\N	27	\N	100004	\N	1	\N
-3	Rol	Roles del Sistema	110	\N	\N	9751	\N	0	\N
 8065	faArrowLeft		\N	27	\N	8065	\N	1	\N
 8066	faArrowLeftLong		\N	27	\N	8066	\N	1	\N
 8067	faArrowPointer		\N	27	\N	8067	\N	1	\N
@@ -530,7 +582,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 84	¿Cuál es tu comida favorita?		0	8	\N	8698	\N	0	\N
 96	Facilitador	Tiene acceso a ver los cursos que da	3	3	\N	8319	{"id_objeto":[100067,100068,100164,100141,100167,100171,100142,100066,100154],"id_clasificacion":[3,73,5]}	0	\N
 98	Administrador	Tiene acceso a los programas y cursos	2	3	\N	\N	{"id_objeto":[100066,100154,100067,100158,100157,100166,100160,100162,100068,100164,100142,100167,100171,100159,100141],"id_clasificacion":[100172]}	0	\N
-1	Géneros		100	\N	\N	9792	\N	1	\N
 10001	Amazonas		\N	122	122	\N	\N	1	\N
 123	Municipios	Lista de Municipios de Venezuela	60	\N	\N	9048	\N	1	\N
 124	Parroquias	Lista de Parroquias de Venezuela	70	\N	\N	100005	\N	1	\N
@@ -545,7 +596,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 10009	Delta Amacuro		\N	122	\N	\N	\N	1	\N
 100289	Foto de Perfil del Usuario		0	100094	\N	\N	\N	0	\N
 4	Programas		30	\N	\N	9072	\N	0	\N
-73	Objetos		90	\N	\N	9768	\N	0	\N
 8009	fa9		\N	27	\N	8009	\N	1	\N
 8012	faA		\N	27	\N	8012	\N	1	\N
 8015	faAddressBook		\N	27	\N	8015	\N	1	\N
@@ -592,6 +642,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 8090	faArrowUpShortWide		\N	27	\N	8090	\N	1	\N
 8091	faArrowUpWideShort		\N	27	\N	8091	\N	1	\N
 8092	faArrowUpZA		\N	27	\N	8092	\N	1	\N
+1	Géneros		100	\N	\N	9792	\N	0	\N
 8093	faArrowsDownToLine		\N	27	\N	8093	\N	1	\N
 8094	faArrowsDownToPeople		\N	27	\N	8094	\N	1	\N
 8095	faArrowsLeftRight		\N	27	\N	8095	\N	1	\N
@@ -1831,8 +1882,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100129	Fin de Año	31/12	8	100121	100121	\N	\N	0	\N
 100028	Divisas en efectivo ( directamente en caja principal)		\N	100026	100026	\N	\N	0	\N
 100130	Halloween	31/10	10	100121	100121	\N	\N	0	\N
-100270	Administración  de Empresas		0	110	201	\N	\N	0	\N
-100147	Cisco Academy		0	4	100152	\N	{"mask": "CEP-CISCO-999"}	0	\N
 100131	Carnaval  2025	03/03/25 , 04/03/25	11	100121	100121	\N	\N	0	\N
 100148	Diplomado		0	4	100270	\N	\N	0	\N
 100271	Contaduria		0	110	\N	\N	\N	0	\N
@@ -1844,7 +1893,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100133	Oficio Tecnológico emergente (Petare)		0	4	100134	\N	\N	0	\N
 100134	Informática (Sede Petare)		0	110	202	\N	\N	0	\N
 100193	Día de los Reyes Magos	06/01\n	0	100121	\N	\N	\N	0	\N
-100152	Informática		0	110	201	8414	\N	0	\N
 100194	Día de la Divina Pastora	14/01\n	0	100121	\N	\N	\N	0	\N
 100195	Declaración de la Independencia	19/04	0	100121	\N	\N	\N	0	\N
 100196	Día de la Bandera	03/08\n	0	100121	\N	\N	\N	0	\N
@@ -1871,6 +1919,9 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100319	Menú de Cohorte	No tiene la opción del  menú de la Cohorte	0	73	\N	\N	\N	0	\N
 100290	Menú de Lista de Cursos	No tiene la opción del menú de la lista de cursos	0	73	\N	\N	\N	0	\N
 100171	Menú de Tipos de Documentos	No tiene la opción del menú de documentos	0	73	\N	\N	\N	0	\N
+100270	Administración  de Empresas		0	110	201	8239	\N	0	\N
+100152	Informática		0	110	201	8414	\N	0	\N
+100147	Cisco Academy		0	4	100152	9381	{"mask":"CISCO-ACADEMY-999"}	0	\N
 303	 BBVA PROVINCIAL	0108	0	100155	\N	\N	\N	0	\N
 100205	0234	Miranda (Los Teques)	\N	100190	\N	9265	{"mobile": false}	0	\N
 100206	0235	Miranda (Guatire)	\N	100190	\N	9265	{"mobile": false}	0	\N
@@ -1939,8 +1990,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 9320	faQuestion		\N	27	\N	9320	\N	1	\N
 116	Ninguna		\N	110	\N	\N	\N	0	\N
 100079	Educación Especial		\N	110	202	8239	\N	0	\N
-100050	Modalidad		45	\N	\N	8266	\N	0	\N
-100059	Status		150	\N	\N	8330	\N	0	\N
 100096	Genérico		0	100094	\N	\N	\N	0	\N
 100097	Listado Asistencia		0	100094	\N	\N	\N	0	\N
 100098	Fotografía Grupal		0	100094	\N	\N	\N	0	\N
@@ -1953,19 +2002,18 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 9322	faQuora		\N	27	\N	9322	\N	1	\N
 9323	faQuoteLeft		\N	27	\N	9323	\N	1	\N
 12	Estudiante IUJO		6	3	\N	9772	{"id_objeto":[100290],"id_clasificacion":[]}	0	\N
+100059	Status		150	\N	\N	8330	\N	0	\N
+100050	Modalidad		45	\N	\N	8266	\N	0	\N
 9324	faQuoteRight		\N	27	\N	9324	\N	1	\N
 9325	faR		\N	27	\N	9325	\N	1	\N
 100026	Forma de pago	pagos de los cursos	130	\N	\N	8809	\N	1	\N
 7	Femenino	sexo femenino	\N	1	\N	9790	\N	1	\N
-8	Preguntas		140	\N	\N	9320	\N	1	\N
 100062	Cancelado		0	100059	100059	8075	\N	0	\N
 100061	Inactivo		1	100059	100059	\N	\N	0	\N
 9326	faRProject		\N	27	\N	9326	\N	1	\N
 9327	faRadiation		\N	27	\N	9327	\N	1	\N
-200	Institutos	Institutos asociados a Fe y Alegría 	10	\N	\N	9404	\N	0	\N
 201	IUJO (Catia)	Instituto Universitario Jesús Obrero (Catia)	10	200	200	8245	{"mask": "CEP-999"}	0	\N
 203	IUJO (Barquisimeto)	Instituto Universitario Jesús Obrero (Barquisimeto)	30	200	200	8241	{"mask": "CEB-999"}	0	\N
-204	IUSF	Instituto Universitario San Francisco	40	200	200	8249	{"mask": "CEF-999"}	0	\N
 27	Íconos		80	\N	\N	8926	\N	1	\N
 100094	Tipo de Documento	Listado de Tipos de Documentos	120	\N	\N	8678	\N	0	\N
 100095	Informativo		0	100094	\N	\N	\N	0	\N
@@ -2050,6 +2098,8 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 30064	Rojas		\N	123	10005	\N	\N	1	\N
 30065	Sosa		\N	123	10005	\N	\N	1	\N
 30066	Caroní		\N	123	10006	\N	\N	1	\N
+8	Pregunta de Seguridad		140	\N	\N	9320	\N	0	\N
+204	IUSF	Instituto Universitario San Francisco	40	200	\N	8249	{"mask":"IUSF-999"}	0	\N
 30067	Cedeño		\N	123	10006	\N	\N	1	\N
 30068	El Callao		\N	123	10006	\N	\N	1	\N
 30069	Gran Sabana		\N	123	10006	\N	\N	1	\N
@@ -4013,12 +4063,10 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 9890	faYinYang		\N	27	\N	9890	\N	1	\N
 9893	faZ		\N	27	\N	9893	\N	1	\N
 100127	Natalicio de Simón Bolívar	24/07	5	100121	100121	\N	\N	0	\N
-100149	Oficio Tecnológico emergente		0	4	100152	\N	\N	0	\N
 100330	Curso Básico de Mantenimiento y Reparación de PC		0	5	100149	9078	{"id":"CEP-01","costo":20}	0	\N
 100331	Módulo 1: Introduction to Network		0	5	100147	8584	{"id":"CEP-CISCO-01","costo":100}	0	\N
 100337	Menú de Estadística	No tiene la opción del menú de estadísticas 	0	73	\N	\N	\N	0	\N
-100332	Dominando MongoDB: “de CRUD a consultas avanzadas"		0	5	100149	8488	{"id":"CEP-02","costo":20}	0	\N
-100333	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		0	5	100147	8584	{"id":"CEP-CISCO-02","costo":100}	0	\N
+100339	DO YOU AGGREGATE?: Descubriendo insights en NoSQL (de Collections/Validations, ...a Modelos Escalables)		0	5	100149	8488	{"id":"CEP-06","costo": 30}	0	\N
 100334	Primeros pasos con Office		0	5	100149	8660	{"id":"CEP-03","costo":20}	0	\N
 100335	Manejo de Bases de Datos con PostgreSQL		0	5	100149	8488	{"id":"CEP-04","costo":20}	0	\N
 100336	Nómina y Prestaciones Sociales		0	5	100149	9109	{"id":"CEP-05","costo":20}	0	\N
@@ -4028,26 +4076,30 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100066	Menú de Roles	No tiene la opción del menú de roles	0	73	\N	\N	\N	0	\N
 100338	Comprobante de Pago		0	100094	\N	9111	\N	0	\N
 15	Super Administrador		1	3	\N	9769	{"id_objeto":[100166,100156,100157,100158,100159,100161,100162,100067,100068,100160,100142,100164,100171,100066,100290,100319,100337,100141],"id_clasificacion":[100172,100173,100174,100178,100179,100181,100234,100300,100301,200,110,4,122,100050,5,123,124,27,1,73,100190,3,100094,100121,100187,100026,100155,8,100059,100311,100315,100310,100317,100318,100327]}	0	\N
-100339	Robótica		0	5	100133	8825	{"id":"","costo":null}	0	\N
+100333	Módulo 2: Switching, Routing and Wireless Essentials (SRWE)		0	5	100147	8584	{"id":"CEP-CISCO-05","costo":100}	0	\N
+200	Institutos	Institutos asociados a Fe y Alegría 	10	\N	\N	9404	\N	0	\N
+73	Permisos de Objetos		90	\N	\N	9768	\N	0	\N
+100332	DO YOU COMMIT?: Dominando el potencial DB (en Oracle XE, MySQL, MS SQL Server, …y PostgreSQL)		0	5	100149	8488	{"id":"CEP-02","costo":20}	0	\N
+3	Roles	Roles del Sistema	110	\N	\N	9769	\N	0	\N
+100149	Oficio Tecnológico Emergente		0	4	100152	8438	\N	0	\N
 \.
 
 
 --
--- TOC entry 4855 (class 0 OID 108251)
+-- TOC entry 4856 (class 0 OID 108251)
 -- Dependencies: 221
 -- Data for Name: cursos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, fecha_hora_inicio, fecha_hora_fin, color, partipantes, codigo_cohorte, horarios, propiedades_curso, documentos) FROM stdin;
-3	100334	\N	100060	17	Primer cohorte	<p><strong style="background-color: initial;">CONTENIDO:</strong></p><ul><li>Descripción y manipulación de Libro, Hoja (etiqueta), Celda, Columna, Fila, Rango. Desplazamiento y selección en la hoja de cálculo. Uso de los atajos con el teclado. Introducción de datos. Copiar, cortar, pegar y mover celdas. Buscar valores.</li><li>Formato de hojas, tablas, celdas, textos, números y fechas. Fuentes, bordes, alineación, alto y ancho de celdas, filas y columnas, combinación de celdas. Formatos condicionales.</li><li>Creación de Gráficos (Columnas, Circulares, Líneas).</li><li>Fórmulas y funciones. Referencias Relativas y Absolutas. Creación de fórmulas. Inserción de funciones en la hoja de cálculo. Funciones básicas. Aplicación de funciones matemáticas, estadísticas, de fecha y hora, de texto, y lógicas simples.</li><li>Esquemas. Esquemas manuales y automáticos.</li><li>Manipulación de Bases de Datos en Excel. Ordenar y filtrar hojas de cálculo por una o varias columnas. Manejo de filtros automáticos. Generar subtotales automáticos por una o varias columnas.</li><li>Aplicación de buenas prácticas con ejercicios simples: Ejercicio de familiarización con el entorno de Excel, aplicación de trucos y atajos, cómo calcular porcentajes y promedios, generar la Contabilidad diaria (básica), control diario de Ventas (básico), calcular la morosidad de créditos, generar la Pre-Nómina de empleados y realizar análisis de ventas</li></ul><p><br></p>	20	CEP-03	107	\N	100052	2025-06-19 21:00:00	2025-06-27 06:24:00	#4F46E5	\N	1-2025	\N	\N	\N
-2	100332	\N	100060	35	Primer Cohorte de MongoDB	<p><strong style="color: rgb(78, 78, 78); background-color: initial;">CONTENIDO:</strong></p><ol><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Introducción a las Bases de Datos NoSQL</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Diferencias ACID vs. BASE</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Tipos de Bases de Datos NoSQL</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Introducción a MongoDB y Compass</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Fundamentos de MongoDB</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Documentos y Colecciones</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">CRUD básico &lt;Back&gt; (Crear, Leer, Actualizar, Eliminar)</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Consultas simples y operadores</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Consultas Avanzadas en MongoDB</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Índices y rendimiento</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Agregaciones y pipelines</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Uso de Compass para consultas avanzadas</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">[</span><strong style="color: rgb(78, 78, 78); background-color: initial;">Sesión 4</strong><span style="color: rgb(78, 78, 78); background-color: initial;">]: </span><strong style="color: rgb(78, 78, 78); background-color: initial;">Modelado de Datos y Seguridad</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Modelado de datos en NoSQL</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Seguridad en MongoDB</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Introducción a Studio 3T</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Studio 3T para Desarrolladores</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Herramientas avanzadas en Studio 3T</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Automatización de tareas con Studio 3T</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Integración con sistemas existentes</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><strong style="color: rgb(78, 78, 78); background-color: initial;">Integración con Node.js</strong></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Configuración del entorno Node.js con MongoDB</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Conexión y operaciones CRUD desde Node.js</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Ejemplo de aplicación</span></li></ol><p><br></p>	20	CEP-02	108	\N	100053	2025-05-29 03:00:00	2025-06-19 06:00:00	#464384	\N	1-2025	\N	\N	\N
-4	100133	\N	100060	20	Curso de Prueba PETARE	<p>Contenido del curso de prueba en PETARE</p>	10	PET-01	\N	\N	100052	2025-07-01 08:00:00	2025-07-01 12:00:00	#FF0000	\N	1-2025	\N	\N	\N
-1	100331	\N	100060	70	Primer Modulo de Cisco del mes de Junio	<p><strong style="color: rgb(78, 78, 78); background-color: initial;">CONTENIDO:</strong></p><ol><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Configuración básica de switches</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Protocolos y modelos.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa física</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Sistemas numéricos</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de enlace de datos</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Switching Ethernet.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de red</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Resolución de dirección</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Configuración básica de un router.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Asignación de direcciones IPv4.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Asignación de direcciones IPv6</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">ICMP</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de transporte</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Capa de aplicación</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Fundamentos de seguridad en la red.</span></li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span><span style="color: rgb(78, 78, 78); background-color: initial;">Cree una red pequeña. </span></li></ol><p><br></p>	100	CEP-CISCO-01	97	\N	100052	2025-05-10 16:00:00	2025-08-02 20:00:00	#4F46E5	\N	1-2025	[{"id":"17513330747211d2t4iptn","fecha_hora_inicio":"2025-05-10T08:00:00","fecha_hora_fin":"2025-05-10T12:00:00","observacion":"primera clase"},{"id":"1751333091303b7f6ygbst","fecha_hora_inicio":"2025-05-17T08:00:00","fecha_hora_fin":"2025-05-17T12:00:00","observacion":"segunda clase"},{"id":"1751333109141bvij3cho6","fecha_hora_inicio":"2025-05-24T08:00:00","fecha_hora_fin":"2025-05-24T12:00:00","observacion":"tercera clase"},{"id":"1751338848491hbtpgui4o","fecha_hora_inicio":"2025-05-31T08:00:00","fecha_hora_fin":"2025-05-31T12:00:00","observacion":"cuarta clase"}]	\N	\N
+1	100331	\N	100060	70	Primera cohorte	\N	100	CEP-CISCO-01	97	\N	100052	2025-03-08 08:00:00	2025-06-21 12:00:00	#2cbaa9	\N	1-2025	\N	\N	\N
+3	100334	\N	100060	\N		\N	20	CEP-03	115	\N	100052	2025-03-08 08:00:00	2025-03-29 12:00:00	#4F46E5	\N	1-2025	\N	\N	\N
+2	100330	\N	100060	20	Primera Cohorte 	\N	20	CEP-01	114	\N	100052	2025-03-08 08:00:00	2025-03-29 12:00:00	#4F46E5	[]	1-2025	\N	\N	\N
 \.
 
 
 --
--- TOC entry 4857 (class 0 OID 108257)
+-- TOC entry 4858 (class 0 OID 108257)
 -- Dependencies: 223
 -- Data for Name: documentos; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -4070,11 +4122,12 @@ COPY public.documentos (id_documento, id_tipo, fecha_hora, nombre, descripcion, 
 38	100097	2025-06-25 15:18:50.834	pepwq	 xdd	csv	2300
 40	100097	2025-06-25 15:56:39.437	xddd		pdf	921972
 41	100099	2025-06-29 19:13:19.898	Supe	xd	jpg	184754
+42	100338	2025-07-01 16:10:28.569	redes.jpg	Comprobante de pago para inscripción	jpg	175096
 \.
 
 
 --
--- TOC entry 4859 (class 0 OID 108264)
+-- TOC entry 4860 (class 0 OID 108264)
 -- Dependencies: 225
 -- Data for Name: personas; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -4087,11 +4140,14 @@ COPY public.personas (id_persona, nombre, apellido, telefono, contrasena, id_gen
 102	Supervisor	General	02123124321	$2b$10$hgUjZ0LbXB8DhPVbhRff4.oX.oNs/mCTShBHHLfxW85cgf48xGUxu	6	100140	98989898	testing98989898@gmail.com	\N	$2b$10$m50MTt.8JKr1.U9T.qrDAOFacipnbToGCCUd3xtdAHXqfYvDajmAu	[]	\N
 107	Alexis	Ramírez                 	04161344554	$2b$10$yFqsSXzAk8bZ8HpZl7G2kOtHKwDeHjwCOs8.FlAsln00wDQDsORai	6	84	6722311	alexisramirez@gmail.com	\N	$2b$10$t9XJx2DDyfsXSBpCnrNLYeuzh/UXXEGKp74nvSywCc/G//nZwvNt2	[96]	\N
 113	Isaac	Cattoni	04143173929	$2b$10$HpQqNNAu/R9dJ3Kswx5Mk.gduCg8CJxym0AhQAICkJix4xrT6qgni	6	9	30551898	isaacattonibarca10@gmail.com	\N	$2b$10$bykw/8MtduioeiWBWysVB./SaFseXvPb4FCX51AK2tO8j7JDD8J1O	[12]	\N
+114	Arnaldo	Barrios	04141231232	$2b$10$LGVFXPOLZyDdb8G/bTpL7..DHIRZH1GZyN6AZRpf1Zzq5ybxyZPLu	6	9	14565212	arnaldo.barrios@gmail.com	\N	$2b$10$g7DfKddP3aGpMKsLR3iEwuT68sQJJkFhC/IFORxWuOfVAgIF0bV2S	[96]	\N
+115	Fernando	 Mozo	04121231232	$2b$10$E3kWo.P.ZP.R3bffmiSJc.I8U2UK7m30q3X2qUELbwd/JvStkW/gK	6	84	20121212	fernado.mozo@gmail.com	\N	$2b$10$dVvDLCdBqslAhUjjJus7Se9G0TFpJGeCvzefetAT27TS8q2rVD3ay	[96]	\N
+116	Manuel	Gil	04161242436	$2b$10$ioaC4mIUHa9Ov2MLS0.oiOP2TI9t3J3hrv78ca.cabWW5W586WeWm	6	84	17341321	manuel.gil@gmail.com	\N	$2b$10$WONTQ2IBHIArZ.VaXWgeb.xlFeZy6ENolgw8l8142kIKXv8H.i8uO	[96]	\N
 \.
 
 
 --
--- TOC entry 4871 (class 0 OID 0)
+-- TOC entry 4872 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: auditorias_id_auditoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -4100,43 +4156,43 @@ SELECT pg_catalog.setval('public.auditorias_id_auditoria_seq', 1, false);
 
 
 --
--- TOC entry 4872 (class 0 OID 0)
+-- TOC entry 4873 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: clasificacion_id_clasificacion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100339, true);
-
-
---
--- TOC entry 4873 (class 0 OID 0)
--- Dependencies: 222
--- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
---
-
-SELECT pg_catalog.setval('public.cursos_id_curso_seq', 4, true);
+SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 100341, true);
 
 
 --
 -- TOC entry 4874 (class 0 OID 0)
--- Dependencies: 224
--- Name: documentos_id_documento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Dependencies: 222
+-- Name: cursos_id_curso_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.documentos_id_documento_seq', 41, true);
+SELECT pg_catalog.setval('public.cursos_id_curso_seq', 3, true);
 
 
 --
 -- TOC entry 4875 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: documentos_id_documento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.documentos_id_documento_seq', 42, true);
+
+
+--
+-- TOC entry 4876 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: personas_id_persona_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.personas_id_persona_seq', 113, true);
+SELECT pg_catalog.setval('public.personas_id_persona_seq', 116, true);
 
 
 --
--- TOC entry 4675 (class 2606 OID 108276)
+-- TOC entry 4676 (class 2606 OID 108276)
 -- Name: auditorias auditorias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4145,7 +4201,7 @@ ALTER TABLE ONLY public.auditorias
 
 
 --
--- TOC entry 4677 (class 2606 OID 108278)
+-- TOC entry 4678 (class 2606 OID 108278)
 -- Name: clasificacion clasificacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4154,7 +4210,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4679 (class 2606 OID 108280)
+-- TOC entry 4680 (class 2606 OID 108280)
 -- Name: cursos cursos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4163,7 +4219,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4681 (class 2606 OID 108282)
+-- TOC entry 4682 (class 2606 OID 108282)
 -- Name: documentos documentos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4172,7 +4228,7 @@ ALTER TABLE ONLY public.documentos
 
 
 --
--- TOC entry 4683 (class 2606 OID 108284)
+-- TOC entry 4684 (class 2606 OID 108284)
 -- Name: personas personas_cedula_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4181,7 +4237,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4685 (class 2606 OID 108286)
+-- TOC entry 4686 (class 2606 OID 108286)
 -- Name: personas personas_gmail_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4190,7 +4246,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4687 (class 2606 OID 108288)
+-- TOC entry 4688 (class 2606 OID 108288)
 -- Name: personas personas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4199,7 +4255,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4703 (class 2620 OID 108289)
+-- TOC entry 4704 (class 2620 OID 108289)
 -- Name: clasificacion trg_proteger_clasificacion; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -4207,7 +4263,7 @@ CREATE TRIGGER trg_proteger_clasificacion BEFORE INSERT OR DELETE OR UPDATE ON p
 
 
 --
--- TOC entry 4704 (class 2620 OID 108290)
+-- TOC entry 4705 (class 2620 OID 108290)
 -- Name: clasificacion trg_validar_clasificacion; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -4215,7 +4271,7 @@ CREATE TRIGGER trg_validar_clasificacion BEFORE INSERT OR UPDATE ON public.clasi
 
 
 --
--- TOC entry 4705 (class 2620 OID 108291)
+-- TOC entry 4706 (class 2620 OID 108291)
 -- Name: cursos trg_validar_codigo_cohorte; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -4223,7 +4279,7 @@ CREATE TRIGGER trg_validar_codigo_cohorte BEFORE INSERT OR UPDATE ON public.curs
 
 
 --
--- TOC entry 4688 (class 2606 OID 108292)
+-- TOC entry 4689 (class 2606 OID 108292)
 -- Name: auditorias auditorias_id_evento_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4232,7 +4288,7 @@ ALTER TABLE ONLY public.auditorias
 
 
 --
--- TOC entry 4689 (class 2606 OID 108297)
+-- TOC entry 4690 (class 2606 OID 108297)
 -- Name: auditorias auditorias_id_persona_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4241,7 +4297,7 @@ ALTER TABLE ONLY public.auditorias
 
 
 --
--- TOC entry 4690 (class 2606 OID 108302)
+-- TOC entry 4691 (class 2606 OID 108302)
 -- Name: clasificacion clasificacion_id_icono_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4250,7 +4306,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4691 (class 2606 OID 108307)
+-- TOC entry 4692 (class 2606 OID 108307)
 -- Name: clasificacion clasificacion_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4259,7 +4315,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4692 (class 2606 OID 108312)
+-- TOC entry 4693 (class 2606 OID 108312)
 -- Name: clasificacion clasificacion_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4268,7 +4324,7 @@ ALTER TABLE ONLY public.clasificacion
 
 
 --
--- TOC entry 4693 (class 2606 OID 108317)
+-- TOC entry 4694 (class 2606 OID 108317)
 -- Name: cursos cursos_id_facilitador_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4277,7 +4333,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4694 (class 2606 OID 108322)
+-- TOC entry 4695 (class 2606 OID 108322)
 -- Name: cursos cursos_id_foto_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4286,7 +4342,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4695 (class 2606 OID 108327)
+-- TOC entry 4696 (class 2606 OID 108327)
 -- Name: cursos cursos_id_modalidad_fkey1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4295,7 +4351,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4696 (class 2606 OID 108332)
+-- TOC entry 4697 (class 2606 OID 108332)
 -- Name: cursos cursos_id_nombre_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4304,7 +4360,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4697 (class 2606 OID 108337)
+-- TOC entry 4698 (class 2606 OID 108337)
 -- Name: cursos cursos_id_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4313,7 +4369,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4698 (class 2606 OID 108342)
+-- TOC entry 4699 (class 2606 OID 108342)
 -- Name: cursos cursos_id_type_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4322,7 +4378,7 @@ ALTER TABLE ONLY public.cursos
 
 
 --
--- TOC entry 4699 (class 2606 OID 108347)
+-- TOC entry 4700 (class 2606 OID 108347)
 -- Name: documentos documentos_id_tipo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4331,7 +4387,7 @@ ALTER TABLE ONLY public.documentos
 
 
 --
--- TOC entry 4700 (class 2606 OID 108352)
+-- TOC entry 4701 (class 2606 OID 108352)
 -- Name: personas personas_id_genero_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4340,7 +4396,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4701 (class 2606 OID 108357)
+-- TOC entry 4702 (class 2606 OID 108357)
 -- Name: personas personas_id_pregunta_fkey1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4349,7 +4405,7 @@ ALTER TABLE ONLY public.personas
 
 
 --
--- TOC entry 4702 (class 2606 OID 108362)
+-- TOC entry 4703 (class 2606 OID 108362)
 -- Name: personas personas_id_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4357,7 +4413,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-07-01 01:54:00
+-- Completed on 2025-07-02 05:28:57
 
 --
 -- PostgreSQL database dump complete

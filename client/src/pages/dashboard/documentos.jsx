@@ -34,6 +34,7 @@ function Documentos() {
   const [cohortes, setCohortes] = useState([]);
   const [selectedCohorte, setSelectedCohorte] = useState('');
   const [cursosCohorteMap, setCursosCohorteMap] = useState({});
+  const [selectedCurso, setSelectedCurso] = useState('');
   const [personas, setPersonas] = useState([]);
   const [selectedPersona, setSelectedPersona] = useState('');
   const [loadingPersonas, setLoadingPersonas] = useState(false);
@@ -91,12 +92,20 @@ function Documentos() {
       )
     : documentos;
 
+  const documentosFiltradosPorCurso = selectedCurso && selectedCohorte && cursosCohorteMap[selectedCohorte]
+    ? documentosFiltradosPorCohorte.filter(doc =>
+        cursosCohorteMap[selectedCohorte].some(curso =>
+          curso.id_curso === Number(selectedCurso) && Array.isArray(curso.documentos) && curso.documentos.includes(doc.id_documento)
+        )
+      )
+    : documentosFiltradosPorCohorte;
+
   const documentosFiltradosPorPersona = selectedPersona
-    ? documentosFiltradosPorCohorte.filter(doc => {
+    ? documentosFiltradosPorCurso.filter(doc => {
         const persona = personas.find(p => p.id_persona === Number(selectedPersona));
         return Array.isArray(persona?.documentos) && persona.documentos.includes(doc.id_documento);
       })
-    : documentosFiltradosPorCohorte;
+    : documentosFiltradosPorCurso;
 
   const filteredDocumentos = documentosFiltradosPorPersona
     .filter(doc => {
@@ -275,71 +284,6 @@ function Documentos() {
                 Agregar Documento
               </button>
             </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Cohorte:</label>
-              <select
-                value={selectedCohorte}
-                onChange={e => setSelectedCohorte(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              >
-                <option value="">Todos</option>
-                {cohortes.map(cohorte => (
-                  <option key={cohorte} value={cohorte}>{cohorte}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Persona:</label>
-              <select
-                value={selectedPersona}
-                onChange={e => setSelectedPersona(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                disabled={loadingPersonas}
-              >
-                <option value="">Todas</option>
-                {/* Agrupar personas por rol, solo mostrar si tienen rol y en orden jerárquico según classificationIds */}
-                {(() => {
-                  // Definir el orden jerárquico usando los IDs de classificationIds.js
-                  const rolIdToName = {};
-                  personas.forEach(p => {
-                    if (p.rol_nombre && p.id_rol) {
-                      rolIdToName[p.id_rol] = p.rol_nombre;
-                    }
-                  });
-                  const rolOrderIds = [
-                    CLASSIFICATION_IDS.Super_admin,
-                    CLASSIFICATION_IDS.Administrador,
-                    CLASSIFICATION_IDS.ROLES_FACILITADORES
-                  ];
-                  const rolOrder = rolOrderIds.map(id => rolIdToName[id]).filter(Boolean);
-                  // Agrupar personas por rol
-                  const grupos = personas.reduce((acc, persona) => {
-                    const rol = persona.rol_nombre;
-                    if (!rol) return acc; // Omitir personas sin rol
-                    if (!acc[rol]) acc[rol] = [];
-                    acc[rol].push(persona);
-                    return acc;
-                  }, {});
-                  // Ordenar los roles según la jerarquía y luego alfabéticamente los demás
-                  const rolesOrdenados = [
-                    ...rolOrder.filter(rol => grupos[rol]),
-                    ...Object.keys(grupos)
-                      .filter(rol => !rolOrder.includes(rol))
-                      .sort()
-                  ];
-                  return rolesOrdenados.map(rol => (
-                    <optgroup key={rol} label={rol}>
-                      {grupos[rol].map(persona => (
-                        <option key={persona.id_persona} value={persona.id_persona}>
-                          {persona.persona_nombre} {persona.apellido}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ));
-                })()}
-              </select>
-            </div>
           </div>
 
           {showFilters && (
@@ -375,6 +319,93 @@ function Documentos() {
                     <option value="nombre-desc">Nombre (Z-A)</option>
                     <option value="tamano-desc">Tamaño (mayor)</option>
                     <option value="tamano-asc">Tamaño (menor)</option>
+                  </select>
+                </div>
+                {/* Select de cohorte */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cohorte</label>
+                  <select
+                    value={selectedCohorte}
+                    onChange={e => {
+                      setSelectedCohorte(e.target.value);
+                      setSelectedCurso('');
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Todos</option>
+                    {cohortes.map(cohorte => (
+                      <option key={cohorte} value={cohorte}>{cohorte}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Select de curso dependiente de cohorte */}
+                {selectedCohorte && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Curso</label>
+                    <select
+                      value={selectedCurso}
+                      onChange={e => setSelectedCurso(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Todos</option>
+                      {(cursosCohorteMap[selectedCohorte] || []).map(curso => (
+                        <option key={curso.id_curso} value={curso.id_curso}>
+                          {curso.nombre_curso}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {/* Select de persona */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Persona</label>
+                  <select
+                    value={selectedPersona}
+                    onChange={e => setSelectedPersona(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    disabled={loadingPersonas}
+                  >
+                    <option value="">Todas</option>
+                    {/* Agrupar personas por rol, solo mostrar si tienen rol y en orden jerárquico según classificationIds */}
+                    {(() => {
+                      // Definir el orden jerárquico usando los IDs de classificationIds.js
+                      const rolIdToName = {};
+                      personas.forEach(p => {
+                        if (p.rol_nombre && p.id_rol) {
+                          rolIdToName[p.id_rol] = p.rol_nombre;
+                        }
+                      });
+                      const rolOrderIds = [
+                        CLASSIFICATION_IDS.Super_admin,
+                        CLASSIFICATION_IDS.Administrador,
+                        CLASSIFICATION_IDS.ROLES_FACILITADORES
+                      ];
+                      const rolOrder = rolOrderIds.map(id => rolIdToName[id]).filter(Boolean);
+                      // Agrupar personas por rol
+                      const grupos = personas.reduce((acc, persona) => {
+                        const rol = persona.rol_nombre;
+                        if (!rol) return acc; // Omitir personas sin rol
+                        if (!acc[rol]) acc[rol] = [];
+                        acc[rol].push(persona);
+                        return acc;
+                      }, {});
+                      // Ordenar los roles según la jerarquía y luego alfabéticamente los demás
+                      const rolesOrdenados = [
+                        ...rolOrder.filter(rol => grupos[rol]),
+                        ...Object.keys(grupos)
+                          .filter(rol => !rolOrder.includes(rol))
+                          .sort()
+                      ];
+                      return rolesOrdenados.map(rol => (
+                        <optgroup key={rol} label={rol}>
+                          {grupos[rol].map(persona => (
+                            <option key={persona.id_persona} value={persona.id_persona}>
+                              {persona.persona_nombre} {persona.apellido}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ));
+                    })()}
                   </select>
                 </div>
               </div>

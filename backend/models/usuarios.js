@@ -372,6 +372,26 @@ class UsuarioModel {
             throw new Error(`Error al asociar documento a la persona: ${error.message}`);
         }
     }
+
+    async removeDocumentoFromAllPersonas(id_documento) {
+      try {
+        const getQuery = 'SELECT id_persona, documentos FROM personas';
+        const result = await pool.query(getQuery);
+        for (const row of result.rows) {
+          let documentos = row.documentos || [];
+          if (typeof documentos === 'string') {
+            try { documentos = JSON.parse(documentos); } catch { documentos = []; }
+          }
+          if (!Array.isArray(documentos)) documentos = [];
+          const nuevosDocumentos = documentos.filter(docId => docId !== Number(id_documento));
+          if (nuevosDocumentos.length !== documentos.length) {
+            await pool.query('UPDATE personas SET documentos = $1 WHERE id_persona = $2', [JSON.stringify(nuevosDocumentos), row.id_persona]);
+          }
+        }
+      } catch (error) {
+        throw new Error('Error al eliminar documento de personas: ' + error.message);
+      }
+    }
 }
 
 export default new UsuarioModel();

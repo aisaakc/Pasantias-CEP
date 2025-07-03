@@ -52,7 +52,18 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
         .finally(() => setLoadingTipos(false));
       // Cargar cursos
       getAllCursos()
-        .then(res => setCursos(res.data?.data || []))
+        .then(res => {
+          const cursos = res.data?.data || [];
+          setCursos(cursos);
+          // Si es edición, buscar el curso y cohorte asociados al documento
+          if (isEdit && editData) {
+            const cursoAsociado = cursos.find(curso => Array.isArray(curso.documentos) && curso.documentos.includes(editData.id_documento));
+            if (cursoAsociado) {
+              setCursoSeleccionado(cursoAsociado.id_curso.toString());
+              setAsociarACohorte(true);
+            }
+          }
+        })
         .catch(() => setCursos([]));
       // Cargar personas
       getUsuarios()
@@ -148,6 +159,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                   await updateDocumentoWithFile(editData.id_documento, values.archivo, documentoData);
                 } else {
                   await updateDocumento(editData.id_documento, documentoData);
+                }
+                // Asociar a curso si corresponde (también en edición)
+                if (asociarACohorte && cursoSeleccionado) {
+                  await asociarDocumentoACurso(cursoSeleccionado, editData.id_documento);
                 }
                 // Asociar a persona si corresponde (también en edición)
                 if (mostrarSelectPersona && personaSeleccionada) {

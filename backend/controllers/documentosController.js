@@ -3,6 +3,8 @@ import { hashFileName, isValidFileType, hashDeterministaPorId, getFileExtension 
 import { getFileUrl, getFilePath } from "../middleware/uploadMiddleware.js";
 import fs from 'fs';
 import path from 'path';
+import UsuarioModel from '../models/usuarios.js';
+import CursoModel from '../models/curso.js';
 
 
 
@@ -362,6 +364,10 @@ class DocumentosController {
             }
 
             const documentoEliminado = await documentosModel.delete(id);
+
+            // Eliminar el id del documento de los arrays en personas y cursos
+            await UsuarioModel.removeDocumentoFromAllPersonas(id);
+            await CursoModel.removeDocumentoFromAllCursos(id);
 
             res.status(200).json({
                 success: true,

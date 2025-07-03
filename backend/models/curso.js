@@ -329,6 +329,26 @@ class CursoModel {
       throw new Error(`Error al asociar documento al curso: ${error.message}`);
     }
   }
+
+  async removeDocumentoFromAllCursos(id_documento) {
+    try {
+      const getQuery = 'SELECT id_curso, documentos FROM cursos';
+      const result = await pool.query(getQuery);
+      for (const row of result.rows) {
+        let documentos = row.documentos || [];
+        if (typeof documentos === 'string') {
+          try { documentos = JSON.parse(documentos); } catch { documentos = []; }
+        }
+        if (!Array.isArray(documentos)) documentos = [];
+        const nuevosDocumentos = documentos.filter(docId => docId !== Number(id_documento));
+        if (nuevosDocumentos.length !== documentos.length) {
+          await pool.query('UPDATE cursos SET documentos = $1 WHERE id_curso = $2', [JSON.stringify(nuevosDocumentos), row.id_curso]);
+        }
+      }
+    } catch (error) {
+      throw new Error('Error al eliminar documento de cursos: ' + error.message);
+    }
+  }
 }
 
 export default new CursoModel();

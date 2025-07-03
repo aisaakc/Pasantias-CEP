@@ -6,6 +6,7 @@ import { hashDeterministaPorId } from '../../utils/hashUtils'
 import DeleteModal from '../../components/DeleteModal'
 import { toast } from 'sonner'
 import * as iconos from '@fortawesome/free-solid-svg-icons'
+import { getAllCursos } from '../../api/curso.api'
 
 const BACKEND_URL = 'http://localhost:3001'
 
@@ -28,9 +29,28 @@ function Documentos() {
   const [selectedDocument, setSelectedDocument] = useState(null)
   const [showModalDocumento, setShowModalDocumento] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [cohortes, setCohortes] = useState([]);
+  const [selectedCohorte, setSelectedCohorte] = useState('');
+  const [cursosCohorteMap, setCursosCohorteMap] = useState({});
 
   useEffect(() => {
     fetchDocumentos()
+    getAllCursos()
+      .then(res => {
+        const cursos = res.data?.data || [];
+        const cohorteMap = {};
+        cursos.forEach(curso => {
+          const cohorte = curso.codigo_cohorte || 'Sin cohorte';
+          if (!cohorteMap[cohorte]) cohorteMap[cohorte] = [];
+          cohorteMap[cohorte].push(curso);
+        });
+        setCohortes(Object.keys(cohorteMap));
+        setCursosCohorteMap(cohorteMap);
+      })
+      .catch(() => {
+        setCohortes([]);
+        setCursosCohorteMap({});
+      });
   }, [fetchDocumentos])
 
   const formatExt = (ext) => (ext || '').replace('.', '').toUpperCase();
@@ -55,7 +75,15 @@ function Documentos() {
 
   const tipos = [...new Set(documentos.map(doc => formatExt(doc.ext)))];
 
-  const filteredDocumentos = documentos
+  const documentosFiltradosPorCohorte = selectedCohorte && cursosCohorteMap[selectedCohorte]
+    ? documentos.filter(doc =>
+        cursosCohorteMap[selectedCohorte].some(curso =>
+          Array.isArray(curso.documentos) && curso.documentos.includes(doc.id_documento)
+        )
+      )
+    : documentos;
+
+  const filteredDocumentos = documentosFiltradosPorCohorte
     .filter(doc => {
       const matchesSearch = (doc.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (doc.descripcion || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -164,6 +192,17 @@ function Documentos() {
 
   const countByExt = (ext) => documentos.filter(d => formatExt(d.ext) === ext).length;
 
+  // Función para resaltar coincidencias en el texto
+  function highlightMatch(text, search) {
+    if (!search) return text;
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.split(regex).map((part, i) =>
+      regex.test(part)
+        ? <span key={i} className="bg-red-400/40 border-b-2 border-red-500 font-bold rounded px-1">{part}</span>
+        : part
+    );
+  }
+
   return (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -215,6 +254,20 @@ function Documentos() {
                 <FaPlus className="h-4 w-4" />
                 Agregar Documento
               </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Cohorte:</label>
+              <select
+                value={selectedCohorte}
+                onChange={e => setSelectedCohorte(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="">Todos</option>
+                {cohortes.map(cohorte => (
+                  <option key={cohorte} value={cohorte}>{cohorte}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -364,7 +417,7 @@ function Documentos() {
                                   rel="noopener noreferrer"
                                   className="text-sm font-semibold text-blue-700 underline truncate hover:text-blue-900"
                                 >
-                                  {documento.nombre}
+                                  {highlightMatch(documento.nombre || '', searchTerm)}
                                 </a>
                                 <div className="text-xs text-gray-500">
                                   {formatExt(documento.ext)}
@@ -374,7 +427,7 @@ function Documentos() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="text-sm text-gray-900 truncate max-w-xs">
-                              {documento.descripcion}
+                              {highlightMatch(documento.descripcion || '', searchTerm)}
                             </div>
                           </td>
                           <td className="px-4 py-4">

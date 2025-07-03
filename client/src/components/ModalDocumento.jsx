@@ -162,7 +162,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
             }
           }}
         >
-          {({ isSubmitting, setFieldValue, errors }) => (
+          {({ isSubmitting, setFieldValue }) => (
             <Form className="flex-1 overflow-y-auto p-6 space-y-5">
               <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '0ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -243,8 +243,20 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white"
                   >
                     <option value="">Seleccionar cohorte</option>
-                    {cursos.map(curso => (
-                      <option key={curso.id_curso} value={curso.id_curso}>{curso.nombre_curso}</option>
+                    {/* Agrupar por codigo_cohorte */}
+                    {Object.entries(
+                      cursos.reduce((acc, curso) => {
+                        const grupo = curso.codigo_cohorte || 'Sin cohorte';
+                        if (!acc[grupo]) acc[grupo] = [];
+                        acc[grupo].push(curso);
+                        return acc;
+                      }, {})
+                    ).map(([codigoCohorte, cursosGrupo]) => (
+                      <optgroup key={codigoCohorte} label={codigoCohorte}>
+                        {cursosGrupo.map(curso => (
+                          <option key={curso.id_curso} value={curso.id_curso}>{curso.nombre_curso}</option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>

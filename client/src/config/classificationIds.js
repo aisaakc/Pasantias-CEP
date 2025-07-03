@@ -16,6 +16,10 @@ export const CLASSIFICATION_IDS = {
   FORMA_PAGO: 100026,
   Estudiante_IUJO: 12,
   Participante_Externo: 13,
+
+
+  IM_CARRUSEL:100102,
+  IM_PERFIL_USUARIO:100289,
   
   MN_ROLES: 100066,
   MN_CURSO: 100141,
@@ -54,7 +58,7 @@ export const CLASSIFICATION_IDS = {
   
 };
 
-export const MASK_DEFAULT = "CEP-CISCO-99";
+export const MASK_DEFAULT = "CEP-99";
 
 // Exportar todo en un solo objeto para facilitar la importación
 export default {

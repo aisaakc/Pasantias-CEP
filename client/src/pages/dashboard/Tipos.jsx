@@ -157,6 +157,20 @@ const Breadcrumb = React.memo(({ items }) => (
   </nav>
 ));
 
+// Función utilitaria para deducir el tipo de hijo a crear
+function getChildTypeId(currentTypeId) {
+  switch (Number(currentTypeId)) {
+    case CLASSIFICATION_IDS.INSTITUTOS:
+      return CLASSIFICATION_IDS.CARRERAS;
+    case CLASSIFICATION_IDS.CARRERAS:
+      return CLASSIFICATION_IDS.PROGRAMAS;
+    case CLASSIFICATION_IDS.PROGRAMAS:
+      return CLASSIFICATION_IDS.CURSOS;
+    default:
+      return null;
+  }
+}
+
 export default function Tipos() {
   const navigate = useNavigate();
   const { id: encodedId, parentId: encodedParentId } = useParams();
@@ -465,15 +479,26 @@ export default function Tipos() {
     fetchParentHierarchy();
   }, [realId, realParentId]);
 
-  // Memoizar el objeto parentInfo para el Modal
+  // Dentro del componente Tipos
+  const childTypeId = getChildTypeId(realId);
+
+  const childTypeName = (() => {
+    switch (childTypeId) {
+      case CLASSIFICATION_IDS.CARRERAS: return 'Carrera';
+      case CLASSIFICATION_IDS.PROGRAMAS: return 'Programa';
+      case CLASSIFICATION_IDS.CURSOS: return 'Curso';
+      default: return 'Subclasificación';
+    }
+  })();
+
   const modalParentInfo = useMemo(() => ({
-    type_id: realId, // Siempre el tipo de clasificación que estamos viendo
-    nombre: parentInfo.nombre,
+    type_id: childTypeId, // El tipo de hijo a crear
+    nombre: childTypeName, // El nombre del tipo de hijo a crear
     icono: parentInfo.icono,
     nicono: parentInfo.icono,
     id_icono: parentInfo.id_icono,
-    parent_id: realParentId // La clasificación padre donde estamos agregando
-  }), [realId, realParentId, parentInfo.nombre, parentInfo.icono, parentInfo.id_icono]);
+    parent_id: realParentId // El padre es el actual
+  }), [childTypeId, childTypeName, realParentId, parentInfo.icono, parentInfo.id_icono]);
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
@@ -550,7 +575,7 @@ export default function Tipos() {
             {parentInfo.icono && (
               <FontAwesomeIcon icon={iconos[parentInfo.icono] || iconos.faFile} />
             )}
-            <span>Agregar {nombreClasificacion || parentInfo.nombre}</span>
+            <span>Agregar {childTypeName}</span>
           </button>
         </div>
 

@@ -149,12 +149,14 @@ class CursoModel {
       fecha_hora_fin,
       costo,
       descripcion_corto,
+      descripcion_html,
       codigo,
       color,
       duracion,
       horarios,
       codigo_cohorte,
-      participante
+      participante,
+      documentos
     } = cursoData;
 
     console.log('Datos recibidos en modelo updateCurso:', cursoData);
@@ -176,6 +178,22 @@ class CursoModel {
       participantes.push(participante);
     }
 
+    // Obtener documentos actuales si no viene en el payload
+    let documentosFinal = documentos;
+    if (typeof documentosFinal === 'undefined') {
+      try {
+        const getDocQuery = 'SELECT documentos FROM cursos WHERE id_curso = $1';
+        const getDocResult = await pool.query(getDocQuery, [id]);
+        documentosFinal = getDocResult.rows[0]?.documentos || [];
+      } catch {
+        documentosFinal = [];
+      }
+    }
+    if (typeof documentosFinal === 'string') {
+      try { documentosFinal = JSON.parse(documentosFinal); } catch { documentosFinal = []; }
+    }
+    if (!Array.isArray(documentosFinal)) documentosFinal = [];
+
     const query = `
       UPDATE cursos 
       SET 
@@ -187,13 +205,15 @@ class CursoModel {
         fecha_hora_fin = $6,
         costo = $7,
         descripcion_corto = $8,
-        codigo = $9,
-        color = $10,
-        duracion = $11,
-        horarios = $12,
-        codigo_cohorte = $13,
-        partipantes = $14
-      WHERE id_curso = $15
+        descripcion_html = $9,
+        codigo = $10,
+        color = $11,
+        duracion = $12,
+        horarios = $13,
+        codigo_cohorte = $14,
+        partipantes = $15,
+        documentos = $16
+      WHERE id_curso = $17
       RETURNING *;
     `;
 
@@ -207,12 +227,14 @@ class CursoModel {
         fecha_hora_fin,
         costo,
         descripcion_corto,
+        descripcion_html || null,
         codigo,
         color,
         duracion,
         horarios ? JSON.stringify(horarios) : null,
         codigo_cohorte || null,
         JSON.stringify(participantes),
+        JSON.stringify(documentosFinal),
         id
       ];
 
@@ -279,6 +301,32 @@ class CursoModel {
     } catch (error) {
       console.error("Error en getFacilitadores:", error.message);
       throw new Error("Error interno del servidor al obtener los facilitadores.");
+    }
+  }
+
+  // Asociar un documento a un curso (agregar el ID al array documentos)
+  async addDocumentoToCurso(id_curso, id_documento) {
+    try {
+      // Obtener el array actual de documentos
+      const getQuery = 'SELECT documentos FROM cursos WHERE id_curso = $1';
+      const getResult = await pool.query(getQuery, [id_curso]);
+      let documentos = getResult.rows[0]?.documentos || [];
+      console.log('[asociar-doc] Documentos previos:', documentos);
+      if (typeof documentos === 'string') {
+        try { documentos = JSON.parse(documentos); } catch { documentos = []; }
+      }
+      if (!Array.isArray(documentos)) documentos = [];
+      // Evitar duplicados
+      if (!documentos.includes(Number(id_documento))) {
+        documentos.push(Number(id_documento));
+      }
+      console.log('[asociar-doc] Documentos a guardar:', documentos);
+      const updateQuery = 'UPDATE cursos SET documentos = $1 WHERE id_curso = $2 RETURNING *';
+      const updateResult = await pool.query(updateQuery, [JSON.stringify(documentos), id_curso]);
+      console.log('[asociar-doc] Resultado del UPDATE:', updateResult.rows[0]);
+      return updateResult.rows[0];
+    } catch (error) {
+      throw new Error(`Error al asociar documento al curso: ${error.message}`);
     }
   }
 }

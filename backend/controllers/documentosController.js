@@ -651,6 +651,19 @@ class DocumentosController {
             });
         }
     }
+
+    async getByIds(req, res) {
+        try {
+            const { ids } = req.body;
+            if (!Array.isArray(ids)) {
+                return res.status(400).json({ success: false, message: 'IDs inválidos' });
+            }
+            const documentos = await documentosModel.findByIds(ids);
+            res.status(200).json({ success: true, data: documentos });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
 }
 
 export default new DocumentosController();

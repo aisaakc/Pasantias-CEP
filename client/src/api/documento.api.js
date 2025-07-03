@@ -75,3 +75,7 @@ export const updateDocumentoWithFile = async (id, file, documentoData) => {
 // Eliminar documento
 export const deleteDocumento = async (id) => 
     axios.delete(`http://localhost:3001/api/documentos/${id}`);
+
+// Obtener documentos por un array de IDs
+export const getDocumentosByIds = async (ids) => 
+    axios.post('http://localhost:3001/api/documentos/by-ids', { ids });

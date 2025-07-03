@@ -17,3 +17,6 @@ export const updateHorariosCurso = async (id, horarios) =>
 
 export const getFacilitadores = async () =>
    axios.get('http://localhost:3001/api/facilitadores');
+
+export const asociarDocumentoACurso = async (id_curso, id_documento) =>
+   axios.post('http://localhost:3001/api/cursos/asociar-documento', { id_curso, id_documento });

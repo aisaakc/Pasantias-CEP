@@ -1,11 +1,51 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { useCursoStore } from '../../store/cursoStore';
 import ModalParticipante from '../../components/ModalParticipante';
+import { getDocumentosByIds } from '../../api/documento.api';
+import { hashDeterministaPorId } from '../../utils/hashUtils';
+import { CLASSIFICATION_IDS } from '../../config/classificationIds';
+import { EditorContenidoCurso } from '../../components/ModalCurso';
+import { EditorState, ContentState, convertFromHTML } from 'draft-js';
 
-const IMAGEN_DEFECTO = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80';
+// const IMAGEN_DEFECTO = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80';
+const IMAGEN_DEFECTO =  'http://localhost:3001/docs/322a386021399414b75613478bbcd9e3.png';
 
-function ModalCursoDetalle({ open, onClose, curso }) {
+const getExtWithDot = (ext) => {
+  if (!ext) return '';
+  return ext.startsWith('.') ? ext : '.' + ext;
+};
+
+function ModalCursoDetalle({ open, onClose, curso, documentosMap }) {
   if (!open || !curso) return null;
+  let documentosIds = [];
+  if (Array.isArray(curso.documentos)) {
+    documentosIds = curso.documentos;
+  } else if (typeof curso.documentos === 'string' && curso.documentos.startsWith('[')) {
+    try {
+      documentosIds = JSON.parse(curso.documentos);
+    } catch {
+      documentosIds = [];
+    }
+  }
+  let imagenUrl = IMAGEN_DEFECTO;
+  if (documentosIds.length > 0 && documentosMap) {
+    const docCarrusel = documentosIds
+      .map(id => documentosMap[id])
+      .find(doc => doc && String(doc.id_tipo) === String(CLASSIFICATION_IDS.IM_CARRUSEL));
+    if (docCarrusel) {
+      const hash = hashDeterministaPorId(docCarrusel.id_documento);
+      imagenUrl = `http://localhost:3001/docs/${hash}${getExtWithDot(docCarrusel.ext)}`;
+    }
+  }
+  let editorStateReadOnly = EditorState.createEmpty();
+  if (curso.descripcion_html) {
+    const blocksFromHTML = convertFromHTML(curso.descripcion_html);
+    const contentState = ContentState.createFromBlockArray(
+      blocksFromHTML.contentBlocks,
+      blocksFromHTML.entityMap
+    );
+    editorStateReadOnly = EditorState.createWithContent(contentState);
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white border-2 border-blue-200 shadow-xl w-full max-w-5xl md:max-w-4xl sm:max-w-lg p-0 relative animate-fadeInUp mx-2 max-h-[90vh] flex flex-col rounded-3xl focus-within:ring-2 focus-within:ring-blue-100">
@@ -20,10 +60,8 @@ function ModalCursoDetalle({ open, onClose, curso }) {
           </button>
         </div>
         <div className="overflow-y-auto px-8 pb-6 pt-2" style={{ maxHeight: 'calc(90vh - 120px)' }}>
-          <img src={curso.imagen || IMAGEN_DEFECTO} alt={curso.nombre_curso} className="w-full h-40 sm:h-28 object-cover rounded-2xl mb-8 shadow border border-blue-100" />
-          {curso.descripcion_html && (
-            <div className="text-gray-800 mb-8 prose max-w-none prose-blue prose-lg" dangerouslySetInnerHTML={{ __html: curso.descripcion_html }} />
-          )}
+          <img src={imagenUrl} alt={curso.nombre_curso} className="w-full h-40 sm:h-28 object-cover rounded-2xl mb-8 shadow border border-blue-100" />
+          <EditorContenidoCurso editorState={editorStateReadOnly} readOnly={true} />
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 shadow-sm">
             <h3 className="font-bold text-blue-600 mb-2 text-base">FORMA DE PAGO:</h3>
             <ul className="text-gray-700 text-base list-disc pl-5 space-y-1">
@@ -55,12 +93,41 @@ function ListCursos() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [modalParticipanteOpen, setModalParticipanteOpen] = useState(false);
   const carruselRef = useRef(null);
+  const [documentosMap, setDocumentosMap] = useState({});
 
   const { cursos, fetchCursos, loading } = useCursoStore();
 
   useEffect(() => {
     fetchCursos();
   }, [fetchCursos]);
+
+  // Obtener documentos de todos los cursos
+  useEffect(() => {
+    if (!cursos || cursos.length === 0) return;
+    // Extraer todos los IDs de documentos únicos
+    const allDocIds = Array.from(new Set(
+      cursos.flatMap(c => {
+        if (Array.isArray(c.documentos)) return c.documentos;
+        if (typeof c.documentos === 'string' && c.documentos.startsWith('[')) {
+          try { return JSON.parse(c.documentos); } catch { return []; }
+        }
+        return [];
+      })
+    ));
+    if (allDocIds.length === 0) return;
+    getDocumentosByIds(allDocIds)
+      .then(res => {
+        // LOG: Verifica los documentos que llegan
+        console.log('[DEBUG] Documentos recibidos del backend:', res.data?.data);
+        // Crear un mapa id_documento -> documento
+        const map = {};
+        (res.data?.data || []).forEach(doc => {
+          map[doc.id_documento] = doc;
+        });
+        setDocumentosMap(map);
+      })
+      .catch(() => setDocumentosMap({}));
+  }, [cursos]);
 
   const scroll = (dir) => {
     const node = carruselRef.current;
@@ -125,53 +192,78 @@ function ListCursos() {
             ) : cursos.length === 0 ? (
               <div className="text-center w-full py-10 text-gray-500">No hay cursos disponibles.</div>
             ) : (
-              cursos.map((curso, idx) => (
-                <div
-                  key={curso.id_curso || curso.id || idx}
-                  className={`relative min-w-[300px] max-w-xs w-full bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-500 group border border-gray-200 hover:border-blue-400 snap-center
-                    ${activeIndex === idx ? 'scale-105 z-10' : 'scale-95 opacity-80'} animate-slideIn`}
-                  style={{ animationDelay: `${idx * 100}ms` }}
-                >
-                  <div className="relative h-52 overflow-hidden">
-                    <img
-                      src={curso.imagen || IMAGEN_DEFECTO}
-                      alt={curso.nombre_curso}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-2 right-2 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full shadow font-semibold opacity-90">
-                      Nuevo
+              cursos.map((curso, idx) => {
+                // Asegurar que documentos sea un array
+                let documentosIds = [];
+                if (Array.isArray(curso.documentos)) {
+                  documentosIds = curso.documentos;
+                } else if (typeof curso.documentos === 'string' && curso.documentos.startsWith('[')) {
+                  try {
+                    documentosIds = JSON.parse(curso.documentos);
+                  } catch {
+                    documentosIds = [];
+                  }
+                }
+                // Buscar documento IM_CARRUSEL
+                let imagenUrl = IMAGEN_DEFECTO;
+                if (documentosIds.length > 0) {
+                  const docCarrusel = documentosIds
+                    .map(id => documentosMap[id])
+                    .find(doc => doc && String(doc.id_tipo) === String(CLASSIFICATION_IDS.IM_CARRUSEL));
+                  if (docCarrusel) {
+                    const hash = hashDeterministaPorId(docCarrusel.id_documento);
+                    imagenUrl = `http://localhost:3001/docs/${hash}${getExtWithDot(docCarrusel.ext)}`;
+                    console.log(`[CARD-IMG] Curso: ${curso.nombre_curso} | Documento ID: ${docCarrusel.id_documento} | Link: ${imagenUrl}`);
+                  }
+                }
+                return (
+                  <div
+                    key={curso.id_curso || curso.id || idx}
+                    className={`relative min-w-[300px] max-w-xs w-full bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-500 group border border-gray-200 hover:border-blue-400 snap-center
+                      ${activeIndex === idx ? 'scale-105 z-10' : 'scale-95 opacity-80'} animate-slideIn`}
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                  >
+                    <div className="relative h-52 overflow-hidden">
+                      <img
+                        src={imagenUrl}
+                        alt={curso.nombre_curso}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-2 right-2 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full shadow font-semibold opacity-90">
+                        Nuevo
+                      </div>
+                    </div>
+                    <div className="p-6 flex flex-col gap-3">
+                      <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
+                        {curso.nombre_curso}
+                      </h2>
+                     
+                      <p className="text-gray-700 text-sm">
+                        <b>Horario:</b> {curso.fecha_hora_inicio ? `${new Date(curso.fecha_hora_inicio).toLocaleDateString()} ` : ''}
+                        {curso.fecha_hora_inicio ? new Date(curso.fecha_hora_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No definido'}
+                        - {curso.fecha_hora_fin ? new Date(curso.fecha_hora_fin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No definido'}
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        <b>Modalidad:</b> {curso.modalidad || 'No definida'}
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        <b>Facilitador:</b> {curso.nombre_completo_facilitador || 'No definido'}
+                      </p>
+                      <p className="text-gray-700 text-sm mb-2">
+                        <b>Costo:</b> {curso.costo !== undefined && curso.costo !== null ? `${curso.costo} $` : 'No definido'}
+                      </p>
+                      <div className="flex gap-3 mt-2">
+                        <button
+                          onClick={() => { setCursoSeleccionado(curso); setModalOpen(true); }}
+                          className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all duration-300 hover:scale-105"
+                        >
+                          Ver más
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-6 flex flex-col gap-3">
-                    <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
-                      {curso.nombre_curso}
-                    </h2>
-                   
-                    <p className="text-gray-700 text-sm">
-                      <b>Horario:</b> {curso.fecha_hora_inicio ? `${new Date(curso.fecha_hora_inicio).toLocaleDateString()} ` : ''}
-                      {curso.fecha_hora_inicio ? new Date(curso.fecha_hora_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No definido'}
-                      - {curso.fecha_hora_fin ? new Date(curso.fecha_hora_fin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No definido'}
-                    </p>
-                    <p className="text-gray-700 text-sm">
-                      <b>Modalidad:</b> {curso.modalidad || 'No definida'}
-                    </p>
-                    <p className="text-gray-700 text-sm">
-                      <b>Facilitador:</b> {curso.nombre_completo_facilitador || 'No definido'}
-                    </p>
-                    <p className="text-gray-700 text-sm mb-2">
-                      <b>Costo:</b> {curso.costo !== undefined && curso.costo !== null ? `${curso.costo} $` : 'No definido'}
-                    </p>
-                    <div className="flex gap-3 mt-2">
-                      <button
-                        onClick={() => { setCursoSeleccionado(curso); setModalOpen(true); }}
-                        className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all duration-300 hover:scale-105"
-                      >
-                        Ver más
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
           {/* Dots de posición */}
@@ -184,7 +276,7 @@ function ListCursos() {
             ))}
           </div>
         </div>
-        <ModalCursoDetalle open={modalOpen} onClose={() => setModalOpen(false)} curso={cursoSeleccionado} />
+        <ModalCursoDetalle open={modalOpen} onClose={() => setModalOpen(false)} curso={cursoSeleccionado} documentosMap={documentosMap} />
         {modalParticipanteOpen && (
           <ModalParticipante onClose={() => setModalParticipanteOpen(false)} />
         )}

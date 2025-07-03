@@ -15,10 +15,9 @@ import { faXmark,
         faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
-import { Editor, EditorState, RichUtils } from 'draft-js';
+import { Editor, EditorState, RichUtils, convertToRaw, ContentState, convertFromHTML } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import draftToHtml from 'draftjs-to-html';
-import { convertToRaw } from 'draft-js';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import useClasificacionStore from '../store/clasificacionStore';
 
@@ -46,6 +45,23 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const [codigoCohorte, setCodigoCohorte] = useState('');
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
   const [showHtmlModal, setShowHtmlModal] = useState(false);
+
+  useEffect(() => {
+    if (curso && curso.descripcion_html) {
+      const blocksFromHTML = convertFromHTML(curso.descripcion_html);
+      const contentState = ContentState.createFromBlockArray(
+        blocksFromHTML.contentBlocks,
+        blocksFromHTML.entityMap
+      );
+      setEditorState(EditorState.createWithContent(contentState));
+    } else {
+      setEditorState(EditorState.createEmpty());
+    }
+  }, [curso]);
+
+  useEffect(() => {
+    setDescripcionHtml(draftToHtml(convertToRaw(editorState.getCurrentContent())));
+  }, [editorState]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -662,19 +678,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                       </button>
                     </div>
                     {/* Área editable */}
-                    <div
-                      className="min-h-[120px] p-3 rounded-lg border border-gray-200 focus-within:border-blue-400 bg-gray-50 transition"
-                      style={{ cursor: "text" }}
-                      onClick={() => {
-                        document.querySelector('.DraftEditor-root').focus();
-                      }}
-                    >
-                      <Editor
-                        editorState={editorState}
-                        onChange={setEditorState}
-                        placeholder="Escribe el contenido del curso aquí..."
-                      />
-                    </div>
+                    <EditorContenidoCurso editorState={editorState} onChange={setEditorState} />
                   </div>
                   {/* Modal para mostrar el HTML generado */}
                   {showHtmlModal && (
@@ -1006,6 +1010,26 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
           }
         }
       `}</style>
+    </div>
+  );
+}
+
+// Componente reutilizable para mostrar el contenido del curso con draft-js
+export function EditorContenidoCurso({ editorState, onChange, readOnly = false }) {
+  return (
+    <div
+      className="min-h-[120px] p-3 rounded-lg border border-gray-200 focus-within:border-blue-400 bg-gray-50 transition"
+      style={{ cursor: readOnly ? 'default' : 'text' }}
+      onClick={() => {
+        if (!readOnly) document.querySelector('.DraftEditor-root').focus();
+      }}
+    >
+      <Editor
+        editorState={editorState}
+        onChange={onChange}
+        readOnly={readOnly}
+        placeholder={readOnly ? undefined : "Escribe el contenido del curso aquí..."}
+      />
     </div>
   );
 }

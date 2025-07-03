@@ -3,13 +3,14 @@ import ReactDOM from 'react-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { FaFileAlt, FaTimes, FaSave } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileAlt, faTimes, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import * as iconos from '@fortawesome/free-solid-svg-icons';
 import useDocumentoStore from '../store/documentoStrore';
 import { getAllSubclasificaciones } from '../api/clasificacion.api';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import { toast } from 'sonner';
 import useClasificacionStore from '../store/clasificacionStore';
+import { getAllCursos, asociarDocumentoACurso } from '../api/curso.api';
 
 const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -17,6 +18,9 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
   const [tipos, setTipos] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(false);
   const { parentClasifications, allClasificaciones } = useClasificacionStore();
+  const [cursos, setCursos] = useState([]);
+  const [cursoSeleccionado, setCursoSeleccionado] = useState('');
+  const [asociarACohorte, setAsociarACohorte] = useState(false);
 
   // Usar el store Zustand
   const {
@@ -41,6 +45,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
         })
         .catch(() => setTipos([]))
         .finally(() => setLoadingTipos(false));
+      // Cargar cursos
+      getAllCursos()
+        .then(res => setCursos(res.data?.data || []))
+        .catch(() => setCursos([]));
     } else {
       setAnimationClass('animate-modal-out');
       document.body.style.overflow = 'unset';
@@ -125,6 +133,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 descripcion: values.descripcion || '',
                 nombre: values.nombre
               };
+              let nuevoDocumento;
               if (isEdit) {
                 if (values.archivo) {
                   await updateDocumentoWithFile(editData.id_documento, values.archivo, documentoData);
@@ -133,7 +142,13 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 }
                 toast.success('Documento actualizado exitosamente');
               } else {
-                await uploadDocumento(values.archivo, documentoData);
+                nuevoDocumento = await uploadDocumento(values.archivo, documentoData);
+                console.log('[FRONT] Respuesta de uploadDocumento:', nuevoDocumento);
+                const idDocumento = nuevoDocumento?.data?.data?.id_documento || nuevoDocumento?.data?.id_documento || nuevoDocumento?.id_documento;
+                if (!isEdit && asociarACohorte && cursoSeleccionado && idDocumento) {
+                  console.log('[FRONT] Asociar documento:', idDocumento, 'al curso:', cursoSeleccionado);
+                  await asociarDocumentoACurso(cursoSeleccionado, idDocumento);
+                }
                 toast.success('Documento subido exitosamente');
               }
               resetForm();
@@ -147,7 +162,7 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
             }
           }}
         >
-          {({ isSubmitting, setFieldValue }) => (
+          {({ isSubmitting, setFieldValue, errors }) => (
             <Form className="flex-1 overflow-y-auto p-6 space-y-5">
               <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '0ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -205,6 +220,35 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 />
                 <ErrorMessage name="archivo" component="div" className="mt-1 text-sm text-red-600" />
               </div>
+              <div className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  id="asociarACohorte"
+                  checked={asociarACohorte}
+                  onChange={e => setAsociarACohorte(e.target.checked)}
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                />
+                <label htmlFor="asociarACohorte" className="text-sm font-medium text-gray-700">
+                  ¿Documento para una cohorte?
+                </label>
+              </div>
+              {asociarACohorte && (
+                <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '400ms' }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecciona la cohorte
+                  </label>
+                  <select
+                    value={cursoSeleccionado}
+                    onChange={e => setCursoSeleccionado(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white"
+                  >
+                    <option value="">Seleccionar cohorte</option>
+                    {cursos.map(curso => (
+                      <option key={curso.id_curso} value={curso.id_curso}>{curso.nombre_curso}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {/* Footer fijo */}
               <div className="relative overflow-hidden border-t border-gray-100 p-6 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-6">
                 <div className="animate-shine absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>

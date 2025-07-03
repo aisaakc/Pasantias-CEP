@@ -90,6 +90,19 @@ class Documentos {
             throw new Error(`Error al obtener documento: ${error.message}`);
         }
     }
+
+    // Obtener varios documentos por un array de IDs
+    async findByIds(ids) {
+        try {
+            console.log('[findByIds] IDs recibidos:', ids);
+            const query = `SELECT * FROM documentos WHERE id_documento = ANY($1::int[])`;
+            console.log('[findByIds] QUERY:', query, 'PARAMS:', ids);
+            const result = await pool.query(query, [ids]);
+            return result.rows;
+        } catch (error) {
+            throw new Error(`Error al obtener documentos por IDs: ${error.message}`);
+        }
+    }
 }
 
 export default new Documentos();

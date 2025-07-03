@@ -10,6 +10,7 @@ class Curso {
         this.updateCurso = this.updateCurso.bind(this);
         this.getFacilitadores = this.getFacilitadores.bind(this);
         this.updateHorarios = this.updateHorarios.bind(this);
+        this.asociarDocumento = this.asociarDocumento.bind(this);
     }
 
     // Métodos de validación
@@ -255,6 +256,20 @@ class Curso {
                 success: true,
                 data: facilitadores
             });
+        } catch (error) {
+            return this.manejarError(error, res);
+        }
+    }
+
+    // Asociar un documento a un curso
+    async asociarDocumento(req, res) {
+        try {
+            const { id_curso, id_documento } = req.body;
+            if (!id_curso || !id_documento) {
+                return res.status(400).json({ success: false, message: 'Faltan parámetros id_curso o id_documento' });
+            }
+            const cursoActualizado = await this.model.addDocumentoToCurso(id_curso, id_documento);
+            return res.status(200).json({ success: true, data: cursoActualizado });
         } catch (error) {
             return this.manejarError(error, res);
         }

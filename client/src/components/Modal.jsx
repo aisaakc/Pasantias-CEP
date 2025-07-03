@@ -55,37 +55,38 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
 
   // Estados locales para inputs optimizados - usando useMemo para evitar re-creaciones
   const initialFormValues = useMemo(() => {
-    let type_id = editData?.type_id || parentInfo?.type_id || '';
-    // Si estamos agregando (no editando) y el padre es PROGRAMA, el hijo debe ser CURSO
-    if (!editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) {
-      type_id = CLASSIFICATION_IDS.CURSOS;
+    if (editData) {
+      return ({
+        nombre: editData.nombre || '',
+        descripcion: editData.descripcion || '',
+        id_icono: editData.id_icono || '',
+        type_id: editData.type_id || '',
+        parent_id: editData.parent_id || '',
+        orden: editData.orden || '',
+        permisos: editData.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
+        clasificaciones: editData.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
+        isMobile: editData.adicional?.mobile || false,
+        codigo: (editData.adicional && typeof editData.adicional === 'object' && 'id' in editData.adicional) ? editData.adicional.id : '',
+        costo: (editData.adicional && typeof editData.adicional === 'object' && 'costo' in editData.adicional) ? editData.adicional.costo : ''
+      });
     }
-    // Si el padre es CARRERA, el hijo debe ser PROGRAMA
-    if (!editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS) {
-      type_id = CLASSIFICATION_IDS.PROGRAMAS;
-    }
-    // Si el padre es INSTITUTO, el hijo debe ser CARRERA
-    if (!editData && Number(parentInfo?.type_id) === CLASSIFICATION_IDS.INSTITUTOS) {
-      type_id = CLASSIFICATION_IDS.CARRERAS;
-    }
+    // Si estamos agregando, usar SIEMPRE el type_id y parent_id que vienen de parentInfo
+    let type_id = parentInfo?.type_id || '';
+    let parent_id = parentInfo?.parent_id || parentId || '';
     return ({
-      nombre: editData?.nombre || '',
-      descripcion: editData?.descripcion || '',
-      id_icono: editData?.id_icono || '',
+      nombre: '',
+      descripcion: '',
+      id_icono: '',
       type_id,
-      parent_id: editData?.parent_id || parentInfo?.parent_id || parentId || '',
-      orden: editData?.orden || '',
-      permisos: editData?.adicional?.id_objeto ? editData.adicional.id_objeto.join(',') : '',
-      clasificaciones: editData?.adicional?.id_clasificacion ? editData.adicional.id_clasificacion.join(',') : '',
-      isMobile: editData?.adicional?.mobile || false,
-      codigo: (editData?.adicional && typeof editData.adicional === 'object' && 'id' in editData.adicional) ? editData.adicional.id : '',
-      costo: (editData?.adicional && typeof editData.adicional === 'object' && 'costo' in editData.adicional) ? editData.adicional.costo : ''
+      parent_id,
+      orden: '',
+      permisos: '',
+      clasificaciones: '',
+      isMobile: false,
+      codigo: '',
+      costo: ''
     });
-  }, [
-    editData,
-    parentInfo,
-    parentId
-  ]);
+  }, [editData, parentInfo, parentId]);
 
   const [formValues, setFormValues] = useState(initialFormValues);
 
@@ -173,21 +174,33 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
     
     try {
       const formValues = getFormValues();
-      console.log('Valores en submit:', formValues);
-      const isCursos = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS;
-      const isCarrera = Number(formValues.type_id) === CLASSIFICATION_IDS.CARRERAS;
-      const isPrograma = Number(formValues.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
-      let parentIdValue = null;
-      if (isCursos || isCarrera || isPrograma) {
-        parentIdValue = formValues.parent_id && formValues.parent_id !== '' ? Number(formValues.parent_id) : null;
+      console.log('[FRONTEND] Valores en submit:', formValues);
+      let typeIdValue = formValues.type_id ? parseInt(formValues.type_id) : null;
+      let parentIdValue = formValues.parent_id && formValues.parent_id !== '' ? Number(formValues.parent_id) : null;
+
+      // --- CAMBIO: Si estamos creando (NO editando), forzar type_id al id_clasificacion actual y parent_id a null SIEMPRE ---
+      if (!editData && parentInfo && parentInfo.type_id) {
+        typeIdValue = parentInfo.type_id;
+        parentIdValue = parentInfo.parent_id || parentId || null;
       }
+      // Si parent_id es igual a type_id, forzar parent_id a null
+      if (parentIdValue === typeIdValue) {
+        parentIdValue = null;
+      }
+
       const dataToSend = {
         ...formValues,
         id_icono: formValues.id_icono !== '' ? parseInt(formValues.id_icono) : null,
-        type_id: formValues.type_id ? parseInt(formValues.type_id) : null,
+        type_id: typeIdValue,
         parent_id: parentIdValue,
         orden: formValues.orden !== '' ? parseInt(formValues.orden) : 0
       };
+      // LOGS DETALLADOS PARA DEPURACIÓN
+      console.log('[FRONTEND] Enviando datos para crear:', dataToSend);
+      console.log('[FRONTEND] parentInfo recibido:', parentInfo);
+      console.log('[FRONTEND] parent_id usado:', dataToSend.parent_id);
+      console.log('[FRONTEND] type_id usado:', dataToSend.type_id);
+      // FIN LOGS
       console.log('Objeto enviado:', dataToSend);
       console.log('Depuración adicional (typeof):', typeof dataToSend.adicional);
       console.log('Depuración adicional (valor):', dataToSend.adicional);
@@ -198,23 +211,23 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       }
 
       // Guardar código y costo en adicional si es curso
-      if (isCursos) {
-        const codigoFinal = formValues.codigo || codigoGenerado || '';
+      if (Number(dataToSend.type_id) === CLASSIFICATION_IDS.CURSOS) {
+        const codigoFinal = dataToSend.codigo || codigoGenerado || '';
         console.log('Código final a guardar:', codigoFinal);
-        console.log('Costo a guardar:', formValues.costo);
+        console.log('Costo a guardar:', dataToSend.costo);
         
         dataToSend.adicional = {
           id: codigoFinal,
-          costo: formValues.costo !== '' ? Number(formValues.costo) : null
+          costo: dataToSend.costo !== '' ? Number(dataToSend.costo) : null
         };
         
         console.log('Objeto adicional final para curso:', dataToSend.adicional);
       }
 
       // Format permissions as an object with id_objeto array and id_clasificacion array for roles
-      if (Number(formValues.type_id) === CLASSIFICATION_IDS.ROLES) {
-        const permisosArray = formValues.permisos ? formValues.permisos.split(',').map(p => parseInt(p.trim())) : [];
-        const clasificacionesArray = formValues.clasificaciones ? formValues.clasificaciones.split(',').map(c => parseInt(c.trim())) : [];
+      if (Number(dataToSend.type_id) === CLASSIFICATION_IDS.ROLES) {
+        const permisosArray = dataToSend.permisos ? dataToSend.permisos.split(',').map(p => parseInt(p.trim())) : [];
+        const clasificacionesArray = dataToSend.clasificaciones ? dataToSend.clasificaciones.split(',').map(c => parseInt(c.trim())) : [];
         
         dataToSend.adicional = { 
           id_objeto: permisosArray,
@@ -225,9 +238,9 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       }
 
       // Handle mobile field for PREFIJOS_TLF
-      if (Number(formValues.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) {
+      if (Number(dataToSend.type_id) === CLASSIFICATION_IDS.PREFIJOS_TLF) {
         dataToSend.adicional = { 
-          mobile: formValues.isMobile 
+          mobile: dataToSend.isMobile 
         };
         console.log('Objeto adicional para PREFIJOS_TLF:', dataToSend.adicional);
       }
@@ -245,7 +258,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       }
 
       // Guardar máscara en adicional si corresponde (Instituto, Carrera, Programa, pero NO curso)
-      if ((isCarrera || isPrograma) && !isCursos) {
+      if ((Number(dataToSend.type_id) === CLASSIFICATION_IDS.CARRERAS || Number(dataToSend.type_id) === CLASSIFICATION_IDS.PROGRAMAS) && Number(dataToSend.type_id) !== CLASSIFICATION_IDS.CURSOS) {
         let adicionalObj = {};
         // Si ya hay un objeto adicional, lo fusionamos
         if (dataToSend.adicional && typeof dataToSend.adicional === 'object') {
@@ -384,6 +397,15 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
               console.log('[GEN-COD-LOAD] Fallback: todos los programas raíz:', programasResponse.data);
             }
           }
+          
+          // Cargar programas también cuando estamos en la vista de cursos directamente (parentInfo.type_id === CURSOS)
+          if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS && !editData) {
+            // Curso: cargar programas
+            const programasResponse = await getSubclassificationsById(CLASSIFICATION_IDS.PROGRAMAS);
+            console.log('[GEN-COD-LOAD] Programas cargados para vista de cursos:', programasResponse.data.data);
+            setProgramas(programasResponse.data.data || []);
+          }
+
           // Roles y otros tipos especiales
           if (typeId === CLASSIFICATION_IDS.ROLES) {
             const permisosResponse = await getSubclassificationsById(CLASSIFICATION_IDS.OBJETOS);
@@ -569,11 +591,25 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   };
   const objetosClasificacionInfo = getObjetosClasificacionInfo();
 
-  // Determinar si es Instituto, Carrera o Programa para mostrar el input de máscara (pero NO si es curso)
-  const isInstituto = Number(formValues.type_id) === CLASSIFICATION_IDS.INSTITUTOS;
-  const isCarrera = Number(formValues.type_id) === CLASSIFICATION_IDS.CARRERAS;
-  const isPrograma = Number(formValues.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
-  const isCurso = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS;
+  // Refuerzo: calcular el tipo de hijo a crear usando el type_id del formulario
+  let isInstituto = Number(formValues.type_id) === CLASSIFICATION_IDS.INSTITUTOS;
+  let isCarrera = Number(formValues.type_id) === CLASSIFICATION_IDS.CARRERAS;
+  let isPrograma = Number(formValues.type_id) === CLASSIFICATION_IDS.PROGRAMAS;
+  let isCurso = Number(formValues.type_id) === CLASSIFICATION_IDS.CURSOS;
+
+  // Refuerzo: si el parentInfo es un Instituto y estamos agregando, forzar isCarrera true
+  if (!editData && parentInfo && parentInfo.type_id === CLASSIFICATION_IDS.INSTITUTOS) {
+    if (Number(formValues.type_id) === parentInfo.type_id) {
+      // Si el type_id es igual al del instituto, forzar Carrera
+      isCarrera = true;
+    }
+  }
+  // Si el parentInfo es una Carrera y estamos agregando, forzar isPrograma true
+  if (!editData && parentInfo && parentInfo.type_id === CLASSIFICATION_IDS.CARRERAS) {
+    if (Number(formValues.type_id) === parentInfo.type_id) {
+      isPrograma = true;
+    }
+  }
 
   // Estado local para la máscara
   const [maskValue, setMaskValue] = useState(() => {
@@ -595,19 +631,21 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
 
   // Refuerzo tipoPadre para ocultar select si es Instituto o si type_id es vacío/nulo
   const tipoPadre = useMemo(() => {
-    if (!formValues.type_id || Number(formValues.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return null;
-    if (isCarrera) return 'instituto';
-    if (isPrograma) return 'carrera';
-    if (isCurso) return 'programa';
+    if (!parentInfo?.type_id) return null;
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return 'instituto';
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS) return 'carrera';
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS) return 'programa';
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CURSOS) return 'programa'; // Para cursos, mostrar select de programas
     return null;
-  }, [formValues.type_id, isCarrera, isPrograma, isCurso]);
+  }, [parentInfo?.type_id]);
 
   const opcionesPadre = useMemo(() => {
-    if (isCarrera) return institutos;
-    if (isPrograma) return carreras;
-    if (isCurso) return programas;
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return institutos;
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS) return carreras;
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) return programas;
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) return programas; // Para cursos, mostrar programas
     return [];
-  }, [isCarrera, isPrograma, isCurso, institutos, carreras, programas]);
+  }, [parentInfo?.type_id, institutos, carreras, programas]);
 
   if (!shouldRender) return null;
 

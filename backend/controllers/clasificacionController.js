@@ -18,25 +18,21 @@ class clasificacionController {
     }
     
     async createClasificacion(req, res) {
-        const nuevaClasificacionData = req.body;
-        console.log('Depuración BACKEND - createClasificacion - req.body.adicional:', nuevaClasificacionData.adicional);
-        console.log('Depuración BACKEND - createClasificacion - typeof adicional:', typeof nuevaClasificacionData.adicional);
-        if (!nuevaClasificacionData || !nuevaClasificacionData.nombre) {
-          return res.status(400).json({ error: "El nombre de la clasificación es obligatorio." });
-        }
         try {
-          const nuevaClasificacion = await Clasificacion.create(nuevaClasificacionData);
-          res.status(201).json(nuevaClasificacion);
+            console.log('[BACKEND] Body recibido en createClasificacion:', req.body);
+            // Log parent_id y type_id
+            console.log('[BACKEND] parent_id recibido:', req.body.parent_id);
+            console.log('[BACKEND] type_id recibido:', req.body.type_id);
+            // Llama al modelo para crear la clasificación
+            const result = await Clasificacion.create(req.body);
+            // Si el modelo retorna la jerarquía, loguéala (esto depende de tu implementación)
+            if (result && result.jerarquia) {
+                console.log('[BACKEND] Jerarquía ascendente obtenida:', result.jerarquia);
+            }
+            res.status(201).json(result);
         } catch (error) {
-          console.error("Error en clasificacionController.createClasificacion:", error.message);
-          if (error.message.includes("Ya existe una clasificación con este nombre.")) {
-            return res.status(409).json({ error: error.message, dbError: error.message, detail: error.detail || null })
-          }
-          res.status(500).json({
-            error: "Error interno del servidor al crear la clasificación.",
-            dbError: error.message,
-            detail: error.detail || null
-          });
+            console.error('[BACKEND] Error en createClasificacion:', error);
+            res.status(500).json({ error: 'Error interno del servidor al crear la clasificación.', dbError: error.message, detail: error.stack });
         }
     }
     

@@ -38,5 +38,7 @@ router.put("/:id/upload",
 
 router.delete("/:id", documentosController.deleteDocumento); // Eliminar documento
 
+router.post("/by-ids", documentosController.getByIds); // Obtener documentos por IDs
+
 export default router;
 

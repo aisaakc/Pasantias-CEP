@@ -7,6 +7,8 @@ import DeleteModal from '../../components/DeleteModal'
 import { toast } from 'sonner'
 import * as iconos from '@fortawesome/free-solid-svg-icons'
 import { getAllCursos } from '../../api/curso.api'
+import { getUsuarios } from '../../api/persona.api'
+import { CLASSIFICATION_IDS } from '../../config/classificationIds'
 
 const BACKEND_URL = 'http://localhost:3001'
 
@@ -32,6 +34,9 @@ function Documentos() {
   const [cohortes, setCohortes] = useState([]);
   const [selectedCohorte, setSelectedCohorte] = useState('');
   const [cursosCohorteMap, setCursosCohorteMap] = useState({});
+  const [personas, setPersonas] = useState([]);
+  const [selectedPersona, setSelectedPersona] = useState('');
+  const [loadingPersonas, setLoadingPersonas] = useState(false);
 
   useEffect(() => {
     fetchDocumentos()
@@ -51,6 +56,9 @@ function Documentos() {
         setCohortes([]);
         setCursosCohorteMap({});
       });
+    getUsuarios()
+      .then(res => setPersonas(res.data?.data || []))
+      .catch(() => setPersonas([]));
   }, [fetchDocumentos])
 
   const formatExt = (ext) => (ext || '').replace('.', '').toUpperCase();
@@ -83,7 +91,14 @@ function Documentos() {
       )
     : documentos;
 
-  const filteredDocumentos = documentosFiltradosPorCohorte
+  const documentosFiltradosPorPersona = selectedPersona
+    ? documentosFiltradosPorCohorte.filter(doc => {
+        const persona = personas.find(p => p.id_persona === Number(selectedPersona));
+        return Array.isArray(persona?.documentos) && persona.documentos.includes(doc.id_documento);
+      })
+    : documentosFiltradosPorCohorte;
+
+  const filteredDocumentos = documentosFiltradosPorPersona
     .filter(doc => {
       const matchesSearch = (doc.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (doc.descripcion || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -172,11 +187,16 @@ function Documentos() {
     console.log(`${action} documento:`, documento.nombre)
   }
 
-  const handleDocumentoGuardado = () => {
-    fetchDocumentos()
-    setShowModalDocumento(false)
-    setSelectedDocument(null)
-  }
+  const handleDocumentoGuardado = async () => {
+    setLoadingPersonas(true);
+    await fetchDocumentos();
+    const res = await getUsuarios();
+    setPersonas(res.data?.data || []);
+    setShowModalDocumento(false);
+    setSelectedDocument(null);
+    setSelectedPersona('');
+    setLoadingPersonas(false);
+  };
 
   const handleConfirmDelete = async () => {
     if (!selectedDocument) return;
@@ -267,6 +287,57 @@ function Documentos() {
                 {cohortes.map(cohorte => (
                   <option key={cohorte} value={cohorte}>{cohorte}</option>
                 ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Persona:</label>
+              <select
+                value={selectedPersona}
+                onChange={e => setSelectedPersona(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                disabled={loadingPersonas}
+              >
+                <option value="">Todas</option>
+                {/* Agrupar personas por rol, solo mostrar si tienen rol y en orden jerárquico según classificationIds */}
+                {(() => {
+                  // Definir el orden jerárquico usando los IDs de classificationIds.js
+                  const rolIdToName = {};
+                  personas.forEach(p => {
+                    if (p.rol_nombre && p.id_rol) {
+                      rolIdToName[p.id_rol] = p.rol_nombre;
+                    }
+                  });
+                  const rolOrderIds = [
+                    CLASSIFICATION_IDS.Super_admin,
+                    CLASSIFICATION_IDS.Administrador,
+                    CLASSIFICATION_IDS.ROLES_FACILITADORES
+                  ];
+                  const rolOrder = rolOrderIds.map(id => rolIdToName[id]).filter(Boolean);
+                  // Agrupar personas por rol
+                  const grupos = personas.reduce((acc, persona) => {
+                    const rol = persona.rol_nombre;
+                    if (!rol) return acc; // Omitir personas sin rol
+                    if (!acc[rol]) acc[rol] = [];
+                    acc[rol].push(persona);
+                    return acc;
+                  }, {});
+                  // Ordenar los roles según la jerarquía y luego alfabéticamente los demás
+                  const rolesOrdenados = [
+                    ...rolOrder.filter(rol => grupos[rol]),
+                    ...Object.keys(grupos)
+                      .filter(rol => !rolOrder.includes(rol))
+                      .sort()
+                  ];
+                  return rolesOrdenados.map(rol => (
+                    <optgroup key={rol} label={rol}>
+                      {grupos[rol].map(persona => (
+                        <option key={persona.id_persona} value={persona.id_persona}>
+                          {persona.persona_nombre} {persona.apellido}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ));
+                })()}
               </select>
             </div>
           </div>

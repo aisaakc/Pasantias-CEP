@@ -231,21 +231,21 @@ class Clasificacion {
             console.log('[GEN-COD-BACK] Resultado de prueba:', testResult.rows);
             // Ahora la consulta completa
             const query = `
-    SELECT 
-        c.id_clasificacion,
-        c.nombre,
-        c.descripcion,
-        c.type_id,
-        c.id_icono,
-        c.adicional, -- ¡Esto debe estar!
-        i.nombre as icono,
-        t.nombre as type_nombre,
-        ti.nombre as type_icono
-    FROM obtener_parents($1) c
-    LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
-    LEFT JOIN clasificacion t ON c.type_id = t.id_clasificacion
-    LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
-`;
+                        SELECT 
+                            c.id_clasificacion,
+                            c.nombre,
+                            c.descripcion,
+                            c.type_id,
+                            c.id_icono,
+                            c.adicional, -- ¡Esto debe estar!
+                            i.nombre as icono,
+                            t.nombre as type_nombre,
+                            ti.nombre as type_icono
+                        FROM obtener_parents($1) c
+                        LEFT JOIN clasificacion i ON c.id_icono = i.id_clasificacion
+                        LEFT JOIN clasificacion t ON c.type_id = t.id_clasificacion
+                        LEFT JOIN clasificacion ti ON t.id_icono = ti.id_clasificacion
+                    `;
             console.log('[GEN-COD-BACK] Ejecutando consulta completa:', query);
             const result = await pool.query(query, [id_clasificacion]);
             console.log('[GEN-COD-BACK] Resultado completo:', result.rows);

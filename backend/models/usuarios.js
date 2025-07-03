@@ -36,6 +36,7 @@ class UsuarioModel {
                p.id_persona,
                p.nombre AS persona_nombre,
                p.apellido,
+               p.documentos,
                p.telefono,
                p.cedula,
                p.gmail,
@@ -343,6 +344,32 @@ class UsuarioModel {
         } catch (error) {
             console.error("Error en deleteUser:", error.message);
             throw error;
+        }
+    }
+
+    // Asociar un documento a una persona (agregar el ID al array documentos)
+    async addDocumentoToPersona(id_persona, id_documento) {
+        try {
+            // Obtener el array actual de documentos
+            const getQuery = 'SELECT documentos FROM personas WHERE id_persona = $1';
+            const getResult = await pool.query(getQuery, [id_persona]);
+            let documentos = getResult.rows[0]?.documentos || [];
+            console.log('[asociar-doc-persona] Documentos previos:', documentos);
+            if (typeof documentos === 'string') {
+                try { documentos = JSON.parse(documentos); } catch { documentos = []; }
+            }
+            if (!Array.isArray(documentos)) documentos = [];
+            // Evitar duplicados
+            if (!documentos.includes(Number(id_documento))) {
+                documentos.push(Number(id_documento));
+            }
+            console.log('[asociar-doc-persona] Documentos a guardar:', documentos);
+            const updateQuery = 'UPDATE personas SET documentos = $1 WHERE id_persona = $2 RETURNING *';
+            const updateResult = await pool.query(updateQuery, [JSON.stringify(documentos), id_persona]);
+            console.log('[asociar-doc-persona] Resultado del UPDATE:', updateResult.rows[0]);
+            return updateResult.rows[0];
+        } catch (error) {
+            throw new Error(`Error al asociar documento a la persona: ${error.message}`);
         }
     }
 }

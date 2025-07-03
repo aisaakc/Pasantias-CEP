@@ -15,3 +15,6 @@ export const updateUser = async (id, userData) =>
 export const deleteUser = async (id) => 
     axios.delete(`http://localhost:3001/api/usuarios/${id}`);
 
+export const asociarDocumentoAPersona = async (id_persona, id_documento) =>
+  axios.post('http://localhost:3001/api/usuarios/asociar-documento', { id_persona, id_documento });
+

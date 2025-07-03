@@ -7,7 +7,6 @@ import { CLASSIFICATION_IDS } from '../../config/classificationIds';
 import { EditorContenidoCurso } from '../../components/ModalCurso';
 import { EditorState, ContentState, convertFromHTML } from 'draft-js';
 
-// const IMAGEN_DEFECTO = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80';
 const IMAGEN_DEFECTO =  'http://localhost:3001/docs/322a386021399414b75613478bbcd9e3.png';
 
 const getExtWithDot = (ext) => {

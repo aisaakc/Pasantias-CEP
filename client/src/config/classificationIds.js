@@ -14,8 +14,16 @@ export const CLASSIFICATION_IDS = {
   PREFIJOS_TLF: 100190,
   BANCOS: 100155,
   FORMA_PAGO: 100026,
+
+
+
   Estudiante_IUJO: 12,
   Participante_Externo: 13,
+  Personal_iujo: 14,
+
+  Super_admin:15,
+
+  Administrador: 98,
 
 
   IM_CARRUSEL:100102,

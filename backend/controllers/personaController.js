@@ -150,6 +150,21 @@ class PersonaController {
         }
     }
 
+    // Asociar un documento a una persona
+    async asociarDocumento(req, res) {
+        try {
+            const { id_persona, id_documento } = req.body;
+            if (!id_persona || !id_documento) {
+                return res.status(400).json({ success: false, message: 'Faltan parámetros id_persona o id_documento' });
+            }
+            const personaActualizada = await UsuarioModel.addDocumentoToPersona(id_persona, id_documento);
+            return res.status(200).json({ success: true, data: personaActualizada });
+        } catch (error) {
+            console.error('Error en asociarDocumento controller:', error.message);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
 };
 
 export default new PersonaController();

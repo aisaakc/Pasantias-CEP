@@ -11,6 +11,8 @@ import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import { toast } from 'sonner';
 import useClasificacionStore from '../store/clasificacionStore';
 import { getAllCursos, asociarDocumentoACurso } from '../api/curso.api';
+import { getUsuarios, asociarDocumentoAPersona } from '../api/persona.api';
+
 
 const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -21,6 +23,9 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
   const [cursos, setCursos] = useState([]);
   const [cursoSeleccionado, setCursoSeleccionado] = useState('');
   const [asociarACohorte, setAsociarACohorte] = useState(false);
+  const [personas, setPersonas] = useState([]);
+  const [personaSeleccionada, setPersonaSeleccionada] = useState('');
+  const [mostrarSelectPersona, setMostrarSelectPersona] = useState(false);
 
   // Usar el store Zustand
   const {
@@ -49,6 +54,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
       getAllCursos()
         .then(res => setCursos(res.data?.data || []))
         .catch(() => setCursos([]));
+      // Cargar personas
+      getUsuarios()
+        .then(res => setPersonas(res.data?.data || []))
+        .catch(() => setPersonas([]));
     } else {
       setAnimationClass('animate-modal-out');
       document.body.style.overflow = 'unset';
@@ -140,6 +149,10 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                 } else {
                   await updateDocumento(editData.id_documento, documentoData);
                 }
+                // Asociar a persona si corresponde (también en edición)
+                if (mostrarSelectPersona && personaSeleccionada) {
+                  await asociarDocumentoAPersona(personaSeleccionada, editData.id_documento);
+                }
                 toast.success('Documento actualizado exitosamente');
               } else {
                 nuevoDocumento = await uploadDocumento(values.archivo, documentoData);
@@ -149,11 +162,15 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                   console.log('[FRONT] Asociar documento:', idDocumento, 'al curso:', cursoSeleccionado);
                   await asociarDocumentoACurso(cursoSeleccionado, idDocumento);
                 }
+                if (!isEdit && mostrarSelectPersona && personaSeleccionada && idDocumento) {
+                  console.log('[FRONT] Asociar documento:', idDocumento, 'a la persona:', personaSeleccionada);
+                  await asociarDocumentoAPersona(personaSeleccionada, idDocumento);
+                }
                 toast.success('Documento subido exitosamente');
               }
               resetForm();
               onClose();
-              if (onSuccess) onSuccess();
+              if (onSuccess) onSuccess(mostrarSelectPersona && personaSeleccionada ? personaSeleccionada : null);
             } catch (error) {
               console.error('Error al guardar el documento:', error);
               toast.error('Error al guardar el documento');
@@ -255,6 +272,50 @@ const ModalDocumento = ({ isOpen, onClose, onSuccess, editData }) => {
                       <optgroup key={codigoCohorte} label={codigoCohorte}>
                         {cursosGrupo.map(curso => (
                           <option key={curso.id_curso} value={curso.id_curso}>{curso.nombre_curso}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {/* Checkbox para mostrar select de persona */}
+              <div className="flex items-center gap-3 mb-2">
+                <input
+                  type="checkbox"
+                  id="mostrarSelectPersona"
+                  checked={mostrarSelectPersona}
+                  onChange={e => setMostrarSelectPersona(e.target.checked)}
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                />
+                <label htmlFor="mostrarSelectPersona" className="text-sm font-medium text-gray-700">
+                  ¿Documento de una persona?
+                </label>
+              </div>
+              {/* Select de persona solo si el checkbox está activo */}
+              {mostrarSelectPersona && (
+                <div className="transform transition-all duration-300 animate-fade-slide-up" style={{ animationDelay: '400ms' }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecciona la persona
+                  </label>
+                  <select
+                    value={personaSeleccionada}
+                    onChange={e => setPersonaSeleccionada(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 bg-white"
+                  >
+                    <option value="">Seleccionar persona</option>
+                    {/* Agrupar personas por rol, solo mostrar si tienen rol */}
+                    {Object.entries(personas.reduce((acc, persona) => {
+                      const rol = persona.rol_nombre;
+                      if (!rol) return acc; // Omitir personas sin rol
+                      if (!acc[rol]) acc[rol] = [];
+                      acc[rol].push(persona);
+                      return acc;
+                    }, {})).map(([rol, personasGrupo]) => (
+                      <optgroup key={rol} label={rol}>
+                        {personasGrupo.map(persona => (
+                          <option key={persona.id_persona} value={persona.id_persona}>
+                            {persona.persona_nombre} {persona.apellido}
+                          </option>
                         ))}
                       </optgroup>
                     ))}

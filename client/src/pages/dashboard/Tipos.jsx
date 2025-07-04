@@ -171,6 +171,32 @@ function getChildTypeId(currentTypeId) {
   }
 }
 
+// Función utilitaria para obtener el nombre del tipo de hijo
+function getChildTypeName(currentTypeId, parentInfo) {
+  // Si tenemos información del padre, usar su nombre
+  if (parentInfo && parentInfo.nombre) {
+    return parentInfo.nombre;
+  }
+  
+  // Fallback a nombres hardcodeados para casos específicos
+  switch (Number(currentTypeId)) {
+    case CLASSIFICATION_IDS.CARRERAS: return 'Carrera';
+    case CLASSIFICATION_IDS.PROGRAMAS: return 'Programa';
+    case CLASSIFICATION_IDS.CURSOS: return 'Curso';
+    case CLASSIFICATION_IDS.INSTITUTOS: return 'Instituto';
+    case CLASSIFICATION_IDS.GENEROS: return 'Género';
+    case CLASSIFICATION_IDS.ESTADOS: return 'Estado';
+    case CLASSIFICATION_IDS.MUNICIPIOS: return 'Municipio';
+    case CLASSIFICATION_IDS.PARROQUIAS: return 'Parroquia';
+    case CLASSIFICATION_IDS.ICONOS: return 'Ícono';
+    case CLASSIFICATION_IDS.OBJETOS: return 'Objeto';
+    case CLASSIFICATION_IDS.PREGUNTAS: return 'Pregunta';
+    case CLASSIFICATION_IDS.ROLES: return 'Ro';
+    case CLASSIFICATION_IDS.PREFIJOS_TLF: return 'Prefijo Telefónico';
+    default: return 'Elemento';
+  }
+}
+
 export default function Tipos() {
   const navigate = useNavigate();
   const { id: encodedId, parentId: encodedParentId } = useParams();
@@ -482,23 +508,16 @@ export default function Tipos() {
   // Dentro del componente Tipos
   const childTypeId = getChildTypeId(realId);
 
-  const childTypeName = (() => {
-    switch (childTypeId) {
-      case CLASSIFICATION_IDS.CARRERAS: return 'Carrera';
-      case CLASSIFICATION_IDS.PROGRAMAS: return 'Programa';
-      case CLASSIFICATION_IDS.CURSOS: return 'Curso';
-      default: return 'Subclasificación';
-    }
-  })();
+  const childTypeName = getChildTypeName(realId, parentInfo);
 
   const modalParentInfo = useMemo(() => ({
-    type_id: childTypeId, // El tipo de hijo a crear
+    type_id: realId, // Usar el ID de la clasificación actual como type_id
     nombre: childTypeName, // El nombre del tipo de hijo a crear
     icono: parentInfo.icono,
     nicono: parentInfo.icono,
     id_icono: parentInfo.id_icono,
     parent_id: realParentId // El padre es el actual
-  }), [childTypeId, childTypeName, realParentId, parentInfo.icono, parentInfo.id_icono]);
+  }), [realId, childTypeName, realParentId, parentInfo.icono, parentInfo.id_icono]);
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">

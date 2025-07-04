@@ -23,13 +23,8 @@ export const deleteClasificacion = async (id) =>
     axios.delete(`http://localhost:3001/api/clasificaciones/delete/${id}`);
 
 export const getParentHierarchy = async (id_clasificacion) => {
-  let id = id_clasificacion;
-  // Si es base64 (no solo dígitos), decodifica primero
-  if (typeof id === 'string' && !/^\d+$/.test(id)) {
-    const decoded = decodeId(id);
-    if (decoded) id = decoded;
-  }
-  return axios.get(`http://localhost:3001/api/clasificaciones/parents/${encodeId(id)}`);
+  // Usar el id tal cual, sin decodificar ni codificar
+  return axios.get(`http://localhost:3001/api/clasificaciones/parents/${id_clasificacion}`);
 };
 
 export const getJerarquiaDesde = async (id_raiz) => 

@@ -169,19 +169,7 @@ class clasificacionController {
             const { id_clasificacion } = req.params;
             console.log('ID recibido en el controlador:', id_clasificacion);
             
-            // Decodificar el ID de base64
-            console.log('Valor recibido para parsear:', Buffer.from(id_clasificacion, 'base64').toString());
-            const decodedId = JSON.parse(Buffer.from(id_clasificacion, 'base64').toString()).id;
-            console.log('ID decodificado:', decodedId);
-            
-            if (!decodedId) {
-                console.error('ID decodificado es nulo o inválido');
-                return res.status(400).json({ error: 'ID inválido' });
-            }
-
-            const parents = await Clasificacion.getParentHierarchy(decodedId);
-            console.log('Jerarquía de padres obtenida:', parents);
-            
+            const parents = await Clasificacion.getParentHierarchy(id_clasificacion);
             res.json(parents);
         } catch (error) {
             console.error("Error detallado en getParentHierarchy controller:", {

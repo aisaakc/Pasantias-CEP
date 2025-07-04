@@ -178,10 +178,10 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
       let typeIdValue = formValues.type_id ? parseInt(formValues.type_id) : null;
       let parentIdValue = formValues.parent_id && formValues.parent_id !== '' ? Number(formValues.parent_id) : null;
 
-      // --- CAMBIO: Si estamos creando (NO editando), forzar type_id al id_clasificacion actual y parent_id a null SIEMPRE ---
-      if (!editData && parentInfo && parentInfo.type_id) {
-        typeIdValue = parentInfo.type_id;
-        parentIdValue = parentInfo.parent_id || parentId || null;
+      // CAMBIO: Si estamos creando una subclasificación dentro de una macro (parentInfo existe y no es edición)
+      if (!editData && parentInfo && !parentInfo.type_id && parentInfo.id_clasificacion) {
+        typeIdValue = parentInfo.id_clasificacion;
+        parentIdValue = null;
       }
       // Si parent_id es igual a type_id, forzar parent_id a null
       if (parentIdValue === typeIdValue) {
@@ -358,35 +358,35 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
             setProgramas(programasResponse.data.data || []);
 
             let idCarrera = null;
-            // // Si parentInfo es un PROGRAMA, su parent_id es la carrera
-            // if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS && parentInfo.parent_id) {
-            //   idCarrera = parentInfo.parent_id;
-            // }
-            // // Si parentInfo es una CARRERA
-            // else if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS && parentInfo.id_clasificacion) {
-            //   idCarrera = parentInfo.id_clasificacion;
-            // }
-            // // Si parentInfo es un CURSO, buscar la jerarquía ascendente para encontrar la carrera
-            // else if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.CURSOS && parentInfo.id_clasificacion) {
-            //   // Buscar la jerarquía ascendente para encontrar la carrera
-            //   try {
-            //     if (useClasificacionStore.getState().getParentHierarchy) {
-            //       const jerarquia = await useClasificacionStore.getState().getParentHierarchy(parentInfo.id_clasificacion);
-            //       const carrera = jerarquia.find(j => Number(j.type_id) === CLASSIFICATION_IDS.CARRERAS);
-            //       if (carrera) {
-            //         idCarrera = carrera.id_clasificacion;
-            //       }
-            //     }
-            //   } catch (e) {
-            //     console.error('[GEN-COD-LOAD] Error obteniendo jerarquía ascendente para curso:', e);
-            //   }
-            // }
-            // Fallbacks
-            // else if (parentInfo && parentInfo.parent_id) {
-            //   idCarrera = parentInfo.parent_id;
-            // } else if (editData && editData.parent_id) {
-            //   idCarrera = editData.parent_id;
-            // }
+            // Si parentInfo es un PROGRAMA, su parent_id es la carrera
+            if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS && parentInfo.parent_id) {
+              idCarrera = parentInfo.parent_id;
+            }
+            // Si parentInfo es una CARRERA
+            else if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS && parentInfo.id_clasificacion) {
+              idCarrera = parentInfo.id_clasificacion;
+            }
+            // Si parentInfo es un CURSO, buscar la jerarquía ascendente para encontrar la carrera
+            else if (parentInfo && Number(parentInfo.type_id) === CLASSIFICATION_IDS.CURSOS && parentInfo.id_clasificacion) {
+              // Buscar la jerarquía ascendente para encontrar la carrera
+              try {
+                if (useClasificacionStore.getState().getParentHierarchy) {
+                  const jerarquia = await useClasificacionStore.getState().getParentHierarchy(parentInfo.id_clasificacion);
+                  const carrera = jerarquia.find(j => Number(j.type_id) === CLASSIFICATION_IDS.CARRERAS);
+                  if (carrera) {
+                    idCarrera = carrera.id_clasificacion;
+                  }
+                }
+              } catch (e) {
+                console.error('[GEN-COD-LOAD] Error obteniendo jerarquía ascendente para curso:', e);
+              }
+            }
+           
+            else if (parentInfo && parentInfo.parent_id) {
+              idCarrera = parentInfo.parent_id;
+            } else if (editData && editData.parent_id) {
+              idCarrera = editData.parent_id;
+            }
             console.log('[GEN-COD-LOAD] idCarrera para cargar programas:', idCarrera);
             if (idCarrera) {
               const programasResponse = await getSubclasificaciones(CLASSIFICATION_IDS.PROGRAMAS, idCarrera);
@@ -632,20 +632,34 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
   // Refuerzo tipoPadre para ocultar select si es Instituto o si type_id es vacío/nulo
   const tipoPadre = useMemo(() => {
     if (!parentInfo?.type_id) return null;
-    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return 'instituto';
-    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS) return 'carrera';
-    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS) return 'programa';
+    
+    // Si el type_id actual es igual al ID de la clasificación de institutos, no mostrar select
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return null;
+    
+    // Si el type_id actual es igual al ID de la clasificación de carreras, mostrar select de institutos
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CARRERAS) return 'instituto';
+    
+    // Si el type_id actual es igual al ID de la clasificación de programas, mostrar select de carreras
+    if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.PROGRAMAS) return 'carrera';
+    
     if (Number(parentInfo.type_id) === CLASSIFICATION_IDS.CURSOS) return 'programa'; // Para cursos, mostrar select de programas
     return null;
   }, [parentInfo?.type_id]);
 
   const opcionesPadre = useMemo(() => {
-    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.INSTITUTOS) return institutos;
-    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS) return carreras;
-    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) return programas;
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CARRERAS) return institutos;
+    if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.PROGRAMAS) return carreras;
     if (Number(parentInfo?.type_id) === CLASSIFICATION_IDS.CURSOS) return programas; // Para cursos, mostrar programas
     return [];
   }, [parentInfo?.type_id, institutos, carreras, programas]);
+
+  // 1. Agregar función utilitaria para el texto del botón
+  function getAgregarTexto(parentInfo) {
+    if (parentInfo && parentInfo.nombre) {
+      return `Agregar ${parentInfo.nombre}`;
+    }
+    return 'Agregar Clasificación';
+  }
 
   if (!shouldRender) return null;
 
@@ -703,7 +717,7 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                 }
               })()}
               {/* Título */}
-              {editData ? `Editar ${editData.nombre}` : isMainClassification ? 'Crear Clasificación' : `Agregar ${parentInfo?.nombre || 'Clasificación'}`}
+              {editData ? `Editar ${editData.nombre}` : isMainClassification ? 'Crear Clasificación' : getAgregarTexto(parentInfo)}
             </h2>
             <button 
               onClick={handleClose}
@@ -800,42 +814,19 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
               </div>
             ))}
 
-            {/* Campo type_id si no es una edición o si no tiene type_id */}
-            {(!editData && !parentInfo?.type_id) && (
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
-                  Tipo <span className="text-red-500 ml-1">*</span>
-                </label>
-                <select
-                  name="type_id"
-                  value={formValues.type_id}
-                  onChange={(e) => setFormValues(prev => ({ ...prev, type_id: e.target.value }))}
-                            className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.type_id 
-                                ? 'border-red-300 focus:ring-red-500' 
-                                : 'border-gray-200 focus:ring-blue-500'
-                            } focus:ring-2 focus:border-transparent transition-all duration-300 hover:border-blue-300`}
-                          >
-                  <option value="">Seleccionar tipo</option>
-                  {clasificacionesPrincipales.map((c) => (
-                    <option key={c.id_clasificacion} value={c.id_clasificacion}>{c.nombre}</option>
-                  ))}
-                </select>
-                {errors.type_id && (
-                  <div className="mt-1 text-sm text-red-600">
-                    {errors.type_id}
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Campo parent_id según el tipo */}
             {tipoPadre && (
-              console.log('[GEN-COD-RENDER] Opciones padre:', opcionesPadre, 'parent_id seleccionado:', formValues.parent_id),
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FontAwesomeIcon icon={faFolder} className="mr-2 text-blue-500" />
+                  <FontAwesomeIcon 
+                    icon={
+                      tipoPadre === 'instituto' && institutosClasificacionInfo ? institutosClasificacionInfo.icono :
+                      tipoPadre === 'carrera' && carrerasClasificacionInfo ? carrerasClasificacionInfo.icono :
+                      tipoPadre === 'programa' && programasClasificacionInfo ? programasClasificacionInfo.icono :
+                      faFolder
+                    } 
+                    className="mr-2 text-blue-500" 
+                  />
                   {tipoPadre === 'instituto' && (institutosClasificacionInfo ? institutosClasificacionInfo.nombre : 'Instituto')}
                   {tipoPadre === 'carrera' && (carrerasClasificacionInfo ? carrerasClasificacionInfo.nombre : 'Carrera')}
                   {tipoPadre === 'programa' && (programasClasificacionInfo ? programasClasificacionInfo.nombre : 'Programa')}
@@ -1092,7 +1083,14 @@ const Modal = ({ isOpen, onClose, editData = null, parentId = null, parentInfo =
                           icon={faSave} 
                           className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`} 
                         />
-                        <span>{isSubmitting ? 'Guardando...' : editData ? 'Actualizar' : 'Guardar'}</span>
+                        <span>
+                          {isSubmitting
+                            ? 'Guardando...'
+                            : editData
+                              ? 'Actualizar'
+                              : getAgregarTexto(parentInfo)
+                          }
+                        </span>
                       </button>
                     </div>
                   </div>

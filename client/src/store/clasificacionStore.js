@@ -175,8 +175,8 @@ export const useClasificacionStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       // Validar datos requeridos
-      if (!data.nombre || !data.type_id) {
-        throw new Error('El nombre y el tipo son campos requeridos');
+      if (!data.nombre) {
+        throw new Error('El nombre es un campo requerido');
       }
 
       const response = await createClasificacionAPI(data);
@@ -208,8 +208,8 @@ export const useClasificacionStore = create((set, get) => ({
   createSubclasificacionSilent: async (data) => {
     try {
       // Validar datos requeridos
-      if (!data.nombre || !data.type_id) {
-        throw new Error('El nombre y el tipo son campos requeridos');
+      if (!data.nombre) {
+        throw new Error('El nombre es un campo requerido');
       }
 
       const response = await createClasificacionAPI(data);

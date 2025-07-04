@@ -583,15 +583,16 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                         {!isDataLoaded || loading ? (
                           <option value="" disabled>Cargando opciones...</option>
                         ) : field.options && field.options.length > 0 ? (
-                          [<option key={`${field.name}-default`} value="">-- Selecciona {field.label.toLowerCase()} --</option>,
-                          ...field.options.map((option, index) => (
+                          <optgroup label={field.label}>
+                            {field.options.map((option, index) => (
                             <option 
                               key={`${field.name}-option-${option.id || option.nombre || index}`} 
                               value={option.id}
                             >
                               {option.nombre}
                             </option>
-                          ))]
+                            ))}
+                          </optgroup>
                         ) : (
                           <option value="" disabled>No hay opciones disponibles</option>
                         )}

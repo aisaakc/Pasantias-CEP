@@ -23,3 +23,6 @@ export const asociarDocumentoACurso = async (id_curso, id_documento) =>
 
 export const validateCohorteCode = async (codigo_cohorte, id_nombre) =>
    axios.get(`http://localhost:3001/api/cursos/validate-cohorte?codigo_cohorte=${codigo_cohorte}&id_nombre=${id_nombre}`);
+
+export const addParticipanteToCohorte = async (cohorteId, participante) =>
+   axios.post(`http://localhost:3001/api/cursos/${cohorteId}/participantes`, participante);

@@ -22,6 +22,13 @@ export const useAuthStore = create((set, get) => ({
   clasificacionesUsuario: [], 
   isSupervisor: !!localStorage.getItem('isSupervisor'),
   rolesDisponibles: [],
+  // Log al inicializar el store
+  user: (() => {
+    const userLS = localStorage.getItem('user');
+    const userParsed = userLS ? JSON.parse(userLS) : undefined;
+    console.log('[DEBUG AUTHSTORE] user inicial:', userParsed);
+    return userParsed;
+  })(),
 
   // Cargar opciones del formulario
   fetchOpcionesRegistro: async () => {
@@ -91,11 +98,14 @@ export const useAuthStore = create((set, get) => ({
       const clasificacionStore = useClasificacionStore.getState();
       await clasificacionStore.preloadIcons();
       
+      // Log después de login
+      console.log('[DEBUG AUTHSTORE] user después de login:', response.data.user);
       set({
         loading: false,
         successMessage: `¡Bienvenido ${response.data.user.nombre} ${response.data.user.apellido}!`,
         isAuthenticated: true,
         isSupervisor: !!response.data.user.isSupervisor,
+        user: response.data.user,
       });
       
       // Retornar la respuesta para que el componente pueda acceder a los datos del usuario
@@ -106,6 +116,7 @@ export const useAuthStore = create((set, get) => ({
         error: error.response?.data?.error || 'Error desconocido al iniciar sesión.',
         isAuthenticated: false,
         isSupervisor: false,
+        user: undefined,
       });
       throw error; // Re-lanzar el error para que el componente pueda manejarlo
     }
@@ -121,12 +132,15 @@ export const useAuthStore = create((set, get) => ({
     const clasificacionStore = useClasificacionStore.getState();
     clasificacionStore.clearIconsCache();
     
+    // Log de logout
+    console.log('[DEBUG AUTHSTORE] logout, user eliminado');
     set({
       successMessage: null,
       error: null,
       loading: false,
       isAuthenticated: false,
       isSupervisor: false,
+      user: undefined,
     });
   },
 

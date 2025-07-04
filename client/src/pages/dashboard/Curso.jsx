@@ -12,6 +12,7 @@ import { useCursoStore } from '../../store/cursoStore';
 import { useClasificacionStore } from '../../store/clasificacionStore';
 import ModalFecha from '../../components/ModalCurso';
 import { encodeId } from '../../utils/hashUtils';
+import { faFile, faCalendarDays } from '@fortawesome/free-solid-svg-icons';
 
 function Curso() {
   const navigate = useNavigate();
@@ -330,8 +331,15 @@ function Curso() {
   }, [cursosCalendario]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FontAwesomeIcon icon={faCalendarDays} className="mr-3 text-blue-600" />
+            Gestión de Cohortes
+          </h1>
+          <p className="text-gray-600">Gestiona el calendario y la programación de los cursos.</p>
+        </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
             <div className="flex justify-between items-center">

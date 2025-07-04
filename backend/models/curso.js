@@ -365,6 +365,36 @@ class CursoModel {
       throw new Error("Error interno del servidor al validar el código de cohorte.");
     }
   }
+
+  // Agregar participante a cohorte (actualiza el campo JSON participantes)
+  async addParticipanteToCohorte(cohorteId, participante) {
+    try {
+      // Obtener los participantes actuales
+      const selectQuery = 'SELECT participantes FROM cursos WHERE id_curso = $1';
+      const selectResult = await pool.query(selectQuery, [cohorteId]);
+      let participantes = selectResult.rows[0]?.participantes || [];
+      console.log('[DEBUG BACKEND] Participantes previos:', participantes);
+      if (typeof participantes === 'string') {
+        participantes = JSON.parse(participantes);
+      }
+      if (!Array.isArray(participantes)) participantes = [];
+      // Si ya existe un participante con el mismo idP, actualiza su monto
+      const idx = participantes.findIndex(p => String(p.idP) === String(participante.idP));
+      if (idx !== -1) {
+        participantes[idx].monto = participante.monto;
+      } else {
+        participantes.push(participante);
+      }
+      console.log('[DEBUG BACKEND] Participantes a guardar:', participantes);
+      // Actualizar el campo en la BD
+      const updateQuery = 'UPDATE cursos SET participantes = $1 WHERE id_curso = $2 RETURNING participantes';
+      const updateResult = await pool.query(updateQuery, [JSON.stringify(participantes), cohorteId]);
+      return { participantes: updateResult.rows[0].participantes };
+    } catch (error) {
+      console.error('Error en addParticipanteToCohorte:', error.message);
+      throw new Error('Error al agregar participante a la cohorte');
+    }
+  }
 }
 
 export default new CursoModel();

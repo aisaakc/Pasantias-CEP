@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 // URL base del backend
 const API_URL = 'http://localhost:3001';
@@ -80,32 +82,39 @@ function Prueba() {
   };
 
   return (
-    <div className="p-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Generador de Certificados</h1>
-        
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Haz clic en el botón para generar un certificado de ejemplo.
-          </p>
-          
-          <button
-            onClick={handleGeneratePDF}
-            disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-200 ${
-              loading 
-                ? 'bg-blue-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {loading ? 'Generando PDF...' : 'Generar Certificado'}
-          </button>
+    <div className="p-8 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FontAwesomeIcon icon={faFilePdf} className="mr-3 text-blue-600" />
+            Generar de Certificados
+          </h1>
+          <p className="text-gray-600">Genera certificados PDF personalizados para los participantes de los cursos.</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-md overflow-hidden p-6 max-w-2xl">
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Haz clic en el botón para generar un certificado de ejemplo.
+            </p>
+            
+            <button
+              onClick={handleGeneratePDF}
+              disabled={loading}
+              className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-200 ${
+                loading 
+                  ? 'bg-blue-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {loading ? 'Generando PDF...' : 'Generar Certificado'}
+            </button>
 
-          {error && (
-            <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                {error}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

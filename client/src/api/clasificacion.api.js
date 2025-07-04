@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { encodeId, decodeId } from '../utils/hashUtils';
+
 
 export const getParentClassifications = async () => 
     axios.get('http://localhost:3001/api/clasificaciones/parent');

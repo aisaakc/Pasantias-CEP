@@ -264,10 +264,10 @@ class Clasificacion {
 
     async getHierarchyFromId(id_raiz) {
         try {
-            const query = 'SELECT * FROM obtener_jerarquia_desde($1)';
+            const query = 'SELECT * FROM obtener_jerarquia_con_cohortes($1)';
             const result = await pool.query(query, [id_raiz]);
-            // ...transformación a árbol igual que antes...
             const items = result.rows;
+            console.log('[DEBUG BACKEND] Items obtenidos de la función SQL:', JSON.stringify(items, null, 2));
             const map = {};
             const roots = [];
             items.forEach(item => {
@@ -280,6 +280,7 @@ class Clasificacion {
                     roots.push(map[item.id]);
                 }
             });
+            console.log('[DEBUG BACKEND] Árbol construido para respuesta:', JSON.stringify(roots, null, 2));
             return roots;
         } catch (error) {
             console.error("Error en getHierarchyFromId:", error.message);

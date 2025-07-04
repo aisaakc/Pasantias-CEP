@@ -7,7 +7,8 @@ import {
   faHashtag,
   faBook,
   faSpinner,
-  faSearch
+  faSearch,
+  faUsers
 } from '@fortawesome/free-solid-svg-icons';
 import { getAllCursos } from '../../api/curso.api';
 import { toast } from 'sonner';
@@ -123,8 +124,8 @@ function Cohorte() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-            <FontAwesomeIcon icon={faBook} className="mr-3 text-blue-600" />
-            Gestión de Cohortes
+            <FontAwesomeIcon icon={faUsers} className="mr-3 text-blue-600" />
+            Cohortes
           </h1>
           <p className="text-gray-600">Administra y visualiza todas las cohortes de cursos</p>
         </div>

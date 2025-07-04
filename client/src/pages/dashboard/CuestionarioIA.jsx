@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { sendMessageToGemini } from "../../api/gemini.api";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 
 export default function CuestionarioIA() {
   const [contenido, setContenido] = useState("");
@@ -51,54 +53,69 @@ export default function CuestionarioIA() {
   };
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
-      <h1>Cuestionario (IA)</h1>
-      <textarea
-        value={contenido}
-        onChange={e => setContenido(e.target.value)}
-        placeholder="Pega aquí el contenido del curso (puede ser HTML o texto plano)"
-        style={{ width: "100%", minHeight: 120, marginBottom: 12, padding: 8, borderRadius: 4, border: "1px solid #ccc" }}
-        disabled={loading}
-      />
-      <button onClick={handleGenerar} disabled={loading || !contenido.trim()} style={{ padding: "8px 16px", marginBottom: 24 }}>
-        {loading ? "Generando..." : "Generar cuestionario"}
-      </button>
-      {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
-      {cuestionario && (
-        <form onSubmit={e => { e.preventDefault(); handleEvaluar(); }}>
-          {cuestionario.map((q, i) => (
-            <div key={i} style={{ marginBottom: 18, padding: 12, border: "1px solid #eee", borderRadius: 6 }}>
-              <div style={{ marginBottom: 6 }}><b>{i + 1}. {q.pregunta}</b></div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {q.opciones.map((op, j) => (
-                  <label key={j} style={{ cursor: evaluado ? "not-allowed" : "pointer" }}>
-                    <input
-                      type="radio"
-                      name={`pregunta-${i}`}
-                      checked={respuestas[i] === j}
-                      onChange={() => handleSeleccion(i, j)}
-                      disabled={evaluado}
-                    /> {String.fromCharCode(65 + j)}. {op}
-                  </label>
-                ))}
-              </div>
-              {evaluado && (
-                <div style={{ marginTop: 6, color: respuestas[i] === q.correcta ? "green" : "red" }}>
-                  {respuestas[i] === q.correcta ? "¡Correcto!" : `Incorrecto. Respuesta correcta: ${String.fromCharCode(65 + q.correcta)}`}
+    <div className="max-w-[1400px] mx-auto px-8 py-10">
+      <div className="mb-8 animate-fade-in text-left">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+          <FontAwesomeIcon icon={faListCheck} className="mr-3 text-blue-600" />
+          Cuestionario <sup className="text-base align-super">(IA)</sup>
+        </h1>
+        <p className="text-gray-600 text-lg">Genera y responde cuestionarios automáticos basados en el contenido de tus cursos.</p>
+      </div>
+      <div className="bg-white rounded-xl shadow-md p-8">
+        <textarea
+          value={contenido}
+          onChange={e => setContenido(e.target.value)}
+          placeholder="Pega aquí el contenido del curso (puede ser HTML o texto plano)"
+          className="w-full min-h-[120px] mb-3 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 transition disabled:bg-gray-100"
+          disabled={loading}
+        />
+        <button
+          onClick={handleGenerar}
+          disabled={loading || !contenido.trim()}
+          className="px-4 py-2 mb-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          {loading ? "Generando..." : "Generar cuestionario"}
+        </button>
+        {error && <div className="text-red-500 mb-3">{error}</div>}
+        {cuestionario && (
+          <form onSubmit={e => { e.preventDefault(); handleEvaluar(); }}>
+            {cuestionario.map((q, i) => (
+              <div key={i} className="mb-5 p-4 border border-gray-100 rounded-lg bg-gray-50">
+                <div className="mb-1 font-semibold">{i + 1}. {q.pregunta}</div>
+                <div className="flex flex-col gap-1">
+                  {q.opciones.map((op, j) => (
+                    <label key={j} className={evaluado ? "cursor-not-allowed" : "cursor-pointer"}>
+                      <input
+                        type="radio"
+                        name={`pregunta-${i}`}
+                        checked={respuestas[i] === j}
+                        onChange={() => handleSeleccion(i, j)}
+                        disabled={evaluado}
+                        className="mr-2 accent-blue-600"
+                      /> {String.fromCharCode(65 + j)}. {op}
+                    </label>
+                  ))}
                 </div>
-              )}
-            </div>
-          ))}
-          {!evaluado && (
-            <button type="submit" style={{ padding: "8px 16px", marginTop: 12 }}>Evaluar</button>
-          )}
-          {evaluado && (
-            <div style={{ fontWeight: "bold", fontSize: 18, marginTop: 16 }}>
-              Puntuación: {puntuacion} / {cuestionario.length}
-            </div>
-          )}
-        </form>
-      )}
+                {evaluado && (
+                  <div className={"mt-1 " + (respuestas[i] === q.correcta ? "text-green-600" : "text-red-500") }>
+                    {respuestas[i] === q.correcta ? "¡Correcto!" : `Incorrecto. Respuesta correcta: ${String.fromCharCode(65 + q.correcta)}`}
+                  </div>
+                )}
+              </div>
+            ))}
+            {!evaluado && (
+              <button type="submit" className="px-4 py-2 mt-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">
+                Evaluar
+              </button>
+            )}
+            {evaluado && (
+              <div className="font-bold text-lg mt-4">
+                Puntuación: {puntuacion} / {cuestionario.length}
+              </div>
+            )}
+          </form>
+        )}
+      </div>
     </div>
   );
 } 

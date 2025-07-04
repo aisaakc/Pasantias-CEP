@@ -1,22 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import * as solidIcons from '@fortawesome/free-solid-svg-icons';
-import { faCreditCard, 
-         faUniversity, 
-         faCalendarAlt, 
-         faIdCard, faFileImage, 
-         faTimes, faSave, faBook, faBuilding, faSchool, faLaptop, faStar, faFolder, faBriefcase, faBuildingCircleCheck, faBuildingFlag, faCode, faEthernet, faMemory, faDatabase, faFileExcel, faHandcuffs } from '@fortawesome/free-solid-svg-icons';
 import { useCursoStore } from '../store/cursoStore';
-import useDocumentoStore from '../store/documentoStrore';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import useAuthStore from '../store/authStore';
 import Select from 'react-select';
 import { TreeSelect } from 'primereact/treeselect';
 import { getJerarquiaDesde } from '../api/clasificacion.api';
+import { addParticipanteToCohorte } from '../api/curso.api';
 import 'primeicons/primeicons.css';
 
-export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
-  const updateCurso = useCursoStore((state) => state.updateCurso);
+export default function ModalParticipante({ onClose }) {
+  // const updateCurso = useCursoStore((state) => state.updateCurso); // Elimino porque no se usa
   const [form, setForm] = useState({
     curso_id: '',
     monto: '',
@@ -27,15 +22,16 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
     cedula_cuenta: '',
     soporte_pago: null,
   });
-  const cursos = useCursoStore((state) => state.cursos);
   const fetchCursos = useCursoStore((state) => state.fetchCursos);
   const formasPago = useCursoStore((state) => state.formasPago);
   const bancos = useCursoStore((state) => state.bancos);
   const fetchFormasPagoYBancos = useCursoStore((state) => state.fetchFormasPagoYBancos);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { uploadDocumento } = useDocumentoStore();
   const { user } = useAuthStore();
   const [jerarquiaCursos, setJerarquiaCursos] = useState([]);
+
+  // Log al inicio del componente
+  console.log('[DEBUG FRONTEND] user al montar ModalParticipante:', user);
 
   // Cargar el tema de PrimeReact solo cuando la modal está abierta
   useEffect(() => {
@@ -54,7 +50,10 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
     fetchCursos();
     fetchFormasPagoYBancos();
     getJerarquiaDesde(CLASSIFICATION_IDS.INSTITUTOS)
-      .then(res => setJerarquiaCursos(res.data))
+      .then(res => {
+        console.log('[DEBUG FRONTEND] Jerarquía recibida del backend:', res.data);
+        setJerarquiaCursos(res.data);
+      })
       .catch(() => setJerarquiaCursos([]));
   }, [fetchCursos, fetchFormasPagoYBancos]);
 
@@ -66,62 +65,59 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
       return;
     }
 
-    let processedValue = value;
     if (name === 'monto') {
-      processedValue = value.replace(/[^0-9.]/g, '');
-    } else if (['nro_referencia', 'cedula_cuenta'].includes(name)) {
-      processedValue = value.replace(/[^0-9]/g, '');
+      setForm((prev) => ({ ...prev, [name]: value }));
+      return;
+    } else if (["nro_referencia", "cedula_cuenta"].includes(name)) {
+      const processedValue = value.replace(/[^0-9]/g, '');
+      setForm((prev) => ({ ...prev, [name]: processedValue }));
+      return;
     }
 
     setForm((prev) => ({
       ...prev,
-      [name]: processedValue,
+      [name]: value,
     }));
   };
+
+  // Solo permitir seleccionar nodos hoja (cohorte)
+  const isCohorteNode = (node) => node && node.data && node.data.nivel === 6; // Ajusta el nivel según tu jerarquía
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // 1. Subir comprobante de pago como documento
-      let id_doc = null;
-      if (form.soporte_pago) {
-        const now = new Date();
-        const documentoData = {
-          id_tipo: CLASSIFICATION_IDS.DOCUMENTOS + 244, // 100338 comprobante de pago
-          fecha_hora: now.toISOString(),
-          descripcion: 'Comprobante de pago para inscripción',
-          nombre: form.soporte_pago.name
-        };
-        const res = await uploadDocumento(form.soporte_pago, documentoData);
-        id_doc = res.data?.id_documento || res.id_documento;
-      }
-      // 2. Construir participante según estructura requerida
-      const participante = {
-        id_pers: user?.id_persona,
-        id_banco: Number(form.banco),
-        id_pago: Number(form.forma_pago),
-        monto: Number(form.monto),
-        ref: form.nro_referencia,
-        fecha_pago: form.fecha_pago,
-        rif: form.cedula_cuenta,
-        id_doc: id_doc
-      };
-      // 3. Buscar el curso seleccionado
-      const cursoSeleccionado = cursos.find(c => c.id_curso === Number(form.curso_id));
-      if (!cursoSeleccionado) {
-        alert('Curso no encontrado');
+      // Log del form completo y usuario
+      console.log('[DEBUG FRONTEND] handleSubmit form:', form);
+      console.log('[DEBUG FRONTEND] handleSubmit user:', user);
+      // Validar que se seleccionó una cohorte
+      const selectedNode = flattenTree(treeSelectNodes).find(
+        n => String(n.value) === String(form.curso_id)
+      );
+      if (!isCohorteNode(selectedNode)) {
+        alert('Debes seleccionar una cohorte (nodo hoja)');
         setIsSubmitting(false);
         return;
       }
-      // 4. Actualizar curso con el nuevo participante
-      const nuevosParticipantes = Array.isArray(cursoSeleccionado.partipantes)
-        ? [...cursoSeleccionado.partipantes, participante]
-        : [participante];
-      await updateCurso({
-        ...cursoSeleccionado,
-        partipantes: nuevosParticipantes
+      // Validar monto
+      const montoNum = Number(form.monto);
+      if (isNaN(montoNum) || montoNum <= 0) {
+        alert('El monto debe ser un número válido y mayor a 0');
+        setIsSubmitting(false);
+        return;
+      }
+      // Log para depurar el id_persona
+      console.log('[DEBUG FRONTEND] user?.id_persona:', user?.id_persona);
+      // Agregar participante a la cohorte
+      const payload = {
+        idP: user?.id_persona,
+        monto: montoNum
+      };
+      console.log('[DEBUG FRONTEND] Enviando inscripción:', {
+        curso_id: form.curso_id,
+        ...payload
       });
+      await addParticipanteToCohorte(form.curso_id, payload);
       setForm({
         curso_id: '',
         monto: '',
@@ -134,46 +130,62 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
       });
       setIsSubmitting(false);
       if (onClose) onClose();
-    } catch {
+    } catch (error) {
       setIsSubmitting(false);
-      alert('Error al inscribirse en el curso');
+      const msg = error?.response?.data?.error || error?.message || 'Error al inscribirse en el curso';
+      alert(msg);
     }
   };
 
-  // IDs de cursos asignados (del store)
-  const cursosAsignadosIds = cursos.map(c => Number(c.id_curso));
+  // Función para aplanar el árbol y buscar nodos
+  function flattenTree(nodes) {
+    if (!Array.isArray(nodes)) return [];
+    return nodes.flatMap(node => [node, ...(node.children ? flattenTree(node.children) : [])]);
+  }
 
   // Función para transformar la jerarquía a formato TreeSelect de PrimeReact con íconos FontAwesome dinámicos
   function toTreeSelectFormat(options) {
-    return options
-      .map(opt => {
-        // Si es nivel 5 (curso), solo incluir si está en la lista de la cohorte
-        if (opt.nivel === 5 && !cursosCohorteIds.includes(Number(opt.id))) {
-          return null;
-        }
-        const faIcon = solidIcons[opt.icono];
-        const node = {
-          key: String(opt.id),
-          label: (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {faIcon && <FontAwesomeIcon icon={faIcon} className="mr-2 text-blue-500" />}
-              {opt.nombre}
-            </span>
-          ),
-          value: opt.id,
-          data: opt,
-          ...(opt.hijos && opt.hijos.length > 0
-            ? { children: toTreeSelectFormat(opt.hijos) }
-            : { isLeaf: true }
-          )
-        };
-        return node;
-      })
-      .filter(Boolean); // Elimina los nulls
+    return options.map(opt => ({
+      key: String(opt.id),
+      label: opt.nombre,
+      value: opt.id,
+      data: opt,
+      isLeaf: (opt.nivel === 6 || opt.es_cohorte === true),
+      ...(opt.hijos && opt.hijos.length > 0
+        ? { children: toTreeSelectFormat(opt.hijos) }
+        : {})
+    }));
   }
 
   // Transformar los datos reales al formato TreeSelect
   const treeSelectNodes = toTreeSelectFormat(jerarquiaCursos);
+  console.log('[DEBUG FRONTEND] Árbol para TreeSelect:', treeSelectNodes);
+  console.log('[DEBUG FRONTEND] Valor seleccionado en TreeSelect:', form.curso_id);
+
+  // Log para ver cómo se construyen los labels de los nodos hoja
+  function logLeafLabels(nodes) {
+    nodes.forEach(node => {
+      if (node.isLeaf) {
+        console.log('[DEBUG FRONTEND] Nodo hoja label:', node.label, 'value:', node.value, 'data:', node.data);
+      }
+      if (node.children) logLeafLabels(node.children);
+    });
+  }
+  useEffect(() => {
+    if (treeSelectNodes.length > 0) {
+      logLeafLabels(treeSelectNodes);
+    }
+  }, [treeSelectNodes]);
+
+  // Log para ver el nodo seleccionado cuando cambia el valor
+  useEffect(() => {
+    if (form.curso_id) {
+      const selectedNode = flattenTree(treeSelectNodes).find(
+        n => String(n.value) === String(form.curso_id)
+      );
+      console.log('[DEBUG FRONTEND] Nodo seleccionado:', selectedNode);
+    }
+  }, [form.curso_id, treeSelectNodes]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center perspective-1000">
@@ -184,7 +196,7 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-2">
               <FontAwesomeIcon icon={solidIcons.faBook} className="text-blue-600" />
-              Inscribir en Curso
+              Inscribir en Curso (Cohorte)
             </h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full transform hover:rotate-90 duration-300">
               <FontAwesomeIcon icon={solidIcons.faTimes} className="text-xl" />
@@ -197,14 +209,16 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
             <div className="md:col-span-2 mb-10">
               <label className="block text-lg font-bold text-blue-700 mb-2 flex items-center gap-2">
                 <FontAwesomeIcon icon={solidIcons.faBook} className="text-2xl text-blue-500" />
-                Curso
-                <span className="ml-2 text-xs text-gray-400 font-normal">(Seleccione el curso y cohorte para inscribirse)</span>
+                Curso (Cohorte)
+                <span className="ml-2 text-xs text-gray-400 font-normal">Seleccione el Curso (Cohorte) para inscribirse</span>
               </label>
               <div className="card flex justify-content-center p-0">
                 <TreeSelect
                   variant="filled"
                   value={form.curso_id}
-                  onChange={e => setForm(prev => ({ ...prev, curso_id: e.value }))}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, curso_id: e.value }));
+                  }}
                   options={treeSelectNodes}
                   filter
                   className="w-full md:w-80 custom-treeselect"
@@ -264,7 +278,15 @@ export default function ModalParticipante({ onClose, cursosCohorteIds = [] }) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FontAwesomeIcon icon={solidIcons.faMoneyBill} className="mr-2 text-blue-500" /> Monto
               </label>
-              <input name="monto" type="text" inputMode="decimal" value={form.monto} onChange={handleChange} required className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300" />
+              <input
+                name="monto"
+                type="number"
+                step="any"
+                value={form.monto ?? ''}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

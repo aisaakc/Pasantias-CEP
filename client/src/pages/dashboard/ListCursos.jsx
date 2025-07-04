@@ -6,6 +6,8 @@ import { hashDeterministaPorId } from '../../utils/hashUtils';
 import { CLASSIFICATION_IDS } from '../../config/classificationIds';
 import { EditorContenidoCurso } from '../../components/ModalCurso';
 import { EditorState, ContentState, convertFromHTML } from 'draft-js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 
 const IMAGEN_DEFECTO =  'http://localhost:3001/docs/322a386021399414b75613478bbcd9e3.png';
 
@@ -151,9 +153,13 @@ function ListCursos() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-7xl mx-auto relative z-10">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center animate-fadeInUp">
-          Catálogos de Cursos
-        </h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FontAwesomeIcon icon={faClipboardList} className="mr-3 text-blue-600" />
+            Catálogo de Cursos
+          </h1>
+          <p className="text-gray-600">Catálogo general de cursos disponibles.</p>
+        </div>
         <button
           className="block mx-auto mt-6 mb-8 bg-white border border-blue-400 text-blue-600 font-semibold py-3 px-8 rounded-full shadow-md transition-all duration-300 flex items-center gap-3 text-lg hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
           onClick={() => setModalParticipanteOpen(true)}

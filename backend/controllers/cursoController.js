@@ -298,6 +298,21 @@ class Curso {
         }
     }
 
+    // Nuevo endpoint: agregar participante a una cohorte
+    async addParticipanteToCohorte(req, res) {
+        const { cohorteId } = req.params;
+        const { idP, monto } = req.body;
+        if (!cohorteId || !idP || !monto) {
+            return res.status(400).json({ error: 'Faltan datos requeridos' });
+        }
+        try {
+            const result = await this.model.addParticipanteToCohorte(Number(cohorteId), { idP, monto });
+            res.json(result);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     // Método para manejar errores
     manejarError(error, res) {
         console.error(`Error en Curso: ${error.message || error}`);

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import usePersonaStore from '../../store/personaStore';
 import ModalUser from '../../components/ModalUser';
 import DeleteModal from '../../components/DeleteModal';
+import { faUserShield } from '@fortawesome/free-solid-svg-icons';
 
 function Roles() {
   const { roles, usuarios, loading, error, fetchRoles, fetchUsuarios, deleteUserStore } = usePersonaStore();
@@ -178,21 +179,22 @@ function Roles() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 py-12 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FontAwesomeIcon icon={faUserShield} className="mr-3 text-blue-600" />
+            Roles
+          </h1>
+          <p className="text-gray-600">Administra los roles y permisos de los usuarios.</p>
+        </div>
+
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 animate-fade-in py-1 leading-tight flex items-center gap-3 group">
             <div className="relative">
-              <div className="absolute inset-0 bg-blue-100 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <FontAwesomeIcon 
-                icon={iconos.faUsers} 
-                className="text-blue-600 relative z-10 transform group-hover:scale-110 transition-all duration-300" 
-                size="lg"
-              />
+             
+             
             </div>
-            <span className="relative bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              Gestión de Roles
-              <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></div>
-            </span>
+           
           </h1>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -201,7 +203,7 @@ function Roles() {
             <span>Agregar Usuario</span>
           </button>
         </div>
-
+    
         {/* Cards de Roles */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-12">
           {/* Card de Resumen */}

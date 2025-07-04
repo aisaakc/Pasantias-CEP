@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { encodeId } from '../utils/hashUtils';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 
+
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -95,11 +96,11 @@ export default function Sidebar() {
 
       <nav className="flex flex-col gap-3">
         {puedeAccederCursos && (
-          renderSidebarLink('/dashboard/cursos', 'Calendario de Cursos', iconos.faFile, puedeAccederCursos, cursosClasificacion, isSupervisor)
+          renderSidebarLink('/dashboard/cursos', 'Gestión de Cohortes', iconos.faCalendarDays, puedeAccederCursos, cursosClasificacion, isSupervisor)
         )}
 
         {puedeAccederListaCursos && (
-          renderSidebarLink('/dashboard/listcursos', 'Lista de Cursos', iconos.faClipboardList, puedeAccederListaCursos, null, isSupervisor)
+          renderSidebarLink('/dashboard/listcursos', 'Catálogo de Cursos', iconos.faClipboardList, puedeAccederListaCursos, null, isSupervisor)
         )}
 
         {puedeAccederDocumentos && (
@@ -111,16 +112,34 @@ export default function Sidebar() {
         )}
 
         {puedeAccederPDF &&
-          renderSidebarLink('/dashboard/prueba', 'Generar PDF', iconos.faFilePdf, puedeAccederPDF, null, isSupervisor)}
+          renderSidebarLink('/dashboard/prueba', 'Generar Certificados', iconos.faFilePdf, puedeAccederPDF, null, isSupervisor)}
 
         {puedeAccederEstadisticas &&
           renderSidebarLink('/dashboard/estadisticas', 'Estadísticas', iconos.faChartBar, true, null, isSupervisor)}
 
         {puedeAccederCohorte &&
-          renderSidebarLink('/dashboard/cohorte', 'Cohorte', iconos.faUsers, true, null, isSupervisor)}
+          renderSidebarLink('/dashboard/cohorte', 'Cohortes', iconos.faUsers, true, null, isSupervisor)}
 
-        {renderSidebarLink('/dashboard/chat-ia', 'CHAT (IA)', iconos.faRobot, true, null, isSupervisor)}
-        {renderSidebarLink('/dashboard/cuestionario-ia', 'Cuestionario (IA)', iconos.faListCheck || iconos.faList, true, null, isSupervisor)}
+        {renderSidebarLink(
+          '/dashboard/chat-ia',
+          <>
+            Chat <sup>(IA)</sup>
+          </>,
+          iconos.faRobot,
+          true,
+          null,
+          isSupervisor
+        )}
+        {renderSidebarLink(
+          '/dashboard/cuestionario-ia',
+          <>
+            Cuestionario <sup>(IA)</sup>
+          </>,
+          iconos.faListCheck || iconos.faList,
+          true,
+          null,
+          isSupervisor
+        )}
 
         {puedeAccederConfiguracion && (
           <div className="relative">

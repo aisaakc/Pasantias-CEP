@@ -9,6 +9,7 @@ import * as iconos from '@fortawesome/free-solid-svg-icons'
 import { getAllCursos } from '../../api/curso.api'
 import { getUsuarios } from '../../api/persona.api'
 import { CLASSIFICATION_IDS } from '../../config/classificationIds'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const BACKEND_URL = 'http://localhost:3001'
 
@@ -233,13 +234,14 @@ function Documentos() {
   }
 
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text ">
-            Gestión de Documentos
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FontAwesomeIcon icon={iconos.faFileAlt} className="mr-3 text-blue-600" />
+            Documentos
           </h1>
-          <p className="text-gray-600 text-lg">Administra y organiza todos los documentos del sistema</p>
+          <p className="text-gray-600">Gestiona y consulta los documentos asociados a los cursos y cohortes.</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 transform transition-all duration-300 hover:shadow-xl">

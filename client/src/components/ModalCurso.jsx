@@ -20,6 +20,7 @@ import 'draft-js/dist/Draft.css';
 import draftToHtml from 'draftjs-to-html';
 import { CLASSIFICATION_IDS } from '../config/classificationIds';
 import useClasificacionStore from '../store/clasificacionStore';
+import { validateCohorteCode } from '../api/curso.api';
 
 
 function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
@@ -45,6 +46,8 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const [codigoCohorte, setCodigoCohorte] = useState('');
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
   const [showHtmlModal, setShowHtmlModal] = useState(false);
+  const [codigoCohorteError, setCodigoCohorteError] = useState('');
+  const [isValidatingCohorte, setIsValidatingCohorte] = useState(false);
 
   useEffect(() => {
     if (curso && curso.descripcion_html) {
@@ -297,6 +300,35 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
   const infoModalidad = getClasificacionInfo(CLASSIFICATION_IDS.MODALIDAD);
   const infoStatus = getClasificacionInfo(CLASSIFICATION_IDS.STATUS);
 
+  // Validar código de cohorte en tiempo real
+  useEffect(() => {
+    const validateCohorteCodeReal = async () => {
+      if (!codigoCohorte || !cursoSeleccionado) {
+        setCodigoCohorteError('');
+        return;
+      }
+
+      setIsValidatingCohorte(true);
+      try {
+        const response = await validateCohorteCode(codigoCohorte, cursoSeleccionado);
+        
+        if (response.data.exists) {
+          setCodigoCohorteError('Ya existe una cohorte con este código para el mismo curso');
+        } else {
+          setCodigoCohorteError('');
+        }
+      } catch (error) {
+        console.error('Error al validar código de cohorte:', error);
+        setCodigoCohorteError('');
+      } finally {
+        setIsValidatingCohorte(false);
+      }
+    };
+
+    const timeoutId = setTimeout(validateCohorteCodeReal, 300);
+    return () => clearTimeout(timeoutId);
+  }, [codigoCohorte, cursoSeleccionado]);
+
   const handleClose = () => {
     setDescripcionHtml('');
     setAnimationClass('animate-modal-out');
@@ -341,6 +373,13 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
 
       if (!fechaInicio) {
         setSubmitError('La fecha de inicio es requerida');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validar código de cohorte si hay error
+      if (codigoCohorteError) {
+        setSubmitError('Por favor corrija el código de cohorte antes de continuar');
         setIsSubmitting(false);
         return;
       }
@@ -450,7 +489,14 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           `Error al ${curso ? 'actualizar' : 'crear'} el curso. Por favor intente nuevamente.`;
-      setSubmitError(errorMessage);
+      
+      // Mostrar toast de error específico para código de cohorte duplicado
+      if (errorMessage.includes('Ya existe una cohorte con este código')) {
+        toast.error(errorMessage);
+      } else {
+        // Para otros errores, mostrar en el estado local
+        setSubmitError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -583,7 +629,14 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                         {!isDataLoaded || loading ? (
                           <option value="" disabled>Cargando opciones...</option>
                         ) : field.options && field.options.length > 0 ? (
-                          <optgroup label={field.label}>
+                          <>
+                            <option value="" disabled>
+                              {field.name === 'curso' ? '--SELECCIONA UN CURSO--' :
+                               field.name === 'modalidad' ? '--SELECCIONA UNA MODALIDAD--' :
+                               field.name === 'status' ? '--SELECCIONA UN STATUS--' :
+                               field.name === 'facilitador' ? '--SELECCIONA UN FACILITADOR--' :
+                               '--SELECCIONA--'}
+                            </option>
                             {field.options.map((option, index) => (
                             <option 
                               key={`${field.name}-option-${option.id || option.nombre || index}`} 
@@ -592,7 +645,7 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                               {option.nombre}
                             </option>
                             ))}
-                          </optgroup>
+                          </>
                         ) : (
                           <option value="" disabled>No hay opciones disponibles</option>
                         )}
@@ -732,15 +785,32 @@ function ModalFecha({ fecha, curso, onClose=  [], onCursoSaved, feriados }) {
                         <FontAwesomeIcon icon={faHashtag} className="mr-2 text-blue-500" />
                         Código de Cohorte
                       </label>
-                      <input
-                        type="text"
-                        value={codigoCohorte || ''}
-                        onChange={(e) => setCodigoCohorte(e.target.value)}
-                        className="w-full h-11 px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white transition-colors
-                          focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-                          hover:border-blue-300"
-                        placeholder="Ingrese el código de la cohorte"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={codigoCohorte || ''}
+                          onChange={(e) => setCodigoCohorte(e.target.value)}
+                          className={`w-full h-11 px-4 py-2 text-sm border rounded-lg bg-white transition-colors
+                            focus:outline-none focus:ring-2
+                            hover:border-blue-300 ${
+                              codigoCohorteError 
+                                ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                                : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                            }`}
+                          placeholder="Ingrese el código de la cohorte"
+                        />
+                        {isValidatingCohorte && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                          </div>
+                        )}
+                      </div>
+                      {codigoCohorteError && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <FontAwesomeIcon icon={faTriangleExclamation} className="mr-1" />
+                          {codigoCohorteError}
+                        </p>
+                      )}
                     </div>
 
                     <div className="transition-all duration-300">

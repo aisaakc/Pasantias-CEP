@@ -11,6 +11,7 @@ import emailRoutes from './routes/email.js';
 import personaRoutes from './routes/persona.js';
 import documentosRoutes from './routes/documentos.js';
 import pdfRoutes from './routes/pdf.js';
+import geminiRoutes from './routes/gemini.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,6 +32,7 @@ app.use('/api', personaRoutes);
 app.use('/api/documentos', documentosRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/gemini', geminiRoutes);
 
 app.get('/', (req, res) => {
     res.send('API está funcionando.');

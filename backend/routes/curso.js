@@ -10,5 +10,6 @@ router.put("/cursos/:id", CursoController.updateCurso);
 router.put("/cursos/:id/horarios", CursoController.updateHorarios);
 router.get("/facilitadores", CursoController.getFacilitadores);
 router.post("/cursos/asociar-documento", CursoController.asociarDocumento);
+router.get("/cursos/validate-cohorte", CursoController.validateCohorteCode);
 
 export default router;

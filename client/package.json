@@ -19,6 +19,7 @@
     "@fullcalendar/list": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
+    "@google/genai": "^1.8.0",
     "@heroicons/react": "^2.2.0",
     "@lexical/react": "^0.32.1",
     "@tailwindcss/vite": "^4.1.4",

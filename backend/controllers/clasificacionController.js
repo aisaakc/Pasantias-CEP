@@ -1,6 +1,22 @@
 import Clasificacion from "../models/clasificacion.js"; 
 import pool from "../db.js";
 
+// Función para decodificar IDs codificados en base64
+function decodeId(encoded) {
+    try {
+        if (!encoded) {
+            console.error('ID codificado inválido:', encoded);
+            return null;
+        }
+        const decoded = Buffer.from(encoded, 'base64').toString();
+        const parsed = JSON.parse(decoded);
+        return parsed.id;
+    } catch (error) {
+        console.error('Error al decodificar ID:', error);
+        return null;
+    }
+}
+
 class clasificacionController {
 
     async getParentClasificaciones(req, res){
@@ -169,7 +185,23 @@ class clasificacionController {
             const { id_clasificacion } = req.params;
             console.log('ID recibido en el controlador:', id_clasificacion);
             
-            const parents = await Clasificacion.getParentHierarchy(id_clasificacion);
+            // Decodificar el ID si está codificado
+            const decodedId = decodeId(id_clasificacion);
+            const finalId = decodedId || id_clasificacion;
+            
+            console.log('ID decodificado:', finalId);
+            
+            // Validar que el ID sea un número válido
+            const numericId = parseInt(finalId);
+            if (isNaN(numericId)) {
+                return res.status(400).json({ 
+                    error: 'Formato de ID inválido', 
+                    dbError: `ID debe ser un número válido, recibido: ${finalId}`, 
+                    detail: null 
+                });
+            }
+            
+            const parents = await Clasificacion.getParentHierarchy(numericId);
             res.json(parents);
         } catch (error) {
             console.error("Error detallado en getParentHierarchy controller:", {

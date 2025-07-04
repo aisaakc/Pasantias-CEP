@@ -152,7 +152,7 @@ function ListCursos() {
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-7xl mx-auto relative z-10">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center animate-fadeInUp">
-          Biblioteca de Cursos
+          Catálogos de Cursos
         </h1>
         <button
           className="block mx-auto mt-6 mb-8 bg-white border border-blue-400 text-blue-600 font-semibold py-3 px-8 rounded-full shadow-md transition-all duration-300 flex items-center gap-3 text-lg hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"

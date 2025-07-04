@@ -27,6 +27,9 @@ import Cohorte from "./pages/dashboard/Cohorte";
 import { Toaster } from 'sonner';
 import React from 'react';
 import { CLASSIFICATION_IDS } from "./config/classificationIds";
+import ChatGemini from "./components/ChatGemini";
+import CuestionarioIA from "./pages/dashboard/CuestionarioIA";
+import ChatIA from "./pages/dashboard/ChatIA";
 
 // Componente para proteger rutas básicas (solo autenticación)
 const BasicProtectedRoute = ({ children }) => {
@@ -149,6 +152,16 @@ export default function App() {
           <Route path="cohorte" element={
             <ProtectedRoute requiredPermission={CLASSIFICATION_IDS.MN_COHORTE}>
               <Cohorte />
+            </ProtectedRoute>
+          } />
+          <Route path="chat-ia" element={
+            <ProtectedRoute>
+              <ChatIA />
+            </ProtectedRoute>
+          } />
+          <Route path="cuestionario-ia" element={
+            <ProtectedRoute>
+              <CuestionarioIA />
             </ProtectedRoute>
           } />
         </Route>

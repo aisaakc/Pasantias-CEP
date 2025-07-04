@@ -12,14 +12,20 @@ export default function HeroSection() {
       <div className="text-white text-center space-y-8 max-w-md relative z-10 transform hover:scale-[1.02] transition-transform duration-300">
         <div className="mx-auto text-white w-16 h-16 drop-shadow-lg text-5xl animate-float">
           🎓
+          
         </div>
 
         <h1 className="text-5xl font-bold leading-tight drop-shadow-lg tracking-tight animate-bounce-sway">
-          Coordinación de Extensión Profesional
+          Sistema de Gestión de Cursos (S.G.C.)
         </h1>
+        <hr />
+        <h3 className="text-2xl font-bold leading-tight drop-shadow-lg tracking-tight animate-bounce-sway">
+          Coordinación de Extensión Profesional
+        </h3>
+
 
         <p className="text-xl text-blue-100 leading-relaxed">
-          Fomentamos la formación continua mediante cursos, talleres y diplomados que potencian tu desarrollo profesional.
+          Fomentamos la formación continua mediante Cursos, Talleres y más, que potencian tu<br /><b>Desarrollo Profesional</b>
         </p>
 
         <div className="pt-4">

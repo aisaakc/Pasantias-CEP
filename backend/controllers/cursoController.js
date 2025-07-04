@@ -11,6 +11,7 @@ class Curso {
         this.getFacilitadores = this.getFacilitadores.bind(this);
         this.updateHorarios = this.updateHorarios.bind(this);
         this.asociarDocumento = this.asociarDocumento.bind(this);
+        this.validateCohorteCode = this.validateCohorteCode.bind(this);
     }
 
     // Métodos de validación
@@ -261,6 +262,28 @@ class Curso {
         }
     }
 
+    async validateCohorteCode(req, res) {
+        try {
+            const { codigo_cohorte, id_nombre } = req.query;
+            
+            if (!codigo_cohorte || !id_nombre) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Código de cohorte e ID del curso son requeridos"
+                });
+            }
+
+            const exists = await this.model.validateCohorteCode(codigo_cohorte, parseInt(id_nombre));
+            
+            return res.json({
+                success: true,
+                exists: exists
+            });
+        } catch (error) {
+            return this.manejarError(error, res);
+        }
+    }
+
     // Asociar un documento a un curso
     async asociarDocumento(req, res) {
         try {
@@ -278,6 +301,22 @@ class Curso {
     // Método para manejar errores
     manejarError(error, res) {
         console.error(`Error en Curso: ${error.message || error}`);
+        
+        // Detectar errores específicos de la base de datos
+        if (error.message && error.message.includes('PGT: Ya existe un código de cohorte')) {
+            return res.status(409).json({
+                success: false,
+                message: "Ya existe una cohorte con este código para el mismo curso. Por favor, use un código diferente."
+            });
+        }
+        
+        // Detectar otros errores de restricción única
+        if (error.code === '23505') {
+            return res.status(409).json({
+                success: false,
+                message: "Ya existe un registro con estos datos. Por favor, verifique la información."
+            });
+        }
         
         const status = error.status || 500;
         const message = error.message || "Error interno del servidor";

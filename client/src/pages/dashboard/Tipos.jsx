@@ -191,7 +191,7 @@ function getChildTypeName(currentTypeId, parentInfo) {
     case CLASSIFICATION_IDS.ICONOS: return 'Ícono';
     case CLASSIFICATION_IDS.OBJETOS: return 'Objeto';
     case CLASSIFICATION_IDS.PREGUNTAS: return 'Pregunta';
-    case CLASSIFICATION_IDS.ROLES: return 'Ro';
+    case CLASSIFICATION_IDS.ROLES: return 'Rol';
     case CLASSIFICATION_IDS.PREFIJOS_TLF: return 'Prefijo Telefónico';
     default: return 'Elemento';
   }

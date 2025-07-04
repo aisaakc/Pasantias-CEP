@@ -349,6 +349,22 @@ class CursoModel {
       throw new Error('Error al eliminar documento de cursos: ' + error.message);
     }
   }
+
+  async validateCohorteCode(codigo_cohorte, id_nombre) {
+    try {
+      const query = `
+        SELECT COUNT(*) as count
+        FROM cursos
+        WHERE codigo_cohorte = $1 AND id_nombre = $2
+      `;
+      
+      const result = await pool.query(query, [codigo_cohorte, id_nombre]);
+      return result.rows[0].count > 0;
+    } catch (error) {
+      console.error("Error en validateCohorteCode:", error.message);
+      throw new Error("Error interno del servidor al validar el código de cohorte.");
+    }
+  }
 }
 
 export default new CursoModel();

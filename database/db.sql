@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2025-07-04 12:32:43
+-- Started on 2025-07-04 13:36:50
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -625,7 +625,6 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 57	¿Cuál es tu pelicula favorita?		0	8	\N	8683	\N	0	\N
 100128	Navidad	25/12	7	100121	100121	\N	\N	0	\N
 84	¿Cuál es tu comida favorita?		0	8	\N	8698	\N	0	\N
-96	Facilitador	Tiene acceso a ver los cursos que da	3	3	\N	8319	{"id_objeto": [100067, 100068, 100164, 100141, 100167, 100171, 100142, 100066, 100154], "id_clasificacion": [3, 73, 5]}	0	\N
 98	Administrador	Tiene acceso a los programas y cursos	2	3	\N	\N	{"id_objeto": [100066, 100154, 100067, 100158, 100157, 100166, 100160, 100162, 100068, 100164, 100142, 100167, 100171, 100159, 100141], "id_clasificacion": [100172]}	0	\N
 10001	Amazonas		\N	122	122	\N	\N	1	\N
 123	Municipios	Lista de Municipios de Venezuela	60	\N	\N	9048	\N	1	\N
@@ -4132,6 +4131,7 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 100396	Menú de CHAT (IA)		0	73	\N	\N	\N	0	\N
 100397	Menú de Cuestionario (IA)		0	73	\N	\N	\N	0	\N
 5	Cursos	Cursos del CEP\n	40	\N	4	8269	\N	0	\N
+96	Facilitador	Tiene acceso a ver los cursos que da	3	3	\N	8319	{"id_objeto": [100067, 100068, 100154, 100396, 100397], "id_clasificacion": []}	0	\N
 \.
 
 
@@ -4142,13 +4142,13 @@ COPY public.clasificacion (id_clasificacion, nombre, descripcion, orden, type_id
 --
 
 COPY public.cursos (id_curso, id_nombre, id_type, id_status, duracion, descripcion_corto, descripcion_html, costo, codigo, id_facilitador, id_foto, id_modalidad, fecha_hora_inicio, fecha_hora_fin, color, participantes, codigo_cohorte, horarios, propiedades_curso, documentos) FROM stdin;
-3	100334	\N	100060	20		<p><strong>CONTENIDO:</strong></p>\n<p>Conociendo Word</p>\n<ul>\n<li>Introducción</li>\n<li>Ventana de Word</li>\n<li>Ayuda en Office</li>\n<li>Barra de herramientas</li>\n<li>Tareas básicas para manejar archivos</li>\n<li>Trabajar con Texto</li>\n<li>Ortografía y Gramática</li>\n<li>Formato y Estilo</li>\n<li>Tablas e Ilustraciones</li>\n<li>Opciones de Impresión</li>\n</ul>\n<p>Power Point</p>\n<ul>\n<li>Interfaz</li>\n<li>Barra de Herramientas</li>\n<li>Manejo de Imágenes</li>\n<li>Uso de texto y símbolos</li>\n<li>Audios y Videos</li>\n<li>Animaciones y Transiciones</li>\n<li>Presentaciones</li>\n<li>Formatos de Guardado</li>\n</ul>\n<p>Exel</p>\n<ul>\n<li>Interfaz</li>\n<li>Barra de Herramientas</li>\n<li>Tareas Básicas con Datos</li>\n<li>Formatos básicos y condicionales</li>\n<li>Fórmulas Básicas</li>\n<li>Gráficos</li>\n<li>Datos Distribuidos</li>\n<li>Listas y Tablas de Datos</li>\n<li>Macros</li>\n</ul>\n	20	CEP-03	115	\N	100052	2025-03-08 08:00:00	2025-03-29 12:00:00	#4F46E5	[]	1-2025	\N	\N	[44]
+1	100331	\N	100060	70	Primera cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li>Configuración básica de switches</li>\n<li>Protocolos y modelos.</li>\n<li>Capa física</li>\n<li>Sistemas numéricos</li>\n<li>Capa de enlace de datos</li>\n<li>Switching Ethernet.</li>\n<li>Capa de red</li>\n<li>Resolución de dirección</li>\n<li>Configuración básica de un router.</li>\n<li>Asignación de direcciones IPv4.</li>\n<li>Asignación de direcciones IPv6</li>\n<li>ICMP</li>\n<li>Capa de transporte</li>\n<li>Capa de aplicación</li>\n<li>Fundamentos de seguridad en la red.</li>\n<li>Cree una red pequeña.</li>\n</ul>\n	100	CEP-CISCO-01	97	\N	100052	2025-03-08 08:00:00	2025-06-21 12:00:00	#2cbaa9	[{"idP":98,"monto":2023,"asistencias":{"1751649413076b68yduto0":true}},{"idP":113,"monto":20,"asistencias":{"1751649413076b68yduto0":true}},{"idP":117,"monto":140,"asistencias":{"1751649413076b68yduto0":true}}]	1-2025	[{"id":"1751649413076b68yduto0","fecha_hora_inicio":"2025-03-08T08:00:00","fecha_hora_fin":"2025-03-08T12:00:00","observacion":"xd"}]	\N	[34,56]
+3	100334	\N	100060	20		<p><strong>CONTENIDO:</strong></p>\n<p>Conociendo Word</p>\n<ul>\n<li>Introducción</li>\n<li>Ventana de Word</li>\n<li>Ayuda en Office</li>\n<li>Barra de herramientas</li>\n<li>Tareas básicas para manejar archivos</li>\n<li>Trabajar con Texto</li>\n<li>Ortografía y Gramática</li>\n<li>Formato y Estilo</li>\n<li>Tablas e Ilustraciones</li>\n<li>Opciones de Impresión</li>\n</ul>\n<p>Power Point</p>\n<ul>\n<li>Interfaz</li>\n<li>Barra de Herramientas</li>\n<li>Manejo de Imágenes</li>\n<li>Uso de texto y símbolos</li>\n<li>Audios y Videos</li>\n<li>Animaciones y Transiciones</li>\n<li>Presentaciones</li>\n<li>Formatos de Guardado</li>\n</ul>\n<p>Exel</p>\n<ul>\n<li>Interfaz</li>\n<li>Barra de Herramientas</li>\n<li>Tareas Básicas con Datos</li>\n<li>Formatos básicos y condicionales</li>\n<li>Fórmulas Básicas</li>\n<li>Gráficos</li>\n<li>Datos Distribuidos</li>\n<li>Listas y Tablas de Datos</li>\n<li>Macros</li>\n</ul>\n	20	CEP-03	115	\N	100052	2025-03-08 08:00:00	2025-03-29 12:00:00	#4F46E5	[{"idP":113,"monto":20}]	1-2025	\N	\N	[44]
 2	100330	\N	100060	20	Primera Cohorte 	\N	20	CEP-01	114	\N	100052	2025-03-08 08:00:00	2025-03-29 12:00:00	#4F46E5	[]	1-2025	\N	\N	[55]
-1	100331	\N	100060	70	Primera cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li>Configuración básica de switches</li>\n<li>Protocolos y modelos.</li>\n<li>Capa física</li>\n<li>Sistemas numéricos</li>\n<li>Capa de enlace de datos</li>\n<li>Switching Ethernet.</li>\n<li>Capa de red</li>\n<li>Resolución de dirección</li>\n<li>Configuración básica de un router.</li>\n<li>Asignación de direcciones IPv4.</li>\n<li>Asignación de direcciones IPv6</li>\n<li>ICMP</li>\n<li>Capa de transporte</li>\n<li>Capa de aplicación</li>\n<li>Fundamentos de seguridad en la red.</li>\n<li>Cree una red pequeña.</li>\n</ul>\n	100	CEP-CISCO-01	97	\N	100052	2025-03-08 08:00:00	2025-06-21 12:00:00	#2cbaa9	[{"idP":98,"monto":2023},{"idP":113,"monto":20},{"idP":117,"monto":140}]	1-2025	\N	\N	[34,56]
 4	100339	\N	100060	37	Primera cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li><strong>Introducción a las Bases de Datos      NoSQL</strong></li>\n</ul>\n<p>o Diferencias/Propiedades ACID vs. BASE</p>\n<p>o Componentes/Operaciones SQL</p>\n<p>o ¿Transaccionalidad o no?</p>\n<ul>\n<li><strong>Fundamentos de MongoDB</strong></li>\n</ul>\n<p>o Documentos y Colecciones</p>\n<p>o CRUD básico &lt;Back&gt; (Crear, Leer, Actualizar, Eliminar)</p>\n<p>o Consultas simples y operadores</p>\n<ul>\n<li><strong>Consultas Avanzadas en MongoDB</strong></li>\n</ul>\n<p>o Índices y rendimiento Agregaciones y pipelines</p>\n<p>o Uso de Compass para consultas avanzadas</p>\n<ul>\n<li><strong>Modelado de Datos y Seguridad</strong></li>\n</ul>\n<p>o Herramientas avanzadas en Studio 3T</p>\n<p>o Automatización de tareas con Studio 3T</p>\n<p>o Integración con sistemas existentes</p>\n<ul>\n<li><strong>Studio 3T para Desarrolladores</strong></li>\n</ul>\n<p>o Entorno Node.js con DBs: Oracle, Microsoft, …otras</p>\n<p>o Conexión y operaciones desde Node.js</p>\n<p>o Aplicación ejemplo v1</p>\n<ul>\n<li><strong>Integración con Node.js</strong></li>\n</ul>\n<p>o Configuración del entorno Node.js con MongoDB</p>\n<p>o Conexión y operaciones CRUD desde Node.js</p>\n<p>o Ejemplo de aplicación</p>\n	30	CEP-06	108	\N	100053	2025-04-12 17:00:00	2025-05-03 01:00:00	#48e59c	[]	1-2025	\N	\N	[43]
 5	100335	\N	100060	17	Primera Cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li>Conceptos Básicos</li>\n<li>Definiciones</li>\n<li>Tipos de Datos</li>\n<li>Tipos de Bases de datos</li>\n<li>Operadores.</li>\n<li>Formas normales</li>\n<li>Simbología</li>\n<li>Diagramas</li>\n<li>Diagrama entidad</li>\n<li>Diagrama de entidad relación</li>\n<li>Atributos</li>\n<li>Motores de BD</li>\n<li>Lenguaje SQL</li>\n<li>Sintaxis</li>\n<li>Comandos.</li>\n</ul>\n	20	CEP-04	116	\N	100053	2025-06-07 08:00:00	2025-06-28 12:00:00	#4F46E5	[]	2-2025	\N	\N	[53,54]
 6	100333	\N	100060	70	Primera cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li>Configuración básica de dispositivos</li>\n<li>Conceptos de Switching</li>\n<li>VLANs, Enrutamiento entre VLAN</li>\n<li>Protocolo Spanning-Tree</li>\n<li>Etherchannel</li>\n<li>DHCPv4, Conceptos SLAAC y DHCPv6</li>\n<li>Conceptos de FHRP</li>\n<li>Conceptos de seguridad de LAN</li>\n<li>Conceptos de seguridad de Switch</li>\n<li>Conceptos de WLAN, Configuración de WLAN</li>\n<li>Conceptos de enrutamiento</li>\n<li>Rutas IP estáticas</li>\n</ul>\n	100	CEP-CISCO-02	97	\N	100052	2025-02-01 08:00:00	2025-05-24 12:00:00	#72e548	\N	1-2025	\N	\N	[66]
-9	100332	\N	100060	35	primera cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li><strong>DB (Relacional/Transaccional)a las Bases de Datos NoSQL </strong>Diferencias/Propiedades ACID vs. BASE<br>Componentes/Operaciones SQL ¿Transaccionalidad o no?<br></li>\n<li><strong>Controlando el cambio (Transacciones) </strong>Transacción<br>Concurrencia<br>Serialización<br>Shell DBs: Oracle, Microsoft, …otras<br></li>\n<li><strong>Stored Procedures and Functions </strong>Stored Procedures (Parámetros E/S)<br>Functions (Parámetros)<br>Ejemplos prácticos (Transacciones)<br></li>\n<li><strong>Triggers and Events </strong>Tiggers y aplicaciones.<br>Events y aplicaciones.<br>Ejemplos prácticos (Ocurrencias)<br></li>\n<li><strong>Integración con Node.js </strong>Entorno Node.js con DBs: Oracle, Microsoft, …otras<br>Conexión y operaciones desde Node.js<br>Aplicación ejemplo v1<br></li>\n<li><strong>Optimización y Rendimiento </strong>Índices: Buenos y Malos<br>Herramientas y Seguridad<br>Aplicación ejemplo v2<br></li>\n</ul>\n	20	CEP-02	108	\N	100053	2025-05-01 16:00:00	2025-05-29 20:00:00	#110c73	\N	1-2025	\N	\N	\N
+9	100332	\N	100060	35	primera cohorte	<p><strong>CONTENIDO:</strong></p>\n<ul>\n<li><strong>DB (Relacional/Transaccional)a las Bases de Datos NoSQL </strong>Diferencias/Propiedades ACID vs. BASE<br>Componentes/Operaciones SQL ¿Transaccionalidad o no?<br></li>\n<li><strong>Controlando el cambio (Transacciones) </strong>Transacción<br>Concurrencia<br>Serialización<br>Shell DBs: Oracle, Microsoft, …otras<br></li>\n<li><strong>Stored Procedures and Functions </strong>Stored Procedures (Parámetros E/S)<br>Functions (Parámetros)<br>Ejemplos prácticos (Transacciones)<br></li>\n<li><strong>Triggers and Events </strong>Tiggers y aplicaciones.<br>Events y aplicaciones.<br>Ejemplos prácticos (Ocurrencias)<br></li>\n<li><strong>Integración con Node.js </strong>Entorno Node.js con DBs: Oracle, Microsoft, …otras<br>Conexión y operaciones desde Node.js<br>Aplicación ejemplo v1<br></li>\n<li><strong>Optimización y Rendimiento </strong>Índices: Buenos y Malos<br>Herramientas y Seguridad<br>Aplicación ejemplo v2<br></li>\n</ul>\n	20	CEP-02	108	\N	100053	2025-05-01 16:00:00	2025-05-29 20:00:00	#110c73	[{"idP":113,"monto":20}]	1-2025	\N	\N	[67]
 \.
 
 
@@ -4187,6 +4187,7 @@ COPY public.documentos (id_documento, id_tipo, fecha_hora, nombre, descripcion, 
 34	100102	2025-07-04 01:44:21.377	Portada de Cisco Modulo 1	Portada de Cisco Modulo 1	png	175096
 54	100102	2025-07-04 02:01:05.662	pepe		png	231000
 66	100102	2025-07-04 06:33:29.883	foto de cisco 2		jpg	47519
+67	100102	2025-07-04 17:36:17.086	Foto	xd	jpeg	79086
 \.
 
 
@@ -4235,7 +4236,7 @@ SELECT pg_catalog.setval('public.cursos_id_curso_seq', 9, true);
 -- Name: documentos_id_documento_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.documentos_id_documento_seq', 66, true);
+SELECT pg_catalog.setval('public.documentos_id_documento_seq', 67, true);
 
 
 --
@@ -4452,7 +4453,7 @@ ALTER TABLE ONLY public.personas
     ADD CONSTRAINT personas_id_status_fkey FOREIGN KEY (id_status) REFERENCES public.clasificacion(id_clasificacion) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
--- Completed on 2025-07-04 12:32:43
+-- Completed on 2025-07-04 13:36:51
 
 --
 -- PostgreSQL database dump complete

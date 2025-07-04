@@ -15,6 +15,9 @@ class Curso {
         this.getCohortesConParticipantes = this.getCohortesConParticipantes.bind(this);
         this.getParticipantesPorCohorte = this.getParticipantesPorCohorte.bind(this);
         this.getCohortesConCurso = this.getCohortesConCurso.bind(this);
+        this.getCursosByFacilitador = this.getCursosByFacilitador.bind(this);
+        this.updateAsistenciaParticipante = this.updateAsistenciaParticipante.bind(this);
+        this.getHorariosByCohorte = this.getHorariosByCohorte.bind(this);
     }
 
     // Métodos de validación
@@ -405,6 +408,44 @@ class Curso {
         } catch (error) {
             console.error('[BACKEND] Error en getCohortesConCurso:', error);
             this.manejarError(error, res);
+        }
+    }
+
+    // Obtener cursos por facilitador
+    async getCursosByFacilitador(req, res) {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({ success: false, message: 'Falta el id del facilitador' });
+            }
+            const cursos = await this.model.getCursosByFacilitador(Number(id));
+            return res.json({ success: true, data: cursos });
+        } catch (error) {
+            return this.manejarError(error, res);
+        }
+    }
+
+    // Actualizar asistencia de un participante a un horario
+    async updateAsistenciaParticipante(req, res) {
+        try {
+            const { cohorteId, idParticipante } = req.params;
+            const { idHorario, presente } = req.body;
+            if (!idHorario) return res.status(400).json({ success: false, message: 'Falta idHorario' });
+            const participantes = await this.model.updateAsistenciaParticipante(cohorteId, idParticipante, idHorario, presente);
+            return res.json({ success: true, data: participantes });
+        } catch (error) {
+            return this.manejarError(error, res);
+        }
+    }
+
+    // Obtener horarios de un curso/cohorte
+    async getHorariosByCohorte(req, res) {
+        try {
+            const { cohorteId } = req.params;
+            const horarios = await this.model.getHorariosByCohorte(cohorteId);
+            return res.json({ success: true, data: horarios });
+        } catch (error) {
+            return this.manejarError(error, res);
         }
     }
 

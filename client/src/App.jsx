@@ -30,6 +30,8 @@ import { CLASSIFICATION_IDS } from "./config/classificationIds";
 import ChatGemini from "./components/ChatGemini";
 import CuestionarioIA from "./pages/dashboard/CuestionarioIA";
 import ChatIA from "./pages/dashboard/ChatIA";
+import Listado from "./pages/dashboard/Listado";
+import Participantes from "./pages/dashboard/Participantes";
 
 // Componente para proteger rutas básicas (solo autenticación)
 const BasicProtectedRoute = ({ children }) => {
@@ -162,6 +164,16 @@ export default function App() {
           <Route path="cuestionario-ia" element={
             <ProtectedRoute>
               <CuestionarioIA />
+            </ProtectedRoute>
+          } />
+          <Route path="listado" element={
+            <ProtectedRoute>
+              <Listado/>
+            </ProtectedRoute>
+          } />
+          <Route path="participantes/:cohorteId" element={
+            <ProtectedRoute>
+              <Participantes/>
             </ProtectedRoute>
           } />
         </Route>

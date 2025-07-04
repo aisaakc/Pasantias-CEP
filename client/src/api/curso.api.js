@@ -35,3 +35,12 @@ export const getParticipantesPorCohorte = async (cohorteId) =>
 
 export const getCohortesPorCurso = async () =>
    axios.get('http://localhost:3001/api/cursos/cohortes-por-curso');
+
+export const getCursosByFacilitador = async (id_facilitador) =>
+   axios.get(`http://localhost:3001/api/cursos/facilitador/${id_facilitador}`);
+
+export const updateAsistenciaParticipante = async (cohorteId, idParticipante, idHorario, presente) =>
+   axios.put(`http://localhost:3001/api/cursos/${cohorteId}/participantes/${idParticipante}/asistencia`, { idHorario, presente });
+
+export const getHorariosByCohorte = async (cohorteId) =>
+   axios.get(`http://localhost:3001/api/cursos/${cohorteId}/horarios`);

@@ -20,5 +20,8 @@ router.get("/cursos", CursoController.getAllCursos);
 router.post("/cursos", CursoController.createCurso);
 router.put("/cursos/:id", CursoController.updateCurso);
 router.put("/cursos/:id/horarios", CursoController.updateHorarios);
+router.get("/cursos/facilitador/:id", CursoController.getCursosByFacilitador);
+router.put("/cursos/:cohorteId/participantes/:idParticipante/asistencia", CursoController.updateAsistenciaParticipante.bind(CursoController));
+router.get("/cursos/:cohorteId/horarios", CursoController.getHorariosByCohorte.bind(CursoController));
 
 export default router;

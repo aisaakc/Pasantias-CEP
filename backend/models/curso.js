@@ -1,5 +1,7 @@
 import pool from "../db.js";
 import { CLASSIFICATION_IDS } from "../../client/src/config/classificationIds.js";
+import EmailService from '../services/emailService.js';
+import UserModel from './persona.js';
 
 class CursoModel {
     
@@ -366,6 +368,23 @@ class CursoModel {
     }
   }
 
+  // Obtener curso por id (con nombre_curso)
+  async getCursoById(id_curso) {
+    const query = `
+      SELECT c.*, cl.nombre AS nombre_curso
+      FROM cursos c
+      LEFT JOIN clasificacion cl ON c.id_nombre = cl.id_clasificacion
+      WHERE c.id_curso = $1
+    `;
+    try {
+      const result = await pool.query(query, [id_curso]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error en getCursoById:', error.message);
+      throw new Error('Error al obtener datos del curso');
+    }
+  }
+
   // Agregar participante a cohorte (actualiza el campo JSON participantes)
   async addParticipanteToCohorte(cohorteId, participante) {
     try {
@@ -389,6 +408,22 @@ class CursoModel {
       // Actualizar el campo en la BD
       const updateQuery = 'UPDATE cursos SET participantes = $1 WHERE id_curso = $2 RETURNING participantes';
       const updateResult = await pool.query(updateQuery, [JSON.stringify(participantes), cohorteId]);
+
+      // --- Enviar correo de bienvenida al curso ---
+      try {
+        // 1. Obtener datos del participante
+        const persona = await UserModel.getPersonaById(participante.idP);
+        // 2. Obtener datos del curso (nombre_curso)
+        const curso = await this.getCursoById(cohorteId);
+        const nombreCurso = curso?.nombre_curso || 'Curso';
+        if (persona && persona.gmail) {
+          await EmailService.sendWelcomeToCourseEmail(persona.gmail, persona.nombre, persona.apellido, nombreCurso);
+        }
+      } catch (emailError) {
+        console.error('[BACKEND] Error al enviar correo de bienvenida al curso:', emailError.message);
+      }
+      // --- Fin correo ---
+
       return { participantes: updateResult.rows[0].participantes };
     } catch (error) {
       console.error('Error en addParticipanteToCohorte:', error.message);
@@ -478,6 +513,64 @@ class CursoModel {
     } catch (error) {
       throw new Error('Error al obtener cohortes con curso: ' + error.message);
     }
+  }
+
+  // Obtener cursos por facilitador
+  async getCursosByFacilitador(id_facilitador) {
+    const query = `
+      SELECT 
+        c.*, 
+        cl.nombre AS nombre_curso,
+        cl_icono.nombre AS nombre_icono,
+        cm.nombre AS modalidad,
+        cs.nombre AS estado,
+        parent.nombre AS nombre_parent
+      FROM cursos c
+      LEFT JOIN clasificacion cl ON c.id_nombre = cl.id_clasificacion
+      LEFT JOIN clasificacion cl_icono ON cl.id_icono = cl_icono.id_clasificacion
+      LEFT JOIN clasificacion cm ON c.id_modalidad = cm.id_clasificacion
+      LEFT JOIN clasificacion cs ON c.id_status = cs.id_clasificacion
+      LEFT JOIN clasificacion parent ON cl.parent_id = parent.id_clasificacion
+      WHERE c.id_facilitador = $1
+      ORDER BY c.fecha_hora_inicio DESC, cl.nombre;
+    `;
+    try {
+      const result = await pool.query(query, [id_facilitador]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error en getCursosByFacilitador:', error.message);
+      throw new Error('Error al obtener cursos del facilitador');
+    }
+  }
+
+  // Actualizar asistencia de un participante a un horario
+  async updateAsistenciaParticipante(id_curso, id_participante, id_horario, presente) {
+    // 1. Obtener participantes actuales
+    const selectQuery = 'SELECT participantes FROM cursos WHERE id_curso = $1';
+    const selectResult = await pool.query(selectQuery, [id_curso]);
+    let participantes = selectResult.rows[0]?.participantes || [];
+    if (typeof participantes === 'string') participantes = JSON.parse(participantes);
+    if (!Array.isArray(participantes)) participantes = [];
+    // 2. Buscar participante
+    const idx = participantes.findIndex(p => String(p.idP) === String(id_participante));
+    if (idx === -1) throw new Error('Participante no encontrado');
+    // 3. Actualizar asistencia
+    if (!participantes[idx].asistencias) participantes[idx].asistencias = {};
+    participantes[idx].asistencias[id_horario] = !!presente;
+    // 4. Guardar en BD
+    const updateQuery = 'UPDATE cursos SET participantes = $1 WHERE id_curso = $2 RETURNING participantes';
+    const updateResult = await pool.query(updateQuery, [JSON.stringify(participantes), id_curso]);
+    return updateResult.rows[0].participantes;
+  }
+
+  // Obtener horarios de un curso/cohorte
+  async getHorariosByCohorte(id_curso) {
+    const query = 'SELECT horarios FROM cursos WHERE id_curso = $1';
+    const result = await pool.query(query, [id_curso]);
+    let horarios = result.rows[0]?.horarios || [];
+    if (typeof horarios === 'string') horarios = JSON.parse(horarios);
+    if (!Array.isArray(horarios)) horarios = [];
+    return horarios;
   }
 
 }

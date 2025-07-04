@@ -63,14 +63,15 @@ export default function Login() {
           const rolesUsuario = userData.id_rol || [];
           const { CLASSIFICATION_IDS } = await import('../../config/classificationIds');
           
-          // Verificar si el usuario tiene rol de Estudiante_IUJO o Participante_Externo
+          // Verificar si el usuario tiene rol de Estudiante_IUJO o Participante_Externo o Facilitador
           const tieneRolEstudiante = rolesUsuario.includes(CLASSIFICATION_IDS.Estudiante_IUJO);
           const tieneRolParticipante = rolesUsuario.includes(CLASSIFICATION_IDS.Participante_Externo);
-          
+          const tieneRolFacilitador = rolesUsuario.includes(CLASSIFICATION_IDS.ROLES_FACILITADORES);
           let rutaDestino = '/dashboard/clasificacion'; // Ruta por defecto
-          
           if (tieneRolEstudiante || tieneRolParticipante) {
             rutaDestino = '/dashboard/listcursos';
+          } else if (tieneRolFacilitador) {
+            rutaDestino = '/dashboard/listado';
           }
           
           setTimeout(() => {

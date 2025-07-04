@@ -262,9 +262,17 @@ class UserModel {
     }
   }
 
-  
-
-  
+  // Obtener persona por id
+  async getPersonaById(id_persona) {
+    const query = `SELECT id_persona, nombre, apellido, gmail FROM personas WHERE id_persona = $1`;
+    try {
+      const result = await pool.query(query, [id_persona]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error en getPersonaById:', error.message);
+      throw new Error('Error al obtener datos de la persona');
+    }
+  }
 }
 
 export default new UserModel();

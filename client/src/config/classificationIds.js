@@ -62,7 +62,7 @@ export const CLASSIFICATION_IDS = {
 
   ROLES_FACILITADORES: 96,
 
-  SEND_EMAIL: false
+  SEND_EMAIL: true
   
 };
 

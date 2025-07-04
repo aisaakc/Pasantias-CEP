@@ -16,7 +16,8 @@ export default function Sidebar() {
   const { 
     tienePermiso, 
     filtrarClasificacionesPorPermiso,
-    isSupervisor
+    isSupervisor,
+    user
   } = useAuthStore();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
@@ -61,6 +62,9 @@ export default function Sidebar() {
   const puedeAccederDocumentos = tienePermiso(CLASSIFICATION_IDS.MN_DOCUMENTOS);
   const puedeAccederEstadisticas = tienePermiso(CLASSIFICATION_IDS.MN_ESTADISTICAS);
   const puedeAccederCohorte = tienePermiso(CLASSIFICATION_IDS.MN_COHORTE);
+
+  // Mostrar el enlace solo si el usuario es facilitador
+  const esFacilitador = user?.id_rol?.includes(CLASSIFICATION_IDS.ROLES_FACILITADORES);
 
   // Función helper para renderizar enlaces del sidebar
   const renderSidebarLink = (to, label, icon, canAccess, clasificacion = null, isSupervisor = false) => {
@@ -119,6 +123,8 @@ export default function Sidebar() {
 
         {puedeAccederCohorte &&
           renderSidebarLink('/dashboard/cohorte', 'Cohortes', iconos.faUsers, true, null, isSupervisor)}
+
+        {esFacilitador && renderSidebarLink('/dashboard/listado', 'Mis Cursos (Facilitador)', iconos.faChalkboardTeacher, true, null, isSupervisor)}
 
         {renderSidebarLink(
           '/dashboard/chat-ia',

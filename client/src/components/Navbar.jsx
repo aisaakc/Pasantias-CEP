@@ -6,7 +6,7 @@ import useAuthStore from '../store/authStore';
 const links = [
   { name: 'Home', href: '/' },
   { name: 'Curso', href: '/lista' },
-  { name: 'Contacto', href: '/contacto' }
+  // { name: 'Contacto', href: '/contacto' }
 ];
 
 export default function Navbar() {

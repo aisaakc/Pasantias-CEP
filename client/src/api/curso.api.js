@@ -26,3 +26,12 @@ export const validateCohorteCode = async (codigo_cohorte, id_nombre) =>
 
 export const addParticipanteToCohorte = async (cohorteId, participante) =>
    axios.post(`http://localhost:3001/api/cursos/${cohorteId}/participantes`, participante);
+
+export const getConteoGeneroDesdeParticipantes = async (participantes) =>
+   axios.post('http://localhost:3001/api/cursos/estadisticas/conteo-genero-participantes', { participantes });
+
+export const getParticipantesPorCohorte = async (cohorteId) =>
+   axios.get(`http://localhost:3001/api/cursos/${cohorteId}/participantes`);
+
+export const getCohortesPorCurso = async () =>
+   axios.get('http://localhost:3001/api/cursos/cohortes-por-curso');

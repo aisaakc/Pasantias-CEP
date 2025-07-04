@@ -46,6 +46,13 @@ Primeros pasos con Office
 faCheck
 faCircleXmark
 
+AIzaSyDxVCnyvpP3PXIW9xtVWsRpnR--8lvUTtE
+AIzaSyDgPdFKwAaqpPzYRsBke_NKDOWjPKIynzk
+
+     // const prompt = `A partir del siguiente contenido de un curso, genera un cuestionario de 10 preguntas de opción múltiple. Cada pregunta debe tener 5 opciones (A, B, C, D, E), solo una correcta. Devuélvelo en formato JSON con este esquema: [{"pregunta": "...", "opciones": ["...", "...", "...", "...", "..."], "correcta": 0-4}]. Solo responde el JSON, sin explicaciones.\n\nContenido:\n${contenidoPlano}`;
+        // const prompt = `A partir del siguiente contenido que te vamos a suministrar respecto a un curso (que puede venir en formato HTML), genera un cuestionario de 10 preguntas de opción múltiple relativas al contexto que guíe el contenido que vamos a suministrar. Cada pregunta debe tener 5 opciones (A, B, C, D, E), y solo una debe ser la correcta. No se debe hacer preguntas refiriendose al indice o letra de las opciones pues se podrian permutar posteriormente. Devuélve la respuesta SOLO en formato JSON con este esquema: [{"pregunta": "...", "opciones": ["...", "...", "...", "...", "..."], "correcta": 0-4}]. Solo responde el JSON, sin explicaciones. El Contenido del Curso es: ${contenidoPlano}`;
+      const prompt = `A partir del siguiente contenido que te vamos a suministrar respecto a un curso (que puede venir en formato HTML), genera un cuestionario de 10 preguntas de opción múltiple relativas al contexto que guíe el contenido que vamos a suministrar. Cada pregunta debe tener 5 opciones (A, B, C, D, E), y solo una debe ser la correcta. No se debe hacer preguntas refiriendose al indice o letra de las opciones pues se podrian permutar posteriormente. Devuélve la respuesta SOLO en formato JSON con este esquema: [{"pregunta": "...", "opciones": ["...", "...", "...", "...", "..."], "correcta": 0-4}]. Solo responde el JSON, sin explicaciones. El Contenido del Curso es: ${contenidoPlano}`;
+
 https://slidesgo.com/theme/nanorobotics#search-Technology&position-11&results-1193
 
 

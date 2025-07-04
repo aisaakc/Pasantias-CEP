@@ -395,6 +395,91 @@ class CursoModel {
       throw new Error('Error al agregar participante a la cohorte');
     }
   }
+
+  async getCohortesConParticipantes() {
+    // 1. Obtener todas las cohortes (todas con participantes)
+    const cohortesQuery = `
+      SELECT c.id_curso, c.participantes, c.id_nombre, cl.nombre AS nombre_cohorte, cl.parent_id
+      FROM cursos c
+      JOIN clasificacion cl ON c.id_nombre = cl.id_clasificacion
+      WHERE c.participantes IS NOT NULL AND c.participantes::text != '[]'
+    `;
+    const cohortesRes = await pool.query(cohortesQuery);
+
+    const resultado = [];
+    for (const cohorte of cohortesRes.rows) {
+      let participantes = [];
+      try { participantes = JSON.parse(cohorte.participantes); } catch { participantes = []; }
+      const ids = participantes.map(p => p.idP);
+      if (ids.length === 0) continue;
+
+      // 2. Consultar nombre y género de los participantes
+      const personasRes = await pool.query(
+        `SELECT id_persona, nombre, apellido, id_genero FROM personas WHERE id_persona = ANY($1)`, [ids]
+      );
+      // 3. Consultar el nombre del curso padre inmediato
+      const cursoPadreRes = await pool.query(
+        `SELECT nombre FROM clasificacion WHERE id_clasificacion = $1`, [cohorte.parent_id]
+      );
+      const nombre_curso = cursoPadreRes.rows[0]?.nombre || null;
+
+      resultado.push({
+        cohorte: cohorte.nombre_cohorte,
+        curso: nombre_curso,
+        participantes: personasRes.rows.map(p => ({
+          id: p.id_persona,
+          nombre: p.nombre,
+          apellido: p.apellido,
+          genero: p.id_genero // 6 = Masculino, 7 = Femenino
+        }))
+      });
+    }
+    return resultado;
+  }
+
+  async getParticipantesPorCohorte(id_curso) {
+    const query = `
+      SELECT 
+        (p->>'idP')::int AS idp,
+        personas.nombre,
+        personas.apellido,
+        personas.cedula,
+        personas.gmail,
+        personas.id_genero AS id_genero
+      FROM cursos
+      JOIN LATERAL jsonb_array_elements(cursos.participantes::jsonb) AS p ON TRUE
+      JOIN personas ON personas.id_persona = (p->>'idP')::int
+      WHERE cursos.id_curso = $1;
+    `;
+    try {
+      const result = await pool.query(query, [id_curso]);
+      console.log('[BACKEND] Participantes SQL:', result.rows);
+      return result.rows;
+    } catch (error) {
+      throw new Error('Error al obtener participantes de la cohorte: ' + error.message);
+    }
+  }
+
+  async getCohortesConCurso() {
+    const query = `
+      SELECT 
+        c.id_curso,
+        c.codigo_cohorte,
+        cl_curso.nombre AS nombre_curso,
+        cl_cohorte.nombre AS nombre_cohorte
+      FROM cursos c
+      JOIN clasificacion cl_cohorte ON c.id_nombre = cl_cohorte.id_clasificacion
+      JOIN clasificacion cl_curso ON cl_cohorte.parent_id = cl_curso.id_clasificacion
+      ORDER BY cl_curso.nombre, cl_cohorte.nombre;
+    `;
+    try {
+      const result = await pool.query(query);
+      return result.rows;
+    } catch (error) {
+      throw new Error('Error al obtener cohortes con curso: ' + error.message);
+    }
+  }
+
 }
 
 export default new CursoModel();

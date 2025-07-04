@@ -12,6 +12,9 @@ class Curso {
         this.updateHorarios = this.updateHorarios.bind(this);
         this.asociarDocumento = this.asociarDocumento.bind(this);
         this.validateCohorteCode = this.validateCohorteCode.bind(this);
+        this.getCohortesConParticipantes = this.getCohortesConParticipantes.bind(this);
+        this.getParticipantesPorCohorte = this.getParticipantesPorCohorte.bind(this);
+        this.getCohortesConCurso = this.getCohortesConCurso.bind(this);
     }
 
     // Métodos de validación
@@ -313,9 +316,114 @@ class Curso {
         }
     }
 
+    async getCohortesConParticipantes(req, res) {
+        try {
+            const data = await this.model.getCohortesConParticipantes();
+            res.json({ success: true, data });
+        } catch (error) {
+            this.manejarError(error, res);
+        }
+    }
+
+    async getConteoGeneroPorCohorte(req, res) {
+        try {
+            const { cohorteId } = req.params;
+            if (!cohorteId) {
+                return res.status(400).json({ success: false, message: 'Falta el id de la cohorte' });
+            }
+            // Obtener el campo participantes de la cohorte
+            const result = await this.model.getParticipantesPorCohorte(Number(cohorteId));
+            if (!result) {
+                return res.status(404).json({ success: false, message: 'Cohorte no encontrada' });
+            }
+            const participantes = result;
+            const ids = participantes.map(p => p.idP);
+            if (ids.length === 0) {
+                return res.json({ success: true, data: [] });
+            }
+            // Query para contar por género
+            const pool = this.model.constructor.pool || this.model.pool;
+            const conteo = await pool.query(
+                `SELECT 
+                    CASE id_genero
+                        WHEN 6 THEN 'Masculino'
+                        WHEN 7 THEN 'Femenino'
+                        ELSE 'Otro'
+                    END AS genero,
+                    COUNT(*) AS cantidad
+                FROM personas
+                WHERE id_persona = ANY($1)
+                GROUP BY id_genero
+                ORDER BY genero;`,
+                [ids]
+            );
+            res.json({ success: true, data: conteo.rows });
+        } catch (error) {
+            this.manejarError(error, res);
+        }
+    }
+
+    /**
+     * Recibe un array de participantes por body y devuelve el conteo de género
+     */
+    async getConteoGeneroDesdeParticipantes(req, res) {
+        try {
+            const { participantes } = req.body;
+            if (!Array.isArray(participantes)) {
+                return res.status(400).json({ success: false, message: 'El campo participantes debe ser un array' });
+            }
+            const data = await this.model.getConteoGeneroDesdeParticipantes(participantes);
+            res.json({ success: true, data });
+        } catch (error) {
+            this.manejarError(error, res);
+        }
+    }
+
+    async getParticipantesPorCohorte(req, res) {
+        try {
+            const { cohorteId } = req.params;
+            if (!cohorteId) {
+                return res.status(400).json({ success: false, message: 'Falta el id de la cohorte' });
+            }
+            const participantes = await this.model.getParticipantesPorCohorte(Number(cohorteId));
+            res.json({
+                success: true,
+                cantidad: participantes.length,
+                data: participantes
+            });
+        } catch (error) {
+            this.manejarError(error, res);
+        }
+    }
+
+    async getCohortesConCurso(req, res) {
+        try {
+            console.log('[BACKEND] Llamada a getCohortesConCurso');
+            const cohortes = await this.model.getCohortesConCurso();
+            console.log('[BACKEND] Cohortes encontradas:', cohortes);
+            res.json({ success: true, data: cohortes });
+        } catch (error) {
+            console.error('[BACKEND] Error en getCohortesConCurso:', error);
+            this.manejarError(error, res);
+        }
+    }
+
     // Método para manejar errores
     manejarError(error, res) {
-        console.error(`Error en Curso: ${error.message || error}`);
+        // Log detallado del error
+        const endpoint = res.req.originalUrl;
+        const method = res.req.method;
+        const params = JSON.stringify(res.req.params);
+        const query = JSON.stringify(res.req.query);
+        const body = JSON.stringify(res.req.body);
+        console.error('[BACKEND][ERROR]');
+        console.error('  Endpoint:', endpoint);
+        console.error('  Método:', method);
+        console.error('  Params:', params);
+        console.error('  Query:', query);
+        console.error('  Body:', body);
+        console.error('  Mensaje:', error.message || error);
+        if (error.stack) console.error('  Stack:', error.stack);
         
         // Detectar errores específicos de la base de datos
         if (error.message && error.message.includes('PGT: Ya existe un código de cohorte')) {

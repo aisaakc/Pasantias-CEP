@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faCalendarAlt, 
-  faClock, 
   faUser, 
   faHashtag,
   faBook,
   faSpinner,
   faSearch,
-  faUsers
+  faUsers,
+  faCalendarAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { getAllCursos } from '../../api/curso.api';
 import { toast } from 'sonner';
@@ -96,6 +95,13 @@ function Cohorte() {
     });
   };
 
+  // Función para resaltar coincidencias
+  const highlightMatch = (text, searchTerm) => {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text?.toString().replace(regex, '<span class="text-red-600">$1</span>');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -179,8 +185,8 @@ function Cohorte() {
 
         {/* Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div>
+            <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -196,14 +202,6 @@ function Cohorte() {
                     Facilitador
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <FontAwesomeIcon icon={faClock} className="mr-2" />
-                    Duración
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
-                    Fecha Inicio
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
                     Fecha Fin
                   </th>
@@ -217,37 +215,22 @@ function Cohorte() {
                       className="hover:bg-gray-50 transition-colors duration-200"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {curso.codigo_cohorte || 'N/A'}
-                        </div>
-                        {curso.codigo && (
-                          <div className="text-sm text-gray-500">
-                            {curso.codigo}
-                          </div>
-                        )}
+                        <div className="text-sm font-medium text-gray-900" dangerouslySetInnerHTML={{
+                          __html: highlightMatch(curso.codigo || 'N/A', searchTerm)
+                        }} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {curso.nombre_curso || 'N/A'}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900" dangerouslySetInnerHTML={{
+                          __html: highlightMatch(curso.nombre_curso || 'N/A', searchTerm)
+                        }} />
                         <div className="text-sm text-gray-500">
                           {curso.modalidad || 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {curso.nombre_completo_facilitador || 'Sin asignar'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {curso.duracion ? `${curso.duracion} horas` : 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatDate(curso.fecha_hora_inicio)}
-                        </div>
+                        <div className="text-sm text-gray-900" dangerouslySetInnerHTML={{
+                          __html: highlightMatch(curso.nombre_completo_facilitador || 'Sin asignar', searchTerm)
+                        }} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
@@ -258,7 +241,7 @@ function Cohorte() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
+                    <td colSpan="4" className="px-6 py-12 text-center">
                       <div className="text-gray-500">
                         <FontAwesomeIcon icon={faBook} className="text-4xl mb-4 text-gray-300" />
                         <p className="text-lg font-medium">No se encontraron cohortes</p>

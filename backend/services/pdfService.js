@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { promises as fs } from 'fs';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,6 +13,84 @@ class PDFService {
         this.logoPath = join(__dirname, '../../client/src/assets/tu_logo.png');
         console.log('PDFService inicializado con template path:', this.templatePath);
         console.log('Logo path:', this.logoPath);
+    }
+
+    // Función para detectar el navegador disponible
+    async detectBrowser() {
+        const platform = os.platform();
+        const possiblePaths = [];
+
+        if (platform === 'win32') {
+            // Rutas comunes de Chrome en Windows
+            possiblePaths.push(
+                'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+                process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
+                process.env.PROGRAMFILES + '\\Google\\Chrome\\Application\\chrome.exe',
+                process.env['PROGRAMFILES(X86)'] + '\\Google\\Chrome\\Application\\chrome.exe'
+            );
+        } else if (platform === 'darwin') {
+            // Rutas comunes de Chrome en macOS
+            possiblePaths.push(
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                '/Applications/Chromium.app/Contents/MacOS/Chromium'
+            );
+        } else if (platform === 'linux') {
+            // Rutas comunes de Chrome en Linux
+            possiblePaths.push(
+                '/usr/bin/google-chrome',
+                '/usr/bin/google-chrome-stable',
+                '/usr/bin/chromium-browser',
+                '/usr/bin/chromium'
+            );
+        }
+
+        // Verificar si alguna ruta existe
+        for (const path of possiblePaths) {
+            try {
+                await fs.access(path);
+                console.log('Navegador encontrado en:', path);
+                return path;
+            } catch (error) {
+                // Continuar con la siguiente ruta
+            }
+        }
+
+        console.log('No se encontró Chrome instalado, usando Puppeteer con navegador incluido');
+        return null;
+    }
+
+    // Función para obtener opciones de lanzamiento del navegador
+    async getLaunchOptions() {
+        const executablePath = await this.detectBrowser();
+        
+        const baseOptions = {
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection'
+            ]
+        };
+
+        if (executablePath) {
+            baseOptions.executablePath = executablePath;
+            console.log('Usando Chrome instalado en el sistema');
+        } else {
+            console.log('Usando navegador incluido con Puppeteer');
+        }
+
+        return baseOptions;
     }
 
     async generatePDF(data) {
@@ -65,24 +144,33 @@ class PDFService {
                     ...data,
                     logoPath: logoBase64
                 });
-                console.log('Placeholders reemplazados');
+                console.log('Placeholders reemplazados exitosamente');
             } catch (error) {
                 console.error('Error al reemplazar placeholders:', error);
                 throw new Error(`Error al reemplazar placeholders: ${error.message}`);
             }
 
-            // Launch browser with minimal configuration
+            // Launch browser with optimized configuration
             console.log('Iniciando navegador...');
             try {
-                browser = await puppeteer.launch({
-                    headless: 'new',
-                    args: ['--no-sandbox', '--disable-setuid-sandbox']
-                     // executablePath: 'C:\\Users\\servi\\.cache\\puppeteer\\chrome\\win64-137.0.7151.55\\chrome-win64\\chrome.exe'
-                });
-                console.log('Navegador iniciado');
+                const launchOptions = await this.getLaunchOptions();
+                browser = await puppeteer.launch(launchOptions);
+                console.log('Navegador iniciado exitosamente');
             } catch (error) {
                 console.error('Error al iniciar el navegador:', error);
-                throw new Error(`Error al iniciar el navegador: ${error.message}`);
+                
+                // Intentar con configuración mínima como fallback
+                try {
+                    console.log('Intentando con configuración mínima...');
+                    browser = await puppeteer.launch({
+                        headless: 'new',
+                        args: ['--no-sandbox', '--disable-setuid-sandbox']
+                    });
+                    console.log('Navegador iniciado con configuración mínima');
+                } catch (fallbackError) {
+                    console.error('Error con configuración mínima:', fallbackError);
+                    throw new Error(`No se pudo iniciar el navegador. Error: ${fallbackError.message}`);
+                }
             }
 
             // Create new page
@@ -96,16 +184,25 @@ class PDFService {
                 throw new Error(`Error al crear nueva página: ${error.message}`);
             }
 
-            // Set content
+            // Set content with timeout
             console.log('Estableciendo contenido...');
             try {
                 await page.setContent(htmlTemplate, {
-                    waitUntil: 'networkidle0'
+                    waitUntil: 'networkidle0',
+                    timeout: 30000 // 30 segundos de timeout
                 });
-                console.log('Contenido establecido');
+                console.log('Contenido establecido correctamente');
             } catch (error) {
                 console.error('Error al establecer contenido:', error);
                 throw new Error(`Error al establecer contenido: ${error.message}`);
+            }
+
+            // Wait a bit for content to render
+            try {
+                await page.waitForTimeout(2000);
+                console.log('Esperando renderizado del contenido...');
+            } catch (error) {
+                console.log('Timeout de espera completado');
             }
 
             // Generate PDF
@@ -121,7 +218,8 @@ class PDFService {
                         right: '20px',
                         bottom: '20px',
                         left: '20px'
-                    }
+                    },
+                    timeout: 60000 // 60 segundos de timeout para generación
                 });
                 console.log('PDF generado exitosamente');
             } catch (error) {
@@ -138,7 +236,7 @@ class PDFService {
                 console.log('Cerrando navegador...');
                 try {
                     await browser.close();
-                    console.log('Navegador cerrado');
+                    console.log('Navegador cerrado exitosamente');
                 } catch (error) {
                     console.error('Error al cerrar el navegador:', error);
                 }

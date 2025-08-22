@@ -58,4 +58,5 @@ https://slidesgo.com/theme/nanorobotics#search-Technology&position-11&results-11
 
 
 
+
 - EN LO POSIBLE, REVISAR RENDIMIENTO/OPTIMIZACION de VISTAS (optimizar tiempo)

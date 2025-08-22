@@ -7,7 +7,9 @@
     "dev": "nodemon index.js",
     "start": "node index.js",
     "migrate": "knex migrate:latest",
-    "seed": "knex seed:run"
+    "seed": "knex seed:run",
+    "setup-puppeteer": "node install-puppeteer.js",
+    "postinstall": "npm run setup-puppeteer"
   },
   "keywords": [],
   "author": "",
